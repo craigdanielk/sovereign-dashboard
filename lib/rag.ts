@@ -3,7 +3,8 @@
  */
 
 const RAG_ENDPOINT = process.env.RAG_MCP_URL
-  ?? "https://rag-mcp-server-rsc32eci6a-ew.a.run.app";
+  ?? "https://rag-mcp-server-152999532788.europe-west1.run.app";
+const RAG_AUTH_TOKEN = process.env.RAG_AUTH_TOKEN ?? "";
 
 const MCP_URL = `${RAG_ENDPOINT.replace(/\/$/, "")}/mcp`;
 
@@ -22,6 +23,7 @@ async function mcpPost(
     "Content-Type": "application/json",
     "Accept": "application/json, text/event-stream",
   };
+  if (RAG_AUTH_TOKEN) headers["Authorization"] = `Bearer ${RAG_AUTH_TOKEN}`;
   if (sessionId) headers["Mcp-Session-Id"] = sessionId;
 
   const resp = await fetch(MCP_URL, {
@@ -30,6 +32,11 @@ async function mcpPost(
     body: JSON.stringify(payload),
     signal: AbortSignal.timeout(15_000),
   });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    throw new Error(`RAG HTTP ${resp.status}: ${errText.slice(0, 200)}`);
+  }
 
   const newSessionId = resp.headers.get("mcp-session-id") ?? sessionId;
   const raw = await resp.text();
@@ -80,7 +87,7 @@ export async function callRagTool(
   );
 
   if (body.error) {
-    throw new Error(`RAG error: ${body.error.message}`);
+    throw new Error(`RAG error: ${body.error.message ?? JSON.stringify(body.error)}`);
   }
 
   const result = body.result as { content?: Array<{ type: string; text: string }> } | undefined;
