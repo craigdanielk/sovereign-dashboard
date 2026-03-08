@@ -54,123 +54,276 @@ function timeAgo(iso: string | null): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  operational: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  beta: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  pending: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-  offline: "bg-red-500/20 text-red-400 border-red-500/30",
-};
-
-const PROFICIENCY_COLORS: Record<string, string> = {
-  production: "bg-emerald-500/20 text-emerald-400",
-  "near-production": "bg-blue-500/20 text-blue-400",
-  beta: "bg-amber-500/20 text-amber-400",
-  prototype: "bg-purple-500/20 text-purple-400",
-  unknown: "bg-gray-500/20 text-gray-400",
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  P0: "bg-red-500/20 text-red-400 border-red-500/30",
-  P1: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  P2: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  P3: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-};
-
-/* ─── Badge Components ───────────────────────────────── */
-
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <span className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border ${STATUS_COLORS[status] ?? STATUS_COLORS.pending}`}>
-      {status}
-    </span>
-  );
+function countOperational(agents: Agent[]): number {
+  return agents.filter((a) => a.status === "operational").length;
 }
 
-function ProficiencyBadge({ level }: { level: string }) {
-  return (
-    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${PROFICIENCY_COLORS[level] ?? PROFICIENCY_COLORS.unknown}`}>
-      {level}
-    </span>
-  );
+/* ─── Status Dot ─────────────────────────────────────── */
+
+function StatusDot({ status, size = "sm" }: { status: string; size?: "sm" | "md" }) {
+  const sizeClass = size === "md" ? "w-2.5 h-2.5" : "w-[7px] h-[7px]";
+  const pulseClass = status === "operational" ? "animate-soft-pulse" : "";
+  return <div className={`${sizeClass} rounded-full dot-${status} ${pulseClass}`} />;
 }
 
-/* ─── Panel: Army ────────────────────────────────────── */
+/* ─── Skeleton Loader ────────────────────────────────── */
 
-function ArmyPanel({ agents }: { agents: Agent[] }) {
+function SkeletonCard() {
   return (
-    <div className="space-y-3">
-      <h2 className="text-sm font-mono uppercase tracking-wider text-slate-400 mb-4">
-        Node Directors
-        <span className="ml-2 text-emerald-400">{agents.length}</span>
-      </h2>
-      {agents.map((agent) => (
-        <div
-          key={agent.name}
-          className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-3 space-y-2"
-        >
-          <div className="flex items-center justify-between">
-            <span className="font-mono font-bold text-sm text-slate-100">{agent.name}</span>
-            <StatusBadge status={agent.status} />
-          </div>
-          {agent.capabilities.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {agent.capabilities.slice(0, 5).map((cap) => (
-                <span key={cap} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400">
-                  {cap}
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="flex items-center gap-3 text-[10px] text-slate-500 font-mono">
-            {agent.lastCommit && <span>#{agent.lastCommit.slice(0, 7)}</span>}
-            <span>{timeAgo(agent.lastUpdated)}</span>
-          </div>
-        </div>
-      ))}
+    <div className="space-y-5 p-1">
+      <div className="skeleton h-5 w-32" />
+      <div className="space-y-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="skeleton h-16 w-full" />
+        ))}
+      </div>
     </div>
   );
 }
 
-/* ─── Panel: System ──────────────────────────────────── */
+/* ─── Metric Block ───────────────────────────────────── */
 
-function SystemPanel({ data }: { data: SystemData | null }) {
-  if (!data) return <div className="text-slate-500 font-mono text-sm">Loading system data...</div>;
+function Metric({ value, label, color }: { value: number | string; label: string; color?: string }) {
+  return (
+    <div className="text-center">
+      <div
+        className="text-2xl font-semibold tracking-tight"
+        style={{ fontFamily: "var(--font-display)", color: color ?? "var(--text-1)" }}
+      >
+        {value}
+      </div>
+      <div
+        className="text-[11px] font-medium tracking-wide uppercase mt-0.5"
+        style={{ color: "var(--text-3)", fontFamily: "var(--font-mono)" }}
+      >
+        {label}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Panel: Agents ──────────────────────────────────── */
+
+function AgentsPanel({ agents }: { agents: Agent[] }) {
+  if (agents.length === 0) return <SkeletonCard />;
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-sm font-mono uppercase tracking-wider text-slate-400 mb-4">
-        System Health
-        <span className="ml-2 text-slate-500">SDM {data.sdmVersion}</span>
-      </h2>
-
-      <div className={`rounded-lg border p-3 ${data.coreInfraComplete ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${data.coreInfraComplete ? "bg-emerald-400" : "bg-amber-400"}`} />
-          <span className="text-xs font-mono text-slate-300">
-            Core Infrastructure: {data.coreInfraComplete ? "COMPLETE" : "IN PROGRESS"}
-          </span>
-        </div>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-[15px] font-semibold tracking-tight" style={{ color: "var(--text-1)" }}>
+          Node Directors
+        </h2>
+        <span className="text-[12px] font-medium" style={{ color: "var(--text-3)" }}>
+          {countOperational(agents)}/{agents.length} online
+        </span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
-        {(["P0", "P1", "P2", "P3"] as const).map((p) => (
-          <div key={p} className={`rounded border text-center py-2 ${PRIORITY_COLORS[p]}`}>
-            <div className="text-lg font-mono font-bold">{data.gapCounts[p]}</div>
-            <div className="text-[10px] font-mono">{p}</div>
+      {/* Agent Cards */}
+      <div className="space-y-2">
+        {agents.map((agent, i) => (
+          <div
+            key={agent.name}
+            className={`glass-inner p-3.5 animate-fade-up delay-${Math.min(i + 1, 8)}`}
+          >
+            {/* Top row: name + status */}
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2.5">
+                <StatusDot status={agent.status} size="md" />
+                <span
+                  className="text-[13px] font-semibold tracking-wide"
+                  style={{ color: "var(--text-1)", fontFamily: "var(--font-display)" }}
+                >
+                  {agent.name}
+                </span>
+              </div>
+              <span
+                className="text-[10px] font-medium"
+                style={{ color: "var(--text-3)", fontFamily: "var(--font-mono)" }}
+              >
+                {timeAgo(agent.lastUpdated)}
+              </span>
+            </div>
+
+            {/* Capabilities */}
+            {agent.capabilities.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {agent.capabilities.slice(0, 4).map((cap) => (
+                  <span
+                    key={cap}
+                    className="text-[10px] font-medium px-2 py-[3px] rounded-full"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      color: "var(--text-2)",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    {cap}
+                  </span>
+                ))}
+                {agent.capabilities.length > 4 && (
+                  <span
+                    className="text-[10px] px-2 py-[3px] rounded-full"
+                    style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
+                  >
+                    +{agent.capabilities.length - 4}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Description excerpt */}
+            <p
+              className="text-[11px] leading-relaxed line-clamp-2"
+              style={{ color: "var(--text-3)" }}
+            >
+              {agent.description}
+            </p>
           </div>
         ))}
       </div>
+    </div>
+  );
+}
 
-      <div className="text-xs font-mono text-slate-500">
-        {data.totalGaps} gaps remaining &middot; Updated {timeAgo(data.sdmLastUpdated)}
+/* ─── Panel: System Health ───────────────────────────── */
+
+function SystemPanel({ data }: { data: SystemData | null }) {
+  if (!data) return <SkeletonCard />;
+
+  const priorityConfig: Record<string, { color: string; bg: string }> = {
+    P0: { color: "var(--red)", bg: "var(--red-dim)" },
+    P1: { color: "var(--orange)", bg: "var(--orange-dim)" },
+    P2: { color: "var(--yellow)", bg: "var(--yellow-dim)" },
+    P3: { color: "var(--text-3)", bg: "rgba(255,255,255,0.03)" },
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-[15px] font-semibold tracking-tight" style={{ color: "var(--text-1)" }}>
+          System Health
+        </h2>
+        <span
+          className="text-[11px] font-medium"
+          style={{ color: "var(--text-3)", fontFamily: "var(--font-mono)" }}
+        >
+          SDM {data.sdmVersion}
+        </span>
       </div>
 
+      {/* Infrastructure Status */}
+      <div
+        className="glass-inner p-3.5 flex items-center gap-3 animate-fade-up delay-1"
+      >
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{
+            background: data.coreInfraComplete ? "var(--green-dim)" : "var(--orange-dim)",
+          }}
+        >
+          <div
+            className="w-2.5 h-2.5 rounded-full"
+            style={{
+              background: data.coreInfraComplete ? "var(--green)" : "var(--orange)",
+              boxShadow: data.coreInfraComplete
+                ? "0 0 12px rgba(48,209,88,0.4)"
+                : "0 0 12px rgba(255,159,10,0.4)",
+            }}
+          />
+        </div>
+        <div>
+          <div className="text-[13px] font-medium" style={{ color: "var(--text-1)" }}>
+            Core Infrastructure
+          </div>
+          <div
+            className="text-[11px] font-medium"
+            style={{
+              color: data.coreInfraComplete ? "var(--green)" : "var(--orange)",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            {data.coreInfraComplete ? "Complete" : "In Progress"}
+          </div>
+        </div>
+      </div>
+
+      {/* Gap Counts */}
+      <div className="grid grid-cols-4 gap-2 animate-fade-up delay-2">
+        {(["P0", "P1", "P2", "P3"] as const).map((p) => {
+          const cfg = priorityConfig[p];
+          return (
+            <div
+              key={p}
+              className="rounded-xl text-center py-3 px-2 transition-all duration-200"
+              style={{
+                background: data.gapCounts[p] > 0 ? cfg.bg : "rgba(255,255,255,0.02)",
+                border: `1px solid ${data.gapCounts[p] > 0 ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.03)"}`,
+              }}
+            >
+              <div
+                className="text-xl font-semibold"
+                style={{
+                  color: data.gapCounts[p] > 0 ? cfg.color : "var(--text-4)",
+                  fontFamily: "var(--font-display)",
+                }}
+              >
+                {data.gapCounts[p]}
+              </div>
+              <div
+                className="text-[10px] font-semibold tracking-wider mt-0.5"
+                style={{
+                  color: data.gapCounts[p] > 0 ? cfg.color : "var(--text-4)",
+                  fontFamily: "var(--font-mono)",
+                  opacity: data.gapCounts[p] > 0 ? 0.7 : 0.5,
+                }}
+              >
+                {p}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary */}
+      <div className="divider" />
+      <div className="flex items-center justify-between animate-fade-up delay-3">
+        <span className="text-[11px]" style={{ color: "var(--text-3)", fontFamily: "var(--font-mono)" }}>
+          {data.totalGaps} gaps remaining
+        </span>
+        <span className="text-[11px]" style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}>
+          {timeAgo(data.sdmLastUpdated)}
+        </span>
+      </div>
+
+      {/* Active Jobs */}
       {data.activeJobs.length > 0 && (
-        <div className="space-y-2">
-          <div className="text-xs font-mono text-slate-400 uppercase">Active Jobs</div>
+        <div className="space-y-2 animate-fade-up delay-4">
+          <div
+            className="text-[11px] font-semibold tracking-wider uppercase"
+            style={{ color: "var(--text-3)" }}
+          >
+            Active Jobs
+          </div>
           {data.activeJobs.map((job, i) => (
-            <div key={i} className="rounded border border-blue-500/30 bg-blue-500/5 p-2">
-              <span className="text-xs font-mono text-blue-400">{job.details.slice(0, 120)}</span>
+            <div
+              key={i}
+              className="glass-inner p-3"
+              style={{ borderColor: "rgba(10,132,255,0.12)" }}
+            >
+              <div className="flex items-start gap-2.5">
+                <div
+                  className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
+                  style={{ background: "var(--blue)", boxShadow: "0 0 6px rgba(10,132,255,0.5)" }}
+                />
+                <span
+                  className="text-[11px] leading-relaxed"
+                  style={{ color: "var(--text-2)", fontFamily: "var(--font-mono)" }}
+                >
+                  {job.details.slice(0, 140)}
+                </span>
+              </div>
             </div>
           ))}
         </div>
@@ -182,49 +335,134 @@ function SystemPanel({ data }: { data: SystemData | null }) {
 /* ─── Panel: Pipeline ────────────────────────────────── */
 
 function PipelinePanel({ data }: { data: PipelineData | null }) {
-  if (!data) return <div className="text-slate-500 font-mono text-sm">Loading pipeline...</div>;
+  if (!data) return <SkeletonCard />;
+
+  const proficiencyStyle: Record<string, { color: string; bg: string }> = {
+    production: { color: "var(--green)", bg: "var(--green-dim)" },
+    "near-production": { color: "var(--blue)", bg: "var(--blue-dim)" },
+    beta: { color: "var(--orange)", bg: "var(--orange-dim)" },
+    prototype: { color: "var(--purple)", bg: "var(--purple-dim)" },
+    unknown: { color: "var(--text-3)", bg: "rgba(255,255,255,0.03)" },
+  };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-sm font-mono uppercase tracking-wider text-slate-400 mb-4">
-        Pipeline
-        <span className="ml-2 text-slate-500">{data.capabilities.length} capabilities</span>
-      </h2>
-
-      <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-3">
-        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">RECON Status</div>
-        <div className="text-xs font-mono text-slate-300">{data.pipelineStatus.slice(0, 150)}</div>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-[15px] font-semibold tracking-tight" style={{ color: "var(--text-1)" }}>
+          Pipeline
+        </h2>
+        <span
+          className="text-[11px] font-medium"
+          style={{ color: "var(--text-3)", fontFamily: "var(--font-mono)" }}
+        >
+          {data.capabilities.length} capabilities
+        </span>
       </div>
 
-      <div className="space-y-1">
-        <div className="grid grid-cols-[1fr_80px_90px_60px] gap-2 text-[10px] font-mono text-slate-500 uppercase px-2">
-          <span>Capability</span>
-          <span>Level</span>
-          <span>Rate</span>
-          <span>Hrs</span>
-        </div>
-        {data.capabilities.map((cap) => (
+      {/* RECON Status */}
+      <div className="glass-inner p-3.5 animate-fade-up delay-1">
+        <div className="flex items-center gap-2 mb-1.5">
           <div
-            key={cap.capability_id}
-            className="grid grid-cols-[1fr_80px_90px_60px] gap-2 items-center rounded border border-slate-700/30 bg-slate-800/30 px-2 py-1.5"
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ background: "var(--blue)", boxShadow: "0 0 6px rgba(10,132,255,0.5)" }}
+          />
+          <span
+            className="text-[10px] font-semibold tracking-wider uppercase"
+            style={{ color: "var(--text-3)" }}
           >
-            <div>
-              <div className="text-xs font-mono text-slate-200">{cap.label}</div>
-              <div className="text-[10px] font-mono text-slate-500">{cap.owned_by.join(", ")}</div>
-            </div>
-            <ProficiencyBadge level={cap.proficiency} />
-            <span className="text-[10px] font-mono text-slate-400">{cap.market_rate}</span>
-            <span className="text-[10px] font-mono text-slate-400">{cap.time_to_deploy_hrs}h</span>
-          </div>
-        ))}
+            RECON Status
+          </span>
+        </div>
+        <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-2)" }}>
+          {data.pipelineStatus.slice(0, 160)}
+        </p>
       </div>
 
+      {/* Capabilities Table */}
+      <div className="space-y-1 animate-fade-up delay-2">
+        {/* Table Header */}
+        <div
+          className="grid gap-3 px-3 py-1.5"
+          style={{
+            gridTemplateColumns: "1fr 90px 70px",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          <span className="text-[10px] font-semibold tracking-wider uppercase" style={{ color: "var(--text-4)" }}>
+            Capability
+          </span>
+          <span className="text-[10px] font-semibold tracking-wider uppercase" style={{ color: "var(--text-4)" }}>
+            Level
+          </span>
+          <span className="text-[10px] font-semibold tracking-wider uppercase text-right" style={{ color: "var(--text-4)" }}>
+            Deploy
+          </span>
+        </div>
+
+        {/* Table Rows */}
+        {data.capabilities.map((cap, i) => {
+          const prof = proficiencyStyle[cap.proficiency] ?? proficiencyStyle.unknown;
+          return (
+            <div
+              key={cap.capability_id}
+              className={`glass-inner grid gap-3 items-center px-3 py-2.5 animate-fade-up delay-${Math.min(i + 3, 8)}`}
+              style={{ gridTemplateColumns: "1fr 90px 70px" }}
+            >
+              <div>
+                <div className="text-[12px] font-medium" style={{ color: "var(--text-1)" }}>
+                  {cap.label}
+                </div>
+                <div
+                  className="text-[10px] mt-0.5"
+                  style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
+                >
+                  {cap.owned_by.join(", ")}
+                </div>
+              </div>
+              <span
+                className="text-[10px] font-medium px-2 py-1 rounded-full text-center"
+                style={{
+                  background: prof.bg,
+                  color: prof.color,
+                  fontFamily: "var(--font-mono)",
+                }}
+              >
+                {cap.proficiency}
+              </span>
+              <span
+                className="text-[12px] font-medium text-right"
+                style={{ color: "var(--text-2)", fontFamily: "var(--font-mono)" }}
+              >
+                {cap.time_to_deploy_hrs}h
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Known Gaps */}
       {data.knownGaps.length > 0 && (
-        <div className="space-y-1">
-          <div className="text-[10px] font-mono text-slate-500 uppercase">Known Gaps</div>
-          <div className="flex flex-wrap gap-1">
+        <div className="space-y-2.5 animate-fade-up delay-5">
+          <div className="divider" />
+          <div
+            className="text-[11px] font-semibold tracking-wider uppercase"
+            style={{ color: "var(--text-3)" }}
+          >
+            Known Gaps
+          </div>
+          <div className="flex flex-wrap gap-1.5">
             {data.knownGaps.map((gap) => (
-              <span key={gap} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
+              <span
+                key={gap}
+                className="text-[10px] font-medium px-2.5 py-[3px] rounded-full"
+                style={{
+                  background: "var(--red-dim)",
+                  color: "var(--red)",
+                  fontFamily: "var(--font-mono)",
+                  border: "1px solid rgba(255,69,58,0.1)",
+                }}
+              >
                 {gap}
               </span>
             ))}
@@ -232,17 +470,182 @@ function PipelinePanel({ data }: { data: PipelineData | null }) {
         </div>
       )}
 
+      {/* Pending GAP */}
       {data.pendingGap && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-1">
-          <div className="text-[10px] font-mono text-amber-400 uppercase">Pending GAP Review</div>
-          <div className="text-xs font-mono text-slate-300">
+        <div
+          className="glass-inner p-3.5 space-y-1.5 animate-fade-up delay-6"
+          style={{ borderColor: "rgba(255,159,10,0.12)" }}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ background: "var(--orange)", boxShadow: "0 0 6px rgba(255,159,10,0.5)" }}
+            />
+            <span
+              className="text-[10px] font-semibold tracking-wider uppercase"
+              style={{ color: "var(--orange)", opacity: 0.8 }}
+            >
+              Pending GAP Review
+            </span>
+          </div>
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-2)" }}>
             {(data.pendingGap as Record<string, string>).gap_description ?? "Details in RAG"}
-          </div>
-          <div className="text-[10px] font-mono text-slate-500">
+          </p>
+          <p className="text-[10px]" style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}>
             Suggested: {(data.pendingGap as Record<string, string>).suggested_skill_name ?? "\u2014"}
-          </div>
+          </p>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Header ─────────────────────────────────────────── */
+
+function Header({
+  agents,
+  system,
+  lastRefresh,
+  error,
+  onRefresh,
+}: {
+  agents: Agent[];
+  system: SystemData | null;
+  lastRefresh: string;
+  error: string | null;
+  onRefresh: () => void;
+}) {
+  const online = countOperational(agents);
+  const total = agents.length;
+
+  return (
+    <header
+      className="sticky top-0 z-50 animate-fade-in"
+      style={{
+        background: "rgba(0,0,0,0.72)",
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-10 h-14 flex items-center justify-between">
+        {/* Left: Brand */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <StatusDot status={online > 0 ? "operational" : "offline"} size="md" />
+            <span
+              className="text-[15px] font-semibold tracking-tight"
+              style={{ color: "var(--text-1)", fontFamily: "var(--font-display)" }}
+            >
+              Sovereign
+            </span>
+          </div>
+          <div className="h-4 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
+          <span className="text-[11px] font-medium" style={{ color: "var(--text-3)" }}>
+            Command Centre
+          </span>
+        </div>
+
+        {/* Right: Stats + Refresh */}
+        <div className="flex items-center gap-5">
+          {/* Quick stats in header */}
+          {total > 0 && (
+            <div className="hidden sm:flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--green)" }} />
+                <span
+                  className="text-[11px] font-medium"
+                  style={{ color: "var(--text-3)", fontFamily: "var(--font-mono)" }}
+                >
+                  {online} agents
+                </span>
+              </div>
+              {system && (
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="text-[11px] font-medium"
+                    style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
+                  >
+                    {system.totalGaps} gaps
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {error && (
+            <span className="text-[11px] font-medium" style={{ color: "var(--red)" }}>
+              {error}
+            </span>
+          )}
+
+          <span
+            className="text-[11px] hidden sm:inline"
+            style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
+          >
+            {lastRefresh || "\u2014"}
+          </span>
+
+          <button
+            onClick={onRefresh}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              color: "var(--text-2)",
+              fontSize: "11px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 500,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.09)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.7 }}>
+              <path
+                d="M13.65 2.35A8 8 0 1 0 16 8h-2a6 6 0 1 1-1.76-4.24L10 6h6V0l-2.35 2.35z"
+                fill="currentColor"
+              />
+            </svg>
+            Sync
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ─── Overview Metrics Bar ───────────────────────────── */
+
+function MetricsBar({ agents, system }: { agents: Agent[]; system: SystemData | null }) {
+  if (agents.length === 0 && !system) return null;
+
+  return (
+    <div className="glass p-5 animate-fade-up delay-1">
+      <div className="flex items-center justify-around flex-wrap gap-6">
+        <Metric value={agents.length} label="Directors" />
+        <Metric
+          value={countOperational(agents)}
+          label="Online"
+          color="var(--green)"
+        />
+        {system && (
+          <>
+            <Metric value={system.sdmVersion} label="SDM" />
+            <Metric value={system.totalGaps} label="Total Gaps" color={system.gapCounts.P0 > 0 ? "var(--red)" : "var(--text-2)"} />
+            <Metric
+              value={system.coreInfraComplete ? "Complete" : "Building"}
+              label="Infrastructure"
+              color={system.coreInfraComplete ? "var(--green)" : "var(--orange)"}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -289,38 +692,28 @@ export default function Dashboard() {
   }, [fetchAll]);
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
-      <header className="border-b border-slate-700/50 px-6 py-4">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <h1 className="font-mono text-sm font-bold text-slate-200 tracking-wider uppercase">
-              SOVEREIGN
-            </h1>
-            <span className="font-mono text-[10px] text-slate-500">Command Centre</span>
-          </div>
-          <div className="flex items-center gap-4 text-[10px] font-mono text-slate-500">
-            {error && <span className="text-red-400">{error}</span>}
-            <span>Last sync: {lastRefresh || "\u2014"}</span>
-            <button
-              onClick={fetchAll}
-              className="px-2 py-1 rounded border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              Refresh
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="relative min-h-screen" style={{ zIndex: 1 }}>
+      <Header
+        agents={agents}
+        system={system}
+        lastRefresh={lastRefresh}
+        error={error}
+        onRefresh={fetchAll}
+      />
 
-      <main className="max-w-[1600px] mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="rounded-xl border border-slate-700/50 bg-slate-900/50 p-4">
-            <ArmyPanel agents={agents} />
+      <main className="max-w-[1440px] mx-auto px-6 lg:px-10 py-8 space-y-6">
+        {/* Metrics Overview */}
+        <MetricsBar agents={agents} system={system} />
+
+        {/* Three-Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="glass p-5 animate-fade-up delay-2">
+            <AgentsPanel agents={agents} />
           </div>
-          <div className="rounded-xl border border-slate-700/50 bg-slate-900/50 p-4">
+          <div className="glass p-5 animate-fade-up delay-3">
             <SystemPanel data={system} />
           </div>
-          <div className="rounded-xl border border-slate-700/50 bg-slate-900/50 p-4">
+          <div className="glass p-5 animate-fade-up delay-4">
             <PipelinePanel data={pipeline} />
           </div>
         </div>
