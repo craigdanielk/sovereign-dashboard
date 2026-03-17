@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { ExpandableText } from "./components/ExpandableText";
+import { NavBar } from "./components/NavBar";
 
 /* ─── Types ──────────────────────────────────────────── */
 
@@ -39,6 +41,13 @@ interface PipelineData {
   knownGaps: string[];
   pendingGap: Record<string, unknown> | null;
   pipelineStatus: string;
+}
+
+interface ReconData {
+  lastRun: string;
+  signalsFound: number;
+  authStatus: "ok" | "error" | "unknown";
+  queueDepth: number;
 }
 
 /* ─── Helpers ────────────────────────────────────────── */
@@ -172,13 +181,13 @@ function AgentsPanel({ agents }: { agents: Agent[] }) {
               </div>
             )}
 
-            {/* Description excerpt */}
-            <p
-              className="text-[11px] leading-relaxed line-clamp-2"
+            {/* Description */}
+            <ExpandableText
+              text={agent.description}
+              maxLength={160}
+              className="text-[11px] leading-relaxed"
               style={{ color: "var(--text-3)" }}
-            >
-              {agent.description}
-            </p>
+            />
           </div>
         ))}
       </div>
@@ -188,7 +197,116 @@ function AgentsPanel({ agents }: { agents: Agent[] }) {
 
 /* ─── Panel: System Health ───────────────────────────── */
 
-function SystemPanel({ data }: { data: SystemData | null }) {
+/* ─── RECON Status Widget ────────────────────────────── */
+
+function ReconWidget({ data }: { data: ReconData | null }) {
+  if (!data) return null;
+
+  const authColor =
+    data.authStatus === "ok"
+      ? "var(--green)"
+      : data.authStatus === "error"
+        ? "var(--red)"
+        : "var(--text-4)";
+
+  return (
+    <div
+      className="glass-inner p-3.5 space-y-2.5 animate-fade-up delay-5"
+      style={{ borderColor: "rgba(10,132,255,0.08)" }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <div
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{
+            background: "var(--blue)",
+            boxShadow: "0 0 6px rgba(10,132,255,0.5)",
+          }}
+        />
+        <span
+          className="text-[10px] font-semibold tracking-wider uppercase"
+          style={{ color: "var(--text-3)" }}
+        >
+          RECON Scanner
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <div
+            className="text-[10px] font-medium tracking-wide uppercase mb-0.5"
+            style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
+          >
+            Last Run
+          </div>
+          <div
+            className="text-[12px] font-medium"
+            style={{ color: "var(--text-2)", fontFamily: "var(--font-mono)" }}
+          >
+            {data.lastRun ? timeAgo(data.lastRun) : "—"}
+          </div>
+        </div>
+
+        <div>
+          <div
+            className="text-[10px] font-medium tracking-wide uppercase mb-0.5"
+            style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
+          >
+            Signals
+          </div>
+          <div
+            className="text-[12px] font-medium"
+            style={{ color: "var(--text-2)", fontFamily: "var(--font-mono)" }}
+          >
+            {data.signalsFound}
+          </div>
+        </div>
+
+        <div>
+          <div
+            className="text-[10px] font-medium tracking-wide uppercase mb-0.5"
+            style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
+          >
+            Auth
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: authColor }}
+            />
+            <span
+              className="text-[12px] font-medium"
+              style={{ color: authColor, fontFamily: "var(--font-mono)" }}
+            >
+              {data.authStatus}
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <div
+            className="text-[10px] font-medium tracking-wide uppercase mb-0.5"
+            style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
+          >
+            Queue
+          </div>
+          <div
+            className="text-[12px] font-medium"
+            style={{
+              color: data.queueDepth > 0 ? "var(--orange)" : "var(--text-2)",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            {data.queueDepth} BRIEFs
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Panel: System Health ───────────────────────────── */
+
+function SystemPanel({ data, recon }: { data: SystemData | null; recon: ReconData | null }) {
   if (!data) return <SkeletonCard />;
 
   const priorityConfig: Record<string, { color: string; bg: string }> = {
@@ -317,17 +435,20 @@ function SystemPanel({ data }: { data: SystemData | null }) {
                   className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
                   style={{ background: "var(--blue)", boxShadow: "0 0 6px rgba(10,132,255,0.5)" }}
                 />
-                <span
+                <ExpandableText
+                  text={job.details}
+                  maxLength={140}
                   className="text-[11px] leading-relaxed"
                   style={{ color: "var(--text-2)", fontFamily: "var(--font-mono)" }}
-                >
-                  {job.details.slice(0, 140)}
-                </span>
+                />
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* RECON Status */}
+      <ReconWidget data={recon} />
     </div>
   );
 }
@@ -541,9 +662,7 @@ function Header({
             </span>
           </div>
           <div className="h-4 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
-          <span className="text-[11px] font-medium" style={{ color: "var(--text-3)" }}>
-            Command Centre
-          </span>
+          <NavBar />
         </div>
 
         {/* Right: Stats + Refresh */}
@@ -656,25 +775,29 @@ export default function Dashboard() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [system, setSystem] = useState<SystemData | null>(null);
   const [pipeline, setPipeline] = useState<PipelineData | null>(null);
+  const [recon, setRecon] = useState<ReconData | null>(null);
   const [lastRefresh, setLastRefresh] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     try {
       setError(null);
-      const [armyRes, sysRes, pipeRes] = await Promise.all([
+      const [armyRes, sysRes, pipeRes, reconRes] = await Promise.all([
         fetch("/api/army"),
         fetch("/api/system"),
         fetch("/api/pipeline"),
+        fetch("/api/recon"),
       ]);
 
       const armyData = await armyRes.json();
       const sysData = await sysRes.json();
       const pipeData = await pipeRes.json();
+      const reconData = await reconRes.json();
 
       setAgents(armyData.agents ?? []);
       setSystem(sysData.error ? null : sysData);
       setPipeline(pipeData.error ? null : pipeData);
+      setRecon(reconData.error ? null : reconData);
       setLastRefresh(new Date().toLocaleTimeString());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fetch failed");
@@ -711,7 +834,7 @@ export default function Dashboard() {
             <AgentsPanel agents={agents} />
           </div>
           <div className="glass p-5 animate-fade-up delay-3">
-            <SystemPanel data={system} />
+            <SystemPanel data={system} recon={recon} />
           </div>
           <div className="glass p-5 animate-fade-up delay-4">
             <PipelinePanel data={pipeline} />

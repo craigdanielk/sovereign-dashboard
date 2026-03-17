@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { searchEntities } from "@/lib/rag";
+import { dedupByName } from "@/lib/dedup";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,8 @@ export async function GET() {
       }>;
     };
 
-    const agents = (result?.entities ?? []).map((e) => {
+    const deduped = dedupByName(result?.entities ?? []);
+    const agents = deduped.map((e) => {
       const desc = e.description ?? "";
       const descLower = desc.toLowerCase();
 
@@ -45,7 +47,7 @@ export async function GET() {
         lastCommit,
         lastUpdated: e.last_updated,
         relatedProjects: e.related_projects ?? [],
-        description: desc.slice(0, 200),
+        description: desc,
       };
     });
 
