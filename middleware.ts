@@ -14,19 +14,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for password in query param (login flow)
-  const password = request.nextUrl.searchParams.get("password");
-  if (password && password === DASHBOARD_PASSWORD) {
-    const response = NextResponse.redirect(
-      new URL(request.nextUrl.pathname, request.url),
-    );
-    response.cookies.set("dashboard-auth", password, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-    return response;
+  // Allow login API
+  if (request.nextUrl.pathname === "/api/login") {
+    return NextResponse.next();
   }
 
   // No password configured = total lockdown (return 403)
@@ -54,7 +44,9 @@ button:hover{background:rgba(255,255,255,0.15)}
 </style></head>
 <body><div class="box">
 <h1>Sovereign Command Centre</h1>
-<form method="GET"><input type="password" name="password" placeholder="Password" autofocus required><button type="submit">Enter</button></form>
+<form id="f"><input type="password" id="p" placeholder="Password" autofocus required><button type="submit">Enter</button></form>
+<div id="err" style="color:#f55;font-size:0.75rem;margin-top:0.75rem"></div>
+<script>document.getElementById('f').onsubmit=async e=>{e.preventDefault();const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:document.getElementById('p').value})});if(r.ok)location.reload();else document.getElementById('err').textContent='Wrong password'}</script>
 </div></body></html>`,
     {
       status: 401,
