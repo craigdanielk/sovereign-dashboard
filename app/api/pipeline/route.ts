@@ -1,68 +1,82 @@
 import { NextResponse } from "next/server";
-import { searchEntities, getCheckpoint } from "@/lib/rag";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-interface Capability {
-  capability_id: string;
-  label: string;
-  owned_by: string[];
-  proficiency: string;
-  market_rate: string;
-  time_to_deploy_hrs: number;
-  gap_to_close: string | null;
-}
-
 export async function GET() {
   try {
-    const [scoreboardResult, gapResult, checkpointResult] = await Promise.all([
-      searchEntities("Scoreboard-current", undefined, 3),
-      searchEntities("RECON-pending-gap", undefined, 3),
-      getCheckpoint("strawberry-picker"),
-    ]);
+    // Recent activity: artifacts ordered by created_at DESC
+    const { data: recentArtifacts, error: artifactError } = await supabase
+      .from("artifacts")
+      .select("id, name, agent_name, artifact_type, status, verified_by_human, summary, vercel_url, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(30);
 
-    // Parse scoreboard
-    const scoreboardEntities = (scoreboardResult as { entities?: Array<{ name: string; description: string }> })?.entities ?? [];
-    const scoreboardEntity = scoreboardEntities.find((e) => e.name === "Scoreboard-current");
-    let capabilities: Capability[] = [];
-    let knownGaps: string[] = [];
+    if (artifactError) throw new Error(artifactError.message);
 
-    if (scoreboardEntity) {
-      try {
-        const parsed = JSON.parse(scoreboardEntity.description);
-        capabilities = parsed.army_capabilities ?? [];
-        knownGaps = parsed.known_gaps ?? [];
-      } catch {
-        // Description might not be JSON
+    // Pending reviews: artifacts not yet verified by human
+    const { data: pendingReview, error: reviewError } = await supabase
+      .from("artifacts")
+      .select("id, name, agent_name, artifact_type, status, summary, vercel_url, created_at")
+      .eq("verified_by_human", false)
+      .order("created_at", { ascending: false });
+
+    if (reviewError) throw new Error(reviewError.message);
+
+    const rows = recentArtifacts ?? [];
+
+    // Build capabilities from artifact types
+    const typeSet = new Map<string, { count: number; agents: Set<string> }>();
+    for (const row of rows) {
+      const t = row.artifact_type ?? "unknown";
+      const existing = typeSet.get(t);
+      if (!existing) {
+        typeSet.set(t, { count: 1, agents: new Set([row.agent_name ?? "unknown"]) });
+      } else {
+        existing.count++;
+        existing.agents.add(row.agent_name ?? "unknown");
       }
     }
 
-    // Parse pending gaps
-    const gapEntities = (gapResult as { entities?: Array<{ name: string; description: string }> })?.entities ?? [];
-    const pendingGap = gapEntities.find((e) => e.name === "RECON-pending-gap");
-    let pendingGapData = null;
-    if (pendingGap) {
-      try {
-        pendingGapData = JSON.parse(pendingGap.description);
-      } catch {
-        pendingGapData = { raw: pendingGap.description.slice(0, 300) };
-      }
-    }
+    const capabilities = Array.from(typeSet.entries()).map(([type, info]) => ({
+      capability_id: type,
+      label: type.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+      owned_by: Array.from(info.agents),
+      proficiency: info.count >= 5 ? "production" : info.count >= 3 ? "near-production" : info.count >= 2 ? "beta" : "prototype",
+      market_rate: "",
+      time_to_deploy_hrs: 0,
+      gap_to_close: null,
+    }));
 
-    // Parse strawberry-picker checkpoint for pipeline status
-    const checkpoint = checkpointResult as {
-      status: string;
-      checkpoint?: { current_state?: string; next_steps?: string };
-    };
-    const pipelineStatus = checkpoint?.status === "success"
-      ? checkpoint.checkpoint?.current_state ?? "Unknown"
-      : "No checkpoint";
+    // Pipeline status summary
+    const totalArtifacts = rows.length;
+    const pendingCount = (pendingReview ?? []).length;
+    const pipelineStatus = `${totalArtifacts} artifacts tracked, ${pendingCount} awaiting human review`;
 
     return NextResponse.json({
       capabilities,
-      knownGaps,
-      pendingGap: pendingGapData,
+      knownGaps: [],
+      pendingGap: null,
       pipelineStatus,
+      recentActivity: rows.slice(0, 10).map((r) => ({
+        name: r.name,
+        agent: r.agent_name,
+        type: r.artifact_type,
+        status: r.status,
+        verifiedByHuman: r.verified_by_human,
+        url: r.vercel_url,
+        createdAt: r.created_at,
+      })),
+      pendingReviews: (pendingReview ?? []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        agent: r.agent_name,
+        type: r.artifact_type,
+        status: r.status,
+        summary: r.summary,
+        url: r.vercel_url,
+        createdAt: r.created_at,
+      })),
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {
