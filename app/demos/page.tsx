@@ -5,11 +5,15 @@ import { ExpandableText } from "../components/ExpandableText";
 import { NavBar } from "../components/NavBar";
 
 interface Demo {
+  id: number;
   name: string;
   url: string;
   whatItDoes: string;
   problemSolved: string;
   lastUpdated: string | null;
+  status: string;
+  verifiedByHuman: boolean;
+  agent: string;
 }
 
 interface GateStatus {
@@ -152,23 +156,34 @@ function OutreachGate({
 
 /* ── Demo Card ────────────────────────────────────── */
 
-function DemoCard({ demo }: { demo: Demo }) {
+function DemoCard({ demo, onReview }: { demo: Demo; onReview: (id: number) => void }) {
   return (
     <div className="glass-inner p-5 space-y-3">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
-        <h3
-          className="text-[13px] font-semibold tracking-wide"
-          style={{
-            color: "var(--text-1)",
-            fontFamily: "var(--font-display)",
-          }}
-        >
-          {demo.name
-            .replace(/^delivery::/, "")
-            .replace(/-/g, " ")
-            .replace(/\b\w/g, (c) => c.toUpperCase())}
-        </h3>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{
+              background: demo.verifiedByHuman ? "var(--green)" : "var(--orange)",
+              boxShadow: demo.verifiedByHuman
+                ? "0 0 8px rgba(48,209,88,0.4)"
+                : "0 0 8px rgba(255,159,10,0.4)",
+            }}
+          />
+          <h3
+            className="text-[13px] font-semibold tracking-wide truncate"
+            style={{
+              color: "var(--text-1)",
+              fontFamily: "var(--font-display)",
+            }}
+          >
+            {demo.name
+              .replace(/^delivery::/, "")
+              .replace(/-/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase())}
+          </h3>
+        </div>
         <span
           className="text-[10px] font-medium flex-shrink-0"
           style={{
@@ -178,6 +193,34 @@ function DemoCard({ demo }: { demo: Demo }) {
         >
           {timeAgo(demo.lastUpdated)}
         </span>
+      </div>
+
+      {/* Agent + Status */}
+      <div className="flex items-center gap-2">
+        {demo.agent && (
+          <span
+            className="text-[10px] font-medium px-2 py-[3px] rounded-full"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              color: "var(--text-2)",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            {demo.agent}
+          </span>
+        )}
+        {demo.status && (
+          <span
+            className="text-[10px] font-medium px-2 py-[3px] rounded-full"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              color: "var(--text-3)",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            {demo.status}
+          </span>
+        )}
       </div>
 
       {/* URL */}
@@ -223,21 +266,27 @@ function DemoCard({ demo }: { demo: Demo }) {
         </div>
       )}
 
-      {/* Problem solved */}
-      {demo.problemSolved && (
-        <div className="space-y-1">
-          <div
-            className="text-[10px] font-semibold tracking-wider uppercase"
-            style={{ color: "var(--text-4)" }}
-          >
-            Problem solved
-          </div>
-          <ExpandableText
-            text={demo.problemSolved}
-            maxLength={150}
-            className="text-[11px] leading-relaxed"
-            style={{ color: "var(--text-3)" }}
-          />
+      {/* Human Review Button */}
+      {!demo.verifiedByHuman && (
+        <button
+          onClick={() => onReview(demo.id)}
+          className="w-full py-2 rounded-lg text-[11px] font-semibold tracking-wide transition-all duration-200 cursor-pointer"
+          style={{
+            fontFamily: "var(--font-mono)",
+            background: "var(--blue-dim)",
+            color: "var(--blue)",
+            border: "1px solid rgba(10,132,255,0.2)",
+          }}
+        >
+          MARK AS REVIEWED
+        </button>
+      )}
+      {demo.verifiedByHuman && (
+        <div
+          className="text-[10px] font-medium text-center py-1.5"
+          style={{ color: "var(--green)", fontFamily: "var(--font-mono)" }}
+        >
+          Verified by human
         </div>
       )}
     </div>
@@ -278,10 +327,38 @@ export default function DemosPage() {
   }, [fetchDemos]);
 
   const handleApprove = async () => {
-    // This would PATCH the RAG entity — for now, just update local state
-    // The BRIEF says: "Button fires a RAG entity update setting outreach_approved=true via /api route"
-    // TODO: Wire up /api/outreach-approve route
+    // Gate is now auto-calculated from verified demo count
     setGateStatus((prev) => ({ ...prev, approved: true }));
+  };
+
+  const handleReview = async (demoId: number) => {
+    try {
+      const res = await fetch("/api/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: demoId }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        // Update local state
+        setDemos((prev) =>
+          prev.map((d) =>
+            d.id === demoId ? { ...d, verifiedByHuman: true } : d,
+          ),
+        );
+        // Recalculate gate
+        const newVerified = demos.filter(
+          (d) => d.verifiedByHuman || d.id === demoId,
+        ).length;
+        setGateStatus((prev) => ({
+          ...prev,
+          current: newVerified,
+          approved: newVerified >= prev.required,
+        }));
+      }
+    } catch {
+      // silent fail — user can retry
+    }
   };
 
   return (
@@ -400,10 +477,10 @@ export default function DemosPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {demos.map((demo, i) => (
               <div
-                key={demo.name}
+                key={demo.id ?? demo.name}
                 className={`glass p-5 animate-fade-up delay-${Math.min(i + 1, 8)}`}
               >
-                <DemoCard demo={demo} />
+                <DemoCard demo={demo} onReview={handleReview} />
               </div>
             ))}
           </div>

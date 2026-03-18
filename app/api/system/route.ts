@@ -1,69 +1,69 @@
 import { NextResponse } from "next/server";
-import { searchEntities, getCheckpoint } from "@/lib/rag";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-interface Gap {
-  name: string;
-  priority: string;
-  description: string;
-}
-
 export async function GET() {
   try {
-    // Fetch SDM and active jobs in parallel
-    const [sdmResult, jobsResult] = await Promise.all([
-      searchEntities("System Dependency Map", "system_map", 3),
-      getCheckpoint("heartbeat-jobs"),
-    ]);
+    // Query briefs for queue counts by status
+    const { data: briefs, error } = await supabase
+      .from("briefs")
+      .select("id, name, status, priority, created_at, claimed_at, completed_at, failure_reason");
 
-    // Parse SDM gaps from description
-    const sdmEntities = (sdmResult as { entities?: Array<{ description: string; last_updated: string | null }> })?.entities ?? [];
-    const sdmDesc = sdmEntities[0]?.description ?? "";
-    const sdmLastUpdated = sdmEntities[0]?.last_updated ?? null;
+    if (error) throw new Error(error.message);
 
-    // Extract gap info from SDM description
-    const gapCountMatch = sdmDesc.match(/(\d+)\s+gaps?\s+remaining/i) ?? sdmDesc.match(/(\d+)\s+gaps?\s+identified/i);
-    const totalGaps = gapCountMatch ? parseInt(gapCountMatch[1]) : 0;
+    const rows = briefs ?? [];
 
-    const p0Match = sdmDesc.match(/(\d+)\s+P0/);
-    const p1Match = sdmDesc.match(/(\d+)\s+P1/);
-    const p2Match = sdmDesc.match(/(\d+)\s+P2/);
-    const p3Match = sdmDesc.match(/(\d+)\s+P3/);
-
-    const gaps: Gap[] = [];
-    const gapCounts = {
-      P0: p0Match ? parseInt(p0Match[1]) : 0,
-      P1: p1Match ? parseInt(p1Match[1]) : 0,
-      P2: p2Match ? parseInt(p2Match[1]) : 0,
-      P3: p3Match ? parseInt(p3Match[1]) : 0,
+    // Count by status
+    const statusCounts: Record<string, number> = {
+      QUEUED: 0,
+      CLAIMED: 0,
+      COMPLETED: 0,
+      FAILED: 0,
     };
 
-    // Generate gap entries from counts
-    for (const [priority, count] of Object.entries(gapCounts)) {
-      for (let i = 0; i < count; i++) {
-        gaps.push({ name: `${priority} Gap ${i + 1}`, priority, description: `From SDM v5` });
+    // Count by priority
+    const priorityCounts: Record<string, number> = {
+      P0: 0,
+      P1: 0,
+      P2: 0,
+      P3: 0,
+    };
+
+    let latestUpdated: string | null = null;
+
+    for (const brief of rows) {
+      const s = (brief.status ?? "").toUpperCase();
+      if (s in statusCounts) statusCounts[s]++;
+
+      const p = (brief.priority ?? "").toUpperCase();
+      if (p in priorityCounts) priorityCounts[p]++;
+
+      // Track most recent activity
+      const date = brief.completed_at ?? brief.claimed_at ?? brief.created_at;
+      if (date && (!latestUpdated || date > latestUpdated)) {
+        latestUpdated = date;
       }
     }
 
-    // Parse jobs checkpoint
-    const jobsCheckpoint = jobsResult as { status: string; checkpoint?: { current_state?: string } };
-    const activeJobs = jobsCheckpoint?.status === "success"
-      ? [{ status: "active", details: jobsCheckpoint.checkpoint?.current_state ?? "No details" }]
-      : [];
-
-    // Extract version info
-    const versionMatch = sdmDesc.match(/v(\d+)/);
-    const sdmVersion = versionMatch ? `v${versionMatch[1]}` : "unknown";
+    const totalGaps = statusCounts.QUEUED + statusCounts.CLAIMED; // outstanding work
+    const activeJobs = rows
+      .filter((b) => (b.status ?? "").toUpperCase() === "CLAIMED")
+      .slice(0, 5)
+      .map((b) => ({
+        status: "active",
+        details: `${b.name}${b.failure_reason ? ` — ${b.failure_reason}` : ""}`,
+      }));
 
     return NextResponse.json({
-      sdmVersion,
+      sdmVersion: `${rows.length} briefs`,
       totalGaps,
-      gapCounts,
-      gaps,
+      gapCounts: priorityCounts,
+      gaps: [],
       activeJobs,
-      sdmLastUpdated,
-      coreInfraComplete: sdmDesc.toLowerCase().includes("complete"),
+      sdmLastUpdated: latestUpdated,
+      coreInfraComplete: statusCounts.FAILED === 0 && statusCounts.QUEUED === 0,
+      statusCounts,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {

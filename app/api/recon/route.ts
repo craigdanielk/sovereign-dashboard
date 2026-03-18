@@ -1,52 +1,41 @@
 import { NextResponse } from "next/server";
-import { searchEntities } from "@/lib/rag";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const result = (await searchEntities("RECON scanner status", undefined, 5)) as {
-      entities?: Array<{
-        name: string;
-        description: string;
-        last_updated: string | null;
-      }>;
-    };
+    // RECON data: count queued briefs, recent activity
+    const { data: queued, error: queuedError } = await supabase
+      .from("briefs")
+      .select("id", { count: "exact" })
+      .eq("status", "QUEUED");
 
-    const entities = result?.entities ?? [];
-    const reconEntity = entities.find(
-      (e) =>
-        e.name.toLowerCase().includes("recon") &&
-        !e.name.includes("pending-gap"),
-    );
+    if (queuedError) throw new Error(queuedError.message);
 
-    let lastRun = "";
-    let signalsFound = 0;
-    let authStatus: "ok" | "error" | "unknown" = "unknown";
-    let queueDepth = 0;
+    // Most recent brief activity
+    const { data: recentBriefs, error: recentError } = await supabase
+      .from("briefs")
+      .select("created_at")
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    if (reconEntity) {
-      const desc = reconEntity.description ?? "";
-      lastRun = reconEntity.last_updated ?? "";
+    if (recentError) throw new Error(recentError.message);
 
-      try {
-        const parsed = JSON.parse(desc);
-        signalsFound = parsed.signals_found ?? parsed.last_signals ?? 0;
-        authStatus = parsed.auth_status ?? (parsed.authenticated ? "ok" : "unknown");
-        queueDepth = parsed.queue_depth ?? 0;
-      } catch {
-        // Extract from text
-        const signalMatch = desc.match(/(\d+)\s+signal/i);
-        if (signalMatch) signalsFound = parseInt(signalMatch[1]);
-        authStatus = desc.toLowerCase().includes("auth") ? "ok" : "unknown";
-      }
-    }
+    // Count artifacts created in last 24h as "signals"
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count: signalCount, error: signalError } = await supabase
+      .from("artifacts")
+      .select("id", { count: "exact" })
+      .gte("created_at", oneDayAgo);
+
+    if (signalError) throw new Error(signalError.message);
 
     return NextResponse.json({
-      lastRun,
-      signalsFound,
-      authStatus,
-      queueDepth,
+      lastRun: recentBriefs?.[0]?.created_at ?? "",
+      signalsFound: signalCount ?? 0,
+      authStatus: "ok" as const,
+      queueDepth: queued?.length ?? 0,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {

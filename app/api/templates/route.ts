@@ -1,97 +1,51 @@
 import { NextResponse } from "next/server";
-import { searchEntities } from "@/lib/rag";
-import { dedupByName } from "@/lib/dedup";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-interface WorkflowTemplate {
-  name: string;
-  category: string;
-  trigger: string;
-  steps: string[];
-  output: string;
-  roiTier?: string;
-  skillGaps?: string[];
-  description?: string;
-}
-
-interface TemplateCategory {
-  name: string;
-  count: number;
-  description?: string;
-}
-
-interface RagEntity {
-  name: string;
-  description: string;
-  last_updated?: string | null;
-  related_projects?: string[];
-}
-
 export async function GET() {
   try {
-    const [patternResult, categoryResult] = await Promise.all([
-      searchEntities("workflow-pattern", "workflow-pattern", 50) as Promise<{ entities?: RagEntity[] }>,
-      searchEntities("workflow-category", "config", 10) as Promise<{ entities?: RagEntity[] }>,
-    ]);
+    // Build pseudo-templates from briefs data (unique brief name patterns)
+    const { data: briefs, error } = await supabase
+      .from("briefs")
+      .select("id, name, priority, status, summary, triggered_by, created_at")
+      .order("created_at", { ascending: false });
 
-    const patterns = dedupByName(patternResult?.entities ?? []);
-    const categories = dedupByName(categoryResult?.entities ?? []);
+    if (error) throw new Error(error.message);
 
-    // Parse workflow-pattern entities into templates
-    const templates: WorkflowTemplate[] = [];
-    for (const entity of patterns) {
-      let parsed: Record<string, unknown> = {};
-      try {
-        parsed = JSON.parse(entity.description);
-      } catch {
-        // description is not JSON; skip or use raw
-      }
+    const rows = briefs ?? [];
 
-      templates.push({
-        name: (parsed.name as string) ?? entity.name,
-        category: (parsed.category as string) ?? "uncategorized",
-        trigger: (parsed.trigger as string) ?? "",
-        steps: Array.isArray(parsed.steps) ? (parsed.steps as string[]) : [],
-        output: (parsed.output as string) ?? "",
-        roiTier: (parsed.roi_tier as string) ?? undefined,
-        skillGaps: Array.isArray(parsed.skill_gaps) ? (parsed.skill_gaps as string[]) : undefined,
-        description: entity.description,
-      });
-    }
-
-    // Build category list from RAG category entities
-    const categoryMap = new Map<string, TemplateCategory>();
-
-    for (const entity of categories) {
-      let parsed: Record<string, unknown> = {};
-      try {
-        parsed = JSON.parse(entity.description);
-      } catch {
-        // not JSON
-      }
-
-      const name = (parsed.name as string) ?? entity.name;
-      categoryMap.set(name, {
-        name,
-        count: 0,
-        description: (parsed.description as string) ?? undefined,
-      });
-    }
-
-    // Count templates per category, adding missing categories as needed
-    for (const t of templates) {
-      const existing = categoryMap.get(t.category);
-      if (existing) {
-        existing.count += 1;
+    // Group by triggered_by to build categories
+    const categoryMap = new Map<string, { count: number; briefs: string[] }>();
+    for (const row of rows) {
+      const trigger = row.triggered_by ?? "manual";
+      const existing = categoryMap.get(trigger);
+      if (!existing) {
+        categoryMap.set(trigger, { count: 1, briefs: [row.name] });
       } else {
-        categoryMap.set(t.category, { name: t.category, count: 1 });
+        existing.count++;
+        existing.briefs.push(row.name);
       }
     }
+
+    const templates = rows.map((row) => ({
+      name: row.name,
+      category: row.triggered_by ?? "manual",
+      trigger: row.triggered_by ?? "",
+      steps: [],
+      output: row.summary ?? "",
+      roiTier: row.priority ?? undefined,
+      description: row.summary ?? "",
+    }));
+
+    const categories = Array.from(categoryMap.entries()).map(([name, info]) => ({
+      name,
+      count: info.count,
+    }));
 
     return NextResponse.json({
       templates,
-      categories: Array.from(categoryMap.values()),
+      categories,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {
