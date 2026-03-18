@@ -4,17 +4,25 @@ import { dedupByName } from "@/lib/dedup";
 
 export const dynamic = "force-dynamic";
 
-interface GraphNode {
+export interface GraphNode {
   id: string;
   type: "agent" | "skill" | "tool";
   label: string;
   status?: string;
   capabilities?: string[];
   proficiency?: string;
+  classification?: string;
+  description?: string;
+  calls?: string[];
+  called_by?: string[];
+  gaps?: string[];
+  layer?: string;
+  category?: string;
+  connectionCount?: number;
   metadata?: Record<string, unknown>;
 }
 
-interface GraphEdge {
+export interface GraphEdge {
   source: string;
   target: string;
   type: "calls" | "called_by" | "uses_skill" | "depends_on";
@@ -41,6 +49,7 @@ export async function GET() {
 
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
+    const nodeIds = new Set<string>();
 
     // Build agent nodes and edges from calls/called_by
     for (const entity of agents) {
@@ -58,13 +67,25 @@ export async function GET() {
         : undefined;
       const calls = Array.isArray(parsed.calls) ? (parsed.calls as string[]) : [];
       const calledBy = Array.isArray(parsed.called_by) ? (parsed.called_by as string[]) : [];
+      const classification = (parsed.classification as string) ?? undefined;
+      const description = (parsed.description as string) ?? (typeof entity.description === "string" && !parsed.name ? entity.description : undefined);
+      const gaps = Array.isArray(parsed.gaps) ? (parsed.gaps as string[]) : undefined;
+      const layer = (parsed.layer as string) ?? undefined;
 
+      nodeIds.add(entity.name);
       nodes.push({
         id: entity.name,
         type: "agent",
         label: name,
         status,
         capabilities,
+        classification,
+        description,
+        calls,
+        called_by: calledBy,
+        gaps,
+        layer,
+        connectionCount: calls.length + calledBy.length,
         metadata: { lastUpdated: entity.last_updated },
       });
 
@@ -88,12 +109,17 @@ export async function GET() {
       const name = (parsed.name as string) ?? entity.name;
       const proficiency = (parsed.proficiency as string) ?? undefined;
       const apqcCode = (parsed.apqc_code as string) ?? undefined;
+      const category = (parsed.category as string) ?? undefined;
+      const description = (parsed.description as string) ?? undefined;
 
+      nodeIds.add(entity.name);
       nodes.push({
         id: entity.name,
         type: "skill",
         label: name,
         proficiency,
+        category,
+        description,
         metadata: apqcCode ? { apqcCode } : undefined,
       });
     }
@@ -118,6 +144,34 @@ export async function GET() {
           }
         }
       }
+
+      // Also extract nodes from the matrix if they define tool/service nodes
+      if (Array.isArray(parsed.nodes)) {
+        for (const n of parsed.nodes as Array<Record<string, unknown>>) {
+          const nId = String(n.id ?? n.name ?? "");
+          if (nId && !nodeIds.has(nId)) {
+            nodeIds.add(nId);
+            nodes.push({
+              id: nId,
+              type: (n.type as GraphNode["type"]) ?? "tool",
+              label: (n.label as string) ?? (n.name as string) ?? nId,
+              status: (n.status as string) ?? undefined,
+              description: (n.description as string) ?? undefined,
+              metadata: {},
+            });
+          }
+        }
+      }
+    }
+
+    // Update connection counts for all nodes based on final edge list
+    const connCounts = new Map<string, number>();
+    for (const edge of edges) {
+      connCounts.set(edge.source, (connCounts.get(edge.source) ?? 0) + 1);
+      connCounts.set(edge.target, (connCounts.get(edge.target) ?? 0) + 1);
+    }
+    for (const node of nodes) {
+      node.connectionCount = connCounts.get(node.id) ?? 0;
     }
 
     return NextResponse.json({ nodes, edges, fetchedAt: new Date().toISOString() });

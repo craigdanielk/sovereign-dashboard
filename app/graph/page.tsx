@@ -5,6 +5,7 @@ import Link from "next/link";
 import { NavBar } from "../components/NavBar";
 import { GraphVisualization } from "./components/GraphVisualization";
 import { NodeDetailPanel } from "./components/NodeDetailPanel";
+import { GraphSidebar } from "./components/GraphSidebar";
 import type { GraphNode, GraphEdge } from "./components/GraphVisualization";
 
 /* ─── Header ─────────────────────────────────────────── */
@@ -200,6 +201,16 @@ export default function GraphPage() {
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+
+  /* Responsive: hide sidebar on small screens by default */
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    setSidebarVisible(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setSidebarVisible(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
 
   const fetchGraph = useCallback(async () => {
     try {
@@ -245,18 +256,45 @@ export default function GraphPage() {
     setSelectedNode(null);
   }, []);
 
+  /* Navigate to a node by ID (from detail panel clickable dependencies) */
+  const handleNavigateToNode = useCallback(
+    (nodeId: string) => {
+      const target = nodes.find((n) => n.id === nodeId);
+      if (target) {
+        setSelectedNode(target);
+      }
+    },
+    [nodes],
+  );
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarVisible((v) => !v);
+  }, []);
+
   return (
     <div className="relative min-h-screen" style={{ zIndex: 1 }}>
       <Header lastRefresh={lastRefresh} error={error} onRefresh={fetchGraph} />
 
-      {/* Graph fills remaining viewport */}
+      {/* Sidebar */}
+      {!loading && nodes.length > 0 && (
+        <GraphSidebar
+          nodes={nodes}
+          selectedNodeId={selectedNode?.id ?? null}
+          onNodeSelect={handleNodeClick}
+          visible={sidebarVisible}
+          onToggle={toggleSidebar}
+        />
+      )}
+
+      {/* Graph fills remaining viewport, offset by sidebar when visible */}
       <div
         style={{
           position: "fixed",
-          top: 56, /* header height (h-14 = 56px) */
-          left: 0,
+          top: 56,
+          left: sidebarVisible && !loading && nodes.length > 0 ? 280 : 0,
           right: 0,
           bottom: 0,
+          transition: "left 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         {loading ? (
@@ -268,12 +306,18 @@ export default function GraphPage() {
             nodes={nodes}
             edges={edges}
             onNodeClick={handleNodeClick}
+            selectedNodeId={selectedNode?.id ?? null}
           />
         )}
       </div>
 
       {/* Detail panel */}
-      <NodeDetailPanel node={selectedNode} edges={edges} onClose={handleClosePanel} />
+      <NodeDetailPanel
+        node={selectedNode}
+        edges={edges}
+        onClose={handleClosePanel}
+        onNavigateToNode={handleNavigateToNode}
+      />
     </div>
   );
 }

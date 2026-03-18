@@ -12,6 +12,14 @@ export interface GraphNode {
   status?: string;
   capabilities?: string[];
   proficiency?: string;
+  classification?: string;
+  description?: string;
+  calls?: string[];
+  called_by?: string[];
+  gaps?: string[];
+  layer?: string;
+  category?: string;
+  connectionCount?: number;
   metadata?: Record<string, unknown>;
 }
 
@@ -29,6 +37,14 @@ interface SimNode extends d3.SimulationNodeDatum {
   status?: string;
   capabilities?: string[];
   proficiency?: string;
+  classification?: string;
+  description?: string;
+  calls?: string[];
+  called_by?: string[];
+  gaps?: string[];
+  layer?: string;
+  category?: string;
+  connectionCount?: number;
   metadata?: Record<string, unknown>;
 }
 
@@ -38,41 +54,40 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 
 /* ─── Helpers ────────────────────────────────────────── */
 
-function nodeRadius(type: string): number {
-  if (type === "agent") return 24;
-  if (type === "skill") return 16;
-  return 12;
+function nodeRadius(node: SimNode): number {
+  const count = node.connectionCount ?? 0;
+  // Scale radius between 12 and 32 based on connection count
+  const minR = 12;
+  const maxR = 32;
+  return Math.min(maxR, Math.max(minR, minR + count * 2.5));
 }
 
 function nodeColor(node: SimNode): string {
-  if (node.type === "skill") return "var(--purple, #a78bfa)";
-  if (node.type === "tool") return "var(--yellow, #facc15)";
-  // agent — color by status
-  switch (node.status) {
-    case "operational":
-      return "var(--green, #30d158)";
-    case "beta":
-      return "var(--blue, #0a84ff)";
-    case "pending":
-      return "var(--orange, #ff9f0a)";
-    case "offline":
-      return "var(--text-4, rgba(245,245,247,0.18))";
-    default:
-      return "var(--text-3, rgba(245,245,247,0.38))";
+  if (node.type === "skill") return "#a78bfa"; // purple
+  if (node.type === "tool") return "#6b7280"; // gray
+
+  // Agent coloring by classification
+  if (node.classification === "orchestrator" || (node.connectionCount ?? 0) >= 6) {
+    return "#22c55e"; // green for orchestrators
   }
+  if (node.classification === "checker") {
+    return "#3b82f6"; // blue for checkers
+  }
+  return "#14b8a6"; // teal for other agents
 }
 
-function edgeStyle(type: string): { dasharray: string; opacity: number } {
+function edgeDasharray(type: string): string {
   switch (type) {
     case "calls":
-      return { dasharray: "", opacity: 0.4 };
-    case "called_by":
-      return { dasharray: "6 3", opacity: 0.3 };
-    case "uses_skill":
+      return ""; // solid
     case "depends_on":
-      return { dasharray: "2 3", opacity: 0.2 };
+      return "6 3"; // dashed
+    case "called_by":
+      return "2 3"; // dotted
+    case "uses_skill":
+      return "4 2"; // short dash
     default:
-      return { dasharray: "", opacity: 0.2 };
+      return "";
   }
 }
 
@@ -82,9 +97,10 @@ interface Props {
   nodes: GraphNode[];
   edges: GraphEdge[];
   onNodeClick: (node: GraphNode) => void;
+  selectedNodeId?: string | null;
 }
 
-export function GraphVisualization({ nodes, edges, onNodeClick }: Props) {
+export function GraphVisualization({ nodes, edges, onNodeClick, selectedNodeId }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
 
@@ -114,6 +130,34 @@ export function GraphVisualization({ nodes, edges, onNodeClick }: Props) {
 
     /* Root <g> for zoom/pan */
     const root = d3.select(svg);
+
+    /* Defs for arrowhead markers */
+    const defs = root.append("defs");
+
+    // Create arrowhead markers for each edge type
+    const markerTypes = [
+      { id: "arrow-calls", color: "rgba(255,255,255,0.25)" },
+      { id: "arrow-called_by", color: "rgba(255,255,255,0.25)" },
+      { id: "arrow-depends_on", color: "rgba(255,255,255,0.25)" },
+      { id: "arrow-uses_skill", color: "rgba(255,255,255,0.25)" },
+      { id: "arrow-highlight", color: "rgba(255,255,255,0.6)" },
+    ];
+
+    for (const mt of markerTypes) {
+      defs
+        .append("marker")
+        .attr("id", mt.id)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 10)
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr("fill", mt.color);
+    }
+
     const g = root.append("g");
 
     /* Zoom behaviour */
@@ -126,24 +170,23 @@ export function GraphVisualization({ nodes, edges, onNodeClick }: Props) {
 
     root.call(zoom);
 
-    /* Edges */
+    /* Edges — rendered BEFORE nodes so nodes appear on top */
     const link = g
       .append("g")
+      .attr("class", "edges")
       .selectAll<SVGLineElement, SimLink>("line")
       .data(simLinks)
       .join("line")
-      .attr("stroke", "var(--text-4, rgba(245,245,247,0.18))")
+      .attr("stroke", "rgba(255,255,255,0.25)")
       .attr("stroke-width", 1)
-      .each(function (d) {
-        const s = edgeStyle(d.type);
-        d3.select(this)
-          .attr("stroke-opacity", s.opacity)
-          .attr("stroke-dasharray", s.dasharray);
-      });
+      .attr("stroke-opacity", 0.4)
+      .attr("stroke-dasharray", (d) => edgeDasharray(d.type))
+      .attr("marker-end", (d) => `url(#arrow-${d.type})`);
 
-    /* Node groups */
+    /* Node groups — rendered AFTER edges */
     const node = g
       .append("g")
+      .attr("class", "nodes")
       .selectAll<SVGGElement, SimNode>("g")
       .data(simNodes)
       .join("g")
@@ -156,29 +199,95 @@ export function GraphVisualization({ nodes, edges, onNodeClick }: Props) {
           status: d.status,
           capabilities: d.capabilities,
           proficiency: d.proficiency,
+          classification: d.classification,
+          description: d.description,
+          calls: d.calls,
+          called_by: d.called_by,
+          gaps: d.gaps,
+          layer: d.layer,
+          category: d.category,
+          connectionCount: d.connectionCount,
           metadata: d.metadata,
         });
+      })
+      .on("mouseenter", (_event, d) => {
+        // Highlight connected edges
+        link
+          .attr("stroke-opacity", (l) => {
+            const src = (l.source as SimNode).id ?? l.source;
+            const tgt = (l.target as SimNode).id ?? l.target;
+            return src === d.id || tgt === d.id ? 0.8 : 0.15;
+          })
+          .attr("stroke-width", (l) => {
+            const src = (l.source as SimNode).id ?? l.source;
+            const tgt = (l.target as SimNode).id ?? l.target;
+            return src === d.id || tgt === d.id ? 2 : 1;
+          })
+          .attr("marker-end", (l) => {
+            const src = (l.source as SimNode).id ?? l.source;
+            const tgt = (l.target as SimNode).id ?? l.target;
+            return src === d.id || tgt === d.id
+              ? "url(#arrow-highlight)"
+              : `url(#arrow-${l.type})`;
+          });
+      })
+      .on("mouseleave", () => {
+        link
+          .attr("stroke-opacity", 0.4)
+          .attr("stroke-width", 1)
+          .attr("marker-end", (l) => `url(#arrow-${l.type})`);
       });
+
+    /* Glow ring for selected node */
+    node
+      .append("circle")
+      .attr("r", (d) => nodeRadius(d) + 6)
+      .attr("fill", "none")
+      .attr("stroke", (d) => nodeColor(d))
+      .attr("stroke-width", 2)
+      .attr("stroke-opacity", (d) => (d.id === selectedNodeId ? 0.5 : 0))
+      .attr("class", "selection-ring");
 
     /* Circle */
     node
       .append("circle")
-      .attr("r", (d) => nodeRadius(d.type))
+      .attr("r", (d) => nodeRadius(d))
       .attr("fill", (d) => nodeColor(d))
       .attr("fill-opacity", 0.18)
       .attr("stroke", (d) => nodeColor(d))
       .attr("stroke-width", 1.5)
       .attr("stroke-opacity", 0.6);
 
+    /* Inner dot for status */
+    node
+      .append("circle")
+      .attr("r", 3)
+      .attr("fill", (d) => {
+        if (!d.status) return "transparent";
+        switch (d.status) {
+          case "operational":
+            return "#30d158";
+          case "beta":
+            return "#0a84ff";
+          case "pending":
+            return "#ff9f0a";
+          case "offline":
+            return "#ff453a";
+          default:
+            return "rgba(255,255,255,0.3)";
+        }
+      })
+      .attr("fill-opacity", (d) => (d.status ? 1 : 0));
+
     /* Label */
     node
       .append("text")
       .text((d) => d.label)
       .attr("text-anchor", "middle")
-      .attr("dy", (d) => nodeRadius(d.type) + 14)
-      .attr("fill", "var(--text-3, rgba(245,245,247,0.38))")
+      .attr("dy", (d) => nodeRadius(d) + 14)
+      .attr("fill", "rgba(245,245,247,0.38)")
       .attr("font-size", (d) => (d.type === "agent" ? 11 : 9))
-      .attr("font-family", "var(--font-mono)")
+      .attr("font-family", "'JetBrains Mono', ui-monospace, monospace")
       .attr("pointer-events", "none");
 
     /* Drag behaviour */
@@ -209,29 +318,50 @@ export function GraphVisualization({ nodes, edges, onNodeClick }: Props) {
         d3
           .forceLink<SimNode, SimLink>(simLinks)
           .id((d) => d.id)
-          .distance(100),
+          .distance(120),
       )
       .force(
         "charge",
-        d3.forceManyBody<SimNode>().strength((d) => (d.type === "agent" ? -300 : -150)),
+        d3.forceManyBody<SimNode>().strength((d) => {
+          if (d.type === "agent" && (d.classification === "orchestrator" || (d.connectionCount ?? 0) >= 6)) {
+            return -400;
+          }
+          return d.type === "agent" ? -250 : -120;
+        }),
       )
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force(
         "collide",
-        d3.forceCollide<SimNode>().radius((d) => nodeRadius(d.type) + 8),
+        d3.forceCollide<SimNode>().radius((d) => nodeRadius(d) + 10),
       )
       .on("tick", () => {
         link
           .attr("x1", (d) => (d.source as SimNode).x ?? 0)
           .attr("y1", (d) => (d.source as SimNode).y ?? 0)
-          .attr("x2", (d) => (d.target as SimNode).x ?? 0)
-          .attr("y2", (d) => (d.target as SimNode).y ?? 0);
+          .attr("x2", (d) => {
+            const src = d.source as SimNode;
+            const tgt = d.target as SimNode;
+            const dx = (tgt.x ?? 0) - (src.x ?? 0);
+            const dy = (tgt.y ?? 0) - (src.y ?? 0);
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const r = nodeRadius(tgt);
+            return (tgt.x ?? 0) - (dx / dist) * r;
+          })
+          .attr("y2", (d) => {
+            const src = d.source as SimNode;
+            const tgt = d.target as SimNode;
+            const dx = (tgt.x ?? 0) - (src.x ?? 0);
+            const dy = (tgt.y ?? 0) - (src.y ?? 0);
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const r = nodeRadius(tgt);
+            return (tgt.y ?? 0) - (dy / dist) * r;
+          });
 
         node.attr("transform", (d) => `translate(${d.x ?? 0},${d.y ?? 0})`);
       });
 
     simulationRef.current = simulation;
-  }, [nodes, edges, onNodeClick]);
+  }, [nodes, edges, onNodeClick, selectedNodeId]);
 
   /* Initial build + resize handler */
   useEffect(() => {
