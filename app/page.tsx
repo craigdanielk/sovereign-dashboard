@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { ExpandableText } from "./components/ExpandableText";
 import { NavBar } from "./components/NavBar";
+import { StaleBanner } from "./components/StaleBanner";
+import { staleFetch } from "./hooks/useStaleFetch";
 
 /* ─── Types ──────────────────────────────────────────── */
 
@@ -778,27 +780,37 @@ export default function Dashboard() {
   const [recon, setRecon] = useState<ReconData | null>(null);
   const [lastRefresh, setLastRefresh] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [staleAt, setStaleAt] = useState<string | null>(null);
+  const retryRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchAll = useCallback(async () => {
     try {
       setError(null);
       const [armyRes, sysRes, pipeRes, reconRes] = await Promise.all([
-        fetch("/api/army"),
-        fetch("/api/system"),
-        fetch("/api/pipeline"),
-        fetch("/api/recon"),
+        staleFetch<{ agents: Agent[]; error?: string }>("/api/army"),
+        staleFetch<SystemData & { error?: string }>("/api/system"),
+        staleFetch<PipelineData & { error?: string }>("/api/pipeline"),
+        staleFetch<ReconData & { error?: string }>("/api/recon"),
       ]);
 
-      const armyData = await armyRes.json();
-      const sysData = await sysRes.json();
-      const pipeData = await pipeRes.json();
-      const reconData = await reconRes.json();
-
-      setAgents(armyData.agents ?? []);
-      setSystem(sysData.error ? null : sysData);
-      setPipeline(pipeData.error ? null : pipeData);
-      setRecon(reconData.error ? null : reconData);
+      setAgents(armyRes.data.agents ?? []);
+      setSystem(sysRes.data.error ? null : sysRes.data);
+      setPipeline(pipeRes.data.error ? null : pipeRes.data);
+      setRecon(reconRes.data.error ? null : reconRes.data);
       setLastRefresh(new Date().toLocaleTimeString());
+
+      // Check if any response is stale
+      const anyStale = armyRes.stale || sysRes.stale || pipeRes.stale || reconRes.stale;
+      const staleCachedAt = armyRes.cachedAt || sysRes.cachedAt || pipeRes.cachedAt || reconRes.cachedAt;
+      setStaleAt(anyStale ? staleCachedAt : null);
+
+      // If stale, start 30s retry interval; if fresh, clear it
+      if (anyStale && !retryRef.current) {
+        retryRef.current = setInterval(() => { fetchAll(); }, 30_000);
+      } else if (!anyStale && retryRef.current) {
+        clearInterval(retryRef.current);
+        retryRef.current = null;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fetch failed");
     }
@@ -811,7 +823,11 @@ export default function Dashboard() {
     };
     run();
     const interval = setInterval(run, 60_000);
-    return () => { cancelled = true; clearInterval(interval); };
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      if (retryRef.current) { clearInterval(retryRef.current); retryRef.current = null; }
+    };
   }, [fetchAll]);
 
   return (
@@ -823,6 +839,7 @@ export default function Dashboard() {
         error={error}
         onRefresh={fetchAll}
       />
+      {staleAt && <StaleBanner cachedAt={staleAt} />}
 
       <main className="max-w-[1440px] mx-auto px-6 lg:px-10 py-8 space-y-6">
         {/* Metrics Overview */}

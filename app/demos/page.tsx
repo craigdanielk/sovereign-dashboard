@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { ExpandableText } from "../components/ExpandableText";
 import { NavBar } from "../components/NavBar";
+import { StaleBanner } from "../components/StaleBanner";
+import { staleFetch } from "../hooks/useStaleFetch";
 
 interface Demo {
   id: number;
@@ -304,17 +306,26 @@ export default function DemosPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [staleAt, setStaleAt] = useState<string | null>(null);
+  const retryRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchDemos = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch("/api/demos");
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setDemos(data.demos ?? []);
+      const result = await staleFetch<{ demos: Demo[]; gateStatus: GateStatus; error?: string }>("/api/demos");
+      if (result.data.error) throw new Error(result.data.error);
+      setDemos(result.data.demos ?? []);
       setGateStatus(
-        data.gateStatus ?? { current: 0, required: 5, approved: false },
+        result.data.gateStatus ?? { current: 0, required: 5, approved: false },
       );
+      setStaleAt(result.stale ? result.cachedAt : null);
+
+      if (result.stale && !retryRef.current) {
+        retryRef.current = setInterval(() => { fetchDemos(); }, 30_000);
+      } else if (!result.stale && retryRef.current) {
+        clearInterval(retryRef.current);
+        retryRef.current = null;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch demos");
     } finally {
@@ -324,6 +335,7 @@ export default function DemosPage() {
 
   useEffect(() => {
     fetchDemos();
+    return () => { if (retryRef.current) { clearInterval(retryRef.current); retryRef.current = null; } };
   }, [fetchDemos]);
 
   const handleApprove = async () => {
@@ -418,6 +430,8 @@ export default function DemosPage() {
           </button>
         </div>
       </header>
+
+      {staleAt && <StaleBanner cachedAt={staleAt} />}
 
       <main className="max-w-[1440px] mx-auto px-6 lg:px-10 py-8 space-y-6">
         {/* Title */}

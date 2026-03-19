@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { ExpandableText } from "../components/ExpandableText";
 import { NavBar } from "../components/NavBar";
+import { StaleBanner } from "../components/StaleBanner";
+import { staleFetch } from "../hooks/useStaleFetch";
 
 /* ── Interfaces ──────────────────────────────────── */
 
@@ -309,14 +311,23 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [staleAt, setStaleAt] = useState<string | null>(null);
+  const retryRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchTemplates = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch("/api/templates");
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setTemplates(data.templates ?? []);
+      const result = await staleFetch<{ templates: WorkflowTemplate[]; error?: string }>("/api/templates");
+      if (result.data.error) throw new Error(result.data.error);
+      setTemplates(result.data.templates ?? []);
+      setStaleAt(result.stale ? result.cachedAt : null);
+
+      if (result.stale && !retryRef.current) {
+        retryRef.current = setInterval(() => { fetchTemplates(); }, 30_000);
+      } else if (!result.stale && retryRef.current) {
+        clearInterval(retryRef.current);
+        retryRef.current = null;
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch templates",
@@ -328,6 +339,7 @@ export default function TemplatesPage() {
 
   useEffect(() => {
     fetchTemplates();
+    return () => { if (retryRef.current) { clearInterval(retryRef.current); retryRef.current = null; } };
   }, [fetchTemplates]);
 
   // Auto-refresh every 120 seconds
@@ -420,6 +432,8 @@ export default function TemplatesPage() {
           </div>
         </div>
       </header>
+
+      {staleAt && <StaleBanner cachedAt={staleAt} />}
 
       <main className="max-w-[1440px] mx-auto px-6 lg:px-10 py-8 space-y-6">
         {/* Title */}

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { NavBar } from "../components/NavBar";
+import { StaleBanner } from "../components/StaleBanner";
+import { staleFetch } from "../hooks/useStaleFetch";
 import { GraphVisualization } from "./components/GraphVisualization";
 import { NodeDetailPanel } from "./components/NodeDetailPanel";
 import { GraphSidebar } from "./components/GraphSidebar";
@@ -201,6 +203,8 @@ export default function GraphPage() {
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [staleAt, setStaleAt] = useState<string | null>(null);
+  const retryRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [sidebarVisible, setSidebarVisible] = useState(true);
 
   /* Responsive: hide sidebar on small screens by default */
@@ -215,19 +219,26 @@ export default function GraphPage() {
   const fetchGraph = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch("/api/graph");
-      const data = await res.json();
+      const result = await staleFetch<{ nodes: GraphNode[]; edges: GraphEdge[]; error?: string }>("/api/graph");
 
-      if (data.error) {
-        setError(data.error);
+      if (result.data.error) {
+        setError(result.data.error);
         setNodes([]);
         setEdges([]);
       } else {
-        setNodes(data.nodes ?? []);
-        setEdges(data.edges ?? []);
+        setNodes(result.data.nodes ?? []);
+        setEdges(result.data.edges ?? []);
       }
 
       setLastRefresh(new Date().toLocaleTimeString());
+      setStaleAt(result.stale ? result.cachedAt : null);
+
+      if (result.stale && !retryRef.current) {
+        retryRef.current = setInterval(() => { fetchGraph(); }, 30_000);
+      } else if (!result.stale && retryRef.current) {
+        clearInterval(retryRef.current);
+        retryRef.current = null;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fetch failed");
     } finally {
@@ -245,6 +256,7 @@ export default function GraphPage() {
     return () => {
       cancelled = true;
       clearInterval(interval);
+      if (retryRef.current) { clearInterval(retryRef.current); retryRef.current = null; }
     };
   }, [fetchGraph]);
 
@@ -274,6 +286,7 @@ export default function GraphPage() {
   return (
     <div className="relative min-h-screen" style={{ zIndex: 1 }}>
       <Header lastRefresh={lastRefresh} error={error} onRefresh={fetchGraph} />
+      {staleAt && <StaleBanner cachedAt={staleAt} />}
 
       {/* Sidebar */}
       {!loading && nodes.length > 0 && (

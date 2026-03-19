@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { ExpandableText } from "../components/ExpandableText";
 import { NavBar } from "../components/NavBar";
+import { StaleBanner } from "../components/StaleBanner";
+import { staleFetch } from "../hooks/useStaleFetch";
 
 interface Job {
   name: string;
@@ -121,14 +123,23 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [staleAt, setStaleAt] = useState<string | null>(null);
+  const retryRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchJobs = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch("/api/jobs");
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setJobs(data.jobs ?? []);
+      const result = await staleFetch<{ jobs: Job[]; error?: string }>("/api/jobs");
+      if (result.data.error) throw new Error(result.data.error);
+      setJobs(result.data.jobs ?? []);
+      setStaleAt(result.stale ? result.cachedAt : null);
+
+      if (result.stale && !retryRef.current) {
+        retryRef.current = setInterval(() => { fetchJobs(); }, 30_000);
+      } else if (!result.stale && retryRef.current) {
+        clearInterval(retryRef.current);
+        retryRef.current = null;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch jobs");
     } finally {
@@ -138,6 +149,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     fetchJobs();
+    return () => { if (retryRef.current) { clearInterval(retryRef.current); retryRef.current = null; } };
   }, [fetchJobs]);
 
   return (
@@ -197,6 +209,8 @@ export default function JobsPage() {
           </button>
         </div>
       </header>
+
+      {staleAt && <StaleBanner cachedAt={staleAt} />}
 
       <main className="max-w-[1440px] mx-auto px-6 lg:px-10 py-8 space-y-6">
         {/* Title */}
