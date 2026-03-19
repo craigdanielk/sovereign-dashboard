@@ -158,40 +158,66 @@ function OutreachGate({
 
 /* ── Demo Card ────────────────────────────────────── */
 
-function DemoCard({ demo, onReview }: { demo: Demo; onReview: (id: number) => void }) {
+function DemoCard({
+  demo,
+  onReview,
+  onPromote,
+  onReject,
+}: {
+  demo: Demo;
+  onReview: (id: number) => void;
+  onPromote: (id: number) => void;
+  onReject: (id: number) => void;
+}) {
+  const isStaging = demo.status?.toLowerCase() === "staging";
+
+  const statusStyle: Record<string, { bg: string; color: string }> = {
+    staging: { bg: "var(--orange-dim)", color: "var(--orange)" },
+    deployed: { bg: "var(--green-dim)", color: "var(--green)" },
+    rejected: { bg: "var(--red-dim)", color: "var(--red)" },
+  };
+  const ss = statusStyle[demo.status?.toLowerCase() ?? ""] ?? {
+    bg: "rgba(255,255,255,0.04)",
+    color: "var(--text-3)",
+  };
+
   return (
-    <div className="glass-inner p-5 space-y-3">
+    <div
+      className="glass-inner p-5 space-y-3"
+      style={isStaging ? { borderColor: "rgba(255,159,10,0.15)" } : undefined}
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <div
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{
-              background: demo.verifiedByHuman ? "var(--green)" : "var(--orange)",
+              background: demo.verifiedByHuman
+                ? "var(--green)"
+                : isStaging
+                  ? "var(--orange)"
+                  : "var(--text-4)",
               boxShadow: demo.verifiedByHuman
                 ? "0 0 8px rgba(48,209,88,0.4)"
-                : "0 0 8px rgba(255,159,10,0.4)",
+                : isStaging
+                  ? "0 0 8px rgba(255,159,10,0.4)"
+                  : "none",
             }}
           />
           <h3
             className="text-[13px] font-semibold tracking-wide truncate"
-            style={{
-              color: "var(--text-1)",
-              fontFamily: "var(--font-display)",
-            }}
+            style={{ color: "var(--text-1)", fontFamily: "var(--font-display)" }}
           >
             {demo.name
               .replace(/^delivery::/, "")
+              .replace(/^staging::/, "")
               .replace(/-/g, " ")
               .replace(/\b\w/g, (c) => c.toUpperCase())}
           </h3>
         </div>
         <span
           className="text-[10px] font-medium flex-shrink-0"
-          style={{
-            color: "var(--text-4)",
-            fontFamily: "var(--font-mono)",
-          }}
+          style={{ color: "var(--text-4)", fontFamily: "var(--font-mono)" }}
         >
           {timeAgo(demo.lastUpdated)}
         </span>
@@ -213,40 +239,27 @@ function DemoCard({ demo, onReview }: { demo: Demo; onReview: (id: number) => vo
         )}
         {demo.status && (
           <span
-            className="text-[10px] font-medium px-2 py-[3px] rounded-full"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              color: "var(--text-3)",
-              fontFamily: "var(--font-mono)",
-            }}
+            className="text-[10px] font-semibold px-2 py-[3px] rounded-full"
+            style={{ background: ss.bg, color: ss.color, fontFamily: "var(--font-mono)" }}
           >
-            {demo.status}
+            {demo.status.toUpperCase()}
           </span>
         )}
       </div>
 
-      {/* URL */}
+      {/* URL — preview link for staging, live link for deployed */}
       {demo.url && (
         <a
           href={demo.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-[11px] font-medium transition-colors"
-          style={{
-            color: "var(--blue)",
-            fontFamily: "var(--font-mono)",
-          }}
+          className="flex items-center gap-2 text-[11px] font-medium"
+          style={{ color: "var(--blue)", fontFamily: "var(--font-mono)" }}
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            style={{ opacity: 0.7 }}
-          >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style={{ opacity: 0.7 }}>
             <path d="M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9.5a2 2 0 0 1-1.88 1.5H4a1.5 1.5 0 1 1 0-3h2.354M9.646 10.5H12a3 3 0 0 0 0-6H9a3 3 0 0 0-2.83 4h.34A2 2 0 0 1 8.5 7H12a1.5 1.5 0 0 1 0 3H9.646z" />
           </svg>
-          {demo.url.replace(/^https?:\/\//, "")}
+          {isStaging ? "Preview → " : ""}{demo.url.replace(/^https?:\/\//, "")}
         </a>
       )}
 
@@ -268,8 +281,38 @@ function DemoCard({ demo, onReview }: { demo: Demo; onReview: (id: number) => vo
         </div>
       )}
 
-      {/* Human Review Button */}
-      {!demo.verifiedByHuman && (
+      {/* Staging: Approve / Reject for production deploy */}
+      {isStaging && !demo.verifiedByHuman && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => onPromote(demo.id)}
+            className="flex-1 py-2 rounded-lg text-[11px] font-semibold tracking-wide transition-all duration-200 cursor-pointer"
+            style={{
+              fontFamily: "var(--font-mono)",
+              background: "var(--green-dim)",
+              color: "var(--green)",
+              border: "1px solid rgba(48,209,88,0.2)",
+            }}
+          >
+            APPROVE → PRODUCTION
+          </button>
+          <button
+            onClick={() => onReject(demo.id)}
+            className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-wide transition-all duration-200 cursor-pointer"
+            style={{
+              fontFamily: "var(--font-mono)",
+              background: "var(--red-dim)",
+              color: "var(--red)",
+              border: "1px solid rgba(255,69,58,0.2)",
+            }}
+          >
+            REJECT
+          </button>
+        </div>
+      )}
+
+      {/* Non-staging unverified: mark as reviewed */}
+      {!isStaging && !demo.verifiedByHuman && demo.status !== "rejected" && (
         <button
           onClick={() => onReview(demo.id)}
           className="w-full py-2 rounded-lg text-[11px] font-semibold tracking-wide transition-all duration-200 cursor-pointer"
@@ -283,12 +326,24 @@ function DemoCard({ demo, onReview }: { demo: Demo; onReview: (id: number) => vo
           MARK AS REVIEWED
         </button>
       )}
+
+      {/* Verified / deployed state */}
       {demo.verifiedByHuman && (
         <div
           className="text-[10px] font-medium text-center py-1.5"
           style={{ color: "var(--green)", fontFamily: "var(--font-mono)" }}
         >
-          Verified by human
+          ✓ Verified — deployed to production
+        </div>
+      )}
+
+      {/* Rejected state */}
+      {demo.status?.toLowerCase() === "rejected" && (
+        <div
+          className="text-[10px] font-medium text-center py-1.5"
+          style={{ color: "var(--red)", fontFamily: "var(--font-mono)" }}
+        >
+          ✕ Rejected
         </div>
       )}
     </div>
@@ -352,13 +407,11 @@ export default function DemosPage() {
       });
       const data = await res.json();
       if (data.ok) {
-        // Update local state
         setDemos((prev) =>
           prev.map((d) =>
             d.id === demoId ? { ...d, verifiedByHuman: true } : d,
           ),
         );
-        // Recalculate gate
         const newVerified = demos.filter(
           (d) => d.verifiedByHuman || d.id === demoId,
         ).length;
@@ -367,6 +420,56 @@ export default function DemosPage() {
           current: newVerified,
           approved: newVerified >= prev.required,
         }));
+      }
+    } catch {
+      // silent fail — user can retry
+    }
+  };
+
+  const handlePromote = async (demoId: number) => {
+    try {
+      const res = await fetch("/api/promote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: demoId, action: "approve" }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setDemos((prev) =>
+          prev.map((d) =>
+            d.id === demoId
+              ? { ...d, status: "deployed", verifiedByHuman: true }
+              : d,
+          ),
+        );
+        const newVerified = demos.filter(
+          (d) => d.verifiedByHuman || d.id === demoId,
+        ).length;
+        setGateStatus((prev) => ({
+          ...prev,
+          current: newVerified,
+          approved: newVerified >= prev.required,
+        }));
+      }
+    } catch {
+      // silent fail — user can retry
+    }
+  };
+
+  const handleReject = async (demoId: number) => {
+    try {
+      const res = await fetch("/api/promote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: demoId, action: "reject" }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setDemos((prev) =>
+          prev.map((d) =>
+            d.id === demoId ? { ...d, status: "rejected" } : d,
+          ),
+        );
       }
     } catch {
       // silent fail — user can retry
@@ -494,7 +597,12 @@ export default function DemosPage() {
                 key={demo.id ?? demo.name}
                 className={`glass p-5 animate-fade-up delay-${Math.min(i + 1, 8)}`}
               >
-                <DemoCard demo={demo} onReview={handleReview} />
+                <DemoCard
+                  demo={demo}
+                  onReview={handleReview}
+                  onPromote={handlePromote}
+                  onReject={handleReject}
+                />
               </div>
             ))}
           </div>
