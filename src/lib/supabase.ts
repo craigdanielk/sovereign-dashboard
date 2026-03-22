@@ -17,7 +17,7 @@ function getSupabase(): SupabaseClient {
 // Proxy that lazily initializes — avoids crash during Next.js static build
 export const supabase = new Proxy({} as SupabaseClient, {
   get(_target, prop) {
-    return (getSupabase() as Record<string | symbol, unknown>)[prop];
+    return (getSupabase() as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
 
