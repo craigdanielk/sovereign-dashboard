@@ -90,6 +90,37 @@ function extractContent(result: Record<string, unknown> | null): unknown[] {
   return [];
 }
 
+interface ExecutionLogEntry {
+  operation: string;
+  tool_or_service: string | null;
+  created_at: string;
+}
+
+async function fetchExecutionLog(agentName: string): Promise<ExecutionLogEntry[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/execution_log?agent=eq.${encodeURIComponent(agentName)}&order=created_at.desc&limit=5&select=operation,tool_or_service,created_at`,
+      {
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
@@ -101,9 +132,10 @@ export async function GET(
   }
 
   try {
-    const [entityResult, traverseResult] = await Promise.all([
+    const [entityResult, traverseResult, executionLog] = await Promise.all([
       ragCall("memory_search_entities", { query: name, top_k: 5 }, 1),
       ragCall("rag_traverse", { start_node: name, max_depth: 1 }, 2),
+      fetchExecutionLog(name),
     ]);
 
     const entities = extractContent(entityResult) as Array<Record<string, unknown>>;
@@ -137,11 +169,12 @@ export async function GET(
         status: (entity.status as string) || "operational",
       },
       relationships,
+      execution_log: executionLog,
     }, {
       headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (err) {
     console.error("Graph detail error:", err);
-    return NextResponse.json({ entity: null, relationships: [], error: String(err) }, { status: 500 });
+    return NextResponse.json({ entity: null, relationships: [], execution_log: [], error: String(err) }, { status: 500 });
   }
 }

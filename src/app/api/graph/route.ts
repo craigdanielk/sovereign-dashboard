@@ -7,6 +7,7 @@ interface RagEntity {
   entity_type?: string;
   description?: string;
   status?: string;
+  last_updated?: string;
   [key: string]: unknown;
 }
 
@@ -24,6 +25,7 @@ interface GraphNode {
   entity_type: string;
   description: string;
   status: string;
+  last_updated: string | null;
   related_projects?: string[];
 }
 
@@ -134,6 +136,25 @@ function isBlocked(name: string): boolean {
   return Array.from(R17_BLOCKED).some((b) => lower.includes(b));
 }
 
+// Normalize entity names: strip "agent::", "service::", etc. prefixes to canonical short names
+function canonicalName(raw: string): string {
+  // Remove known prefixes
+  const prefixes = ["agent::", "service::", "tool::", "workflow::", "gap::"];
+  let name = raw;
+  for (const prefix of prefixes) {
+    if (name.toLowerCase().startsWith(prefix)) {
+      name = name.slice(prefix.length);
+      break;
+    }
+  }
+  return name;
+}
+
+// Check if a name is a node-card config entity (should be excluded)
+function isNodeCard(name: string): boolean {
+  return name.toLowerCase().startsWith("node-card::");
+}
+
 export async function GET() {
   try {
     // Step A, B, C: fetch agents, services, and workflows in parallel
@@ -147,92 +168,107 @@ export async function GET() {
     const serviceEntities = extractContent(servicesResult) as RagEntity[];
     const workflowEntities = extractContent(workflowsResult) as RagEntity[];
 
-    // Step C & D: traverse for edges
+    // Step C & D: traverse for edges from multiple roots
     const [sovereignTraverse, ragTraverse, supaTraverse] = await Promise.all([
-      ragCall("rag_traverse", { start_node: "agent::SOVEREIGN", max_depth: 2 }, 3),
-      ragCall("rag_traverse", { start_node: "RAG-System", max_depth: 2 }, 4),
-      ragCall("rag_traverse", { start_node: "Supabase", max_depth: 2 }, 5),
+      ragCall("rag_traverse", { entity_name: "agent::SOVEREIGN", max_depth: 2 }, 3),
+      ragCall("rag_traverse", { entity_name: "RAG-System", max_depth: 1 }, 4),
+      ragCall("rag_traverse", { entity_name: "Supabase", max_depth: 1 }, 5),
     ]);
 
-    // Build node map
+    // Also try with start_node param (RAG MCP may use either field name)
+    const [sovTraverse2, ragTraverse2, supaTraverse2] = await Promise.all([
+      ragCall("rag_traverse", { start_node: "agent::SOVEREIGN", max_depth: 2 }, 7),
+      ragCall("rag_traverse", { start_node: "RAG-System", max_depth: 1 }, 8),
+      ragCall("rag_traverse", { start_node: "Supabase", max_depth: 1 }, 9),
+    ]);
+
+    // Build node map with deduplication
     const nodeMap = new Map<string, GraphNode>();
 
-    for (const e of agentEntities) {
-      const name = e.name || "";
-      if (!name || isBlocked(name)) continue;
-      nodeMap.set(name, {
-        id: name,
-        name,
-        entity_type: "agent",
-        description: (e.description as string) || "",
-        status: (e.status as string) || "operational",
-        related_projects: Array.isArray(e.related_projects) ? (e.related_projects as string[]) : [],
-      });
-    }
+    function upsertNode(raw: string, entityType: string, desc: string, status: string, lastUpdated: string | null, relatedProjects?: string[]) {
+      if (isNodeCard(raw)) return;
+      const name = canonicalName(raw);
+      if (!name || isBlocked(name)) return;
 
-    for (const e of serviceEntities) {
-      const name = e.name || "";
-      if (!name || isBlocked(name)) continue;
-      nodeMap.set(name, {
-        id: name,
-        name,
-        entity_type: "service",
-        description: (e.description as string) || "",
-        status: (e.status as string) || "operational",
-        related_projects: Array.isArray(e.related_projects) ? (e.related_projects as string[]) : [],
-      });
-    }
-
-    for (const e of workflowEntities) {
-      const name = e.name || "";
-      if (!name || isBlocked(name)) continue;
-      if (!nodeMap.has(name)) {
+      const existing = nodeMap.get(name);
+      if (existing) {
+        // Merge: prefer longer description, keep first non-default status
+        if (desc && desc.length > (existing.description || "").length) {
+          existing.description = desc;
+        }
+        if (status && status !== "operational" && existing.status === "operational") {
+          existing.status = status;
+        }
+        if (entityType !== "unknown" && existing.entity_type === "unknown") {
+          existing.entity_type = entityType;
+        }
+        if (lastUpdated && (!existing.last_updated || lastUpdated > existing.last_updated)) {
+          existing.last_updated = lastUpdated;
+        }
+        if (relatedProjects && relatedProjects.length > 0) {
+          const merged = new Set([...(existing.related_projects || []), ...relatedProjects]);
+          existing.related_projects = Array.from(merged);
+        }
+      } else {
         nodeMap.set(name, {
           id: name,
           name,
-          entity_type: "workflow",
-          description: (e.description as string) || "",
-          status: (e.status as string) || "operational",
-          related_projects: Array.isArray(e.related_projects) ? (e.related_projects as string[]) : [],
+          entity_type: entityType,
+          description: desc,
+          status: status || "operational",
+          last_updated: lastUpdated || null,
+          related_projects: relatedProjects || [],
         });
       }
     }
 
-    // Build edge set
+    for (const e of agentEntities) {
+      const name = e.name || "";
+      if (!name) continue;
+      upsertNode(name, "agent", (e.description as string) || "", (e.status as string) || "operational", (e.last_updated as string) || null, Array.isArray(e.related_projects) ? (e.related_projects as string[]) : []);
+    }
+
+    for (const e of serviceEntities) {
+      const name = e.name || "";
+      if (!name) continue;
+      upsertNode(name, "service", (e.description as string) || "", (e.status as string) || "operational", (e.last_updated as string) || null, Array.isArray(e.related_projects) ? (e.related_projects as string[]) : []);
+    }
+
+    for (const e of workflowEntities) {
+      const name = e.name || "";
+      if (!name) continue;
+      upsertNode(name, "workflow", (e.description as string) || "", (e.status as string) || "operational", (e.last_updated as string) || null, Array.isArray(e.related_projects) ? (e.related_projects as string[]) : []);
+    }
+
+    // Build edge set from all traverse results
     const edgeSet = new Map<string, GraphEdge>();
 
-    for (const traverseResult of [sovereignTraverse, ragTraverse, supaTraverse]) {
+    const allTraverseResults = [sovereignTraverse, ragTraverse, supaTraverse, sovTraverse2, ragTraverse2, supaTraverse2];
+
+    for (const traverseResult of allTraverseResults) {
       const relations = extractContent(traverseResult) as RagRelation[];
       for (const r of relations) {
-        const source = r.source || "";
-        const target = r.target || "";
-        const relType = r.relation_type || r.type || "related_to";
-        if (!source || !target || isBlocked(source) || isBlocked(target)) continue;
+        const rawSource = r.source || "";
+        const rawTarget = r.target || "";
+        if (!rawSource || !rawTarget) continue;
+        if (isNodeCard(rawSource) || isNodeCard(rawTarget)) continue;
 
+        const source = canonicalName(rawSource);
+        const target = canonicalName(rawTarget);
+        if (!source || !target || source === target) continue;
+        if (isBlocked(source) || isBlocked(target)) continue;
+
+        const relType = r.relation_type || r.type || "related_to";
         const key = `${source}--${relType}--${target}`;
-        if (!edgeSet.has(key)) {
+        // Also check reverse to avoid duplicated bidirectional edges
+        const reverseKey = `${target}--${relType}--${source}`;
+        if (!edgeSet.has(key) && !edgeSet.has(reverseKey)) {
           edgeSet.set(key, { source, target, type: relType });
         }
 
         // Ensure both endpoints exist as nodes
-        if (!nodeMap.has(source)) {
-          nodeMap.set(source, {
-            id: source,
-            name: source,
-            entity_type: "unknown",
-            description: "",
-            status: "operational",
-          });
-        }
-        if (!nodeMap.has(target)) {
-          nodeMap.set(target, {
-            id: target,
-            name: target,
-            entity_type: "unknown",
-            description: "",
-            status: "operational",
-          });
-        }
+        upsertNode(source, "unknown", "", "operational", null);
+        upsertNode(target, "unknown", "", "operational", null);
       }
     }
 

@@ -13,6 +13,7 @@ interface RagNode {
   entity_type: string;
   description: string;
   status: string;
+  last_updated: string | null;
   related_projects?: string[];
 }
 
@@ -20,6 +21,12 @@ interface RagEdge {
   source: string;
   target: string;
   type: string;
+}
+
+interface ExecutionLogEntry {
+  operation: string;
+  tool_or_service: string | null;
+  created_at: string;
 }
 
 interface EntityDetail {
@@ -36,6 +43,13 @@ interface EntityDetail {
     type: string;
     direction: string;
   }>;
+  execution_log: ExecutionLogEntry[];
+}
+
+interface HealthStatus {
+  rag: "ok" | "down";
+  supabase: "ok" | "down";
+  timestamp: string;
 }
 
 /* ── Colour helpers ───────────────────────────────────────────── */
@@ -61,11 +75,30 @@ function statusDot(status: string): string {
   const s = (status || "").toLowerCase();
   if (s === "operational" || s === "active" || s === "ready") return "#00ff41";
   if (s === "beta" || s === "partial" || s === "degraded") return "#ffb800";
+  if (s.includes("locked") || s.includes("disabled")) return "#ff0040";
   return "#ff0040";
 }
 
-function typeBadgeColour(type: string): string {
-  return nodeColour(type);
+function statusDotFromRecency(lastUpdated: string | null, status: string): string {
+  if (!lastUpdated) return statusDot(status);
+  const age = Date.now() - new Date(lastUpdated).getTime();
+  const hours = age / (1000 * 60 * 60);
+  if (hours < 1) return "#00ff41";
+  if (hours < 24) return "#39ff14";
+  if (hours < 168) return "#ffb800";
+  return "#737373";
+}
+
+/* ── Recency-based glow intensity for living memory ───────── */
+
+function recencyIntensity(lastUpdated: string | null): number {
+  if (!lastUpdated) return 0.3;
+  const age = Date.now() - new Date(lastUpdated).getTime();
+  const hours = age / (1000 * 60 * 60);
+  if (hours < 1) return 1.0;
+  if (hours < 24) return 0.75;
+  if (hours < 168) return 0.5;
+  return 0.3;
 }
 
 /* ── Graph data interfaces ────────────────────────────────────── */
@@ -76,9 +109,11 @@ interface GraphNodeObj {
   entity_type: string;
   description: string;
   status: string;
+  last_updated: string | null;
   related_projects?: string[];
   colour: string;
   val: number;
+  intensity: number;
   x?: number;
   y?: number;
   z?: number;
@@ -95,160 +130,43 @@ interface GraphData {
   links: GraphLinkObj[];
 }
 
-/* ── Globe props interface ────────────────────────────────────── */
+/* ── ForceGraph3D via react-force-graph-3d (dynamic, SSR disabled) ── */
 
-interface GlobeProps {
-  graphData: GraphData;
-  onNodeClick: (node: GraphNodeObj) => void;
-  highlightNodes: Set<string>;
-  selectedId: string | null;
-}
-
-/* ── 3D Globe wrapper (dynamic, SSR disabled) ─────────────────── */
-
-const ForceGraph3DComponent = dynamic<GlobeProps>(
-  () => import("3d-force-graph").then((mod) => {
-    const ForceGraph3DConstructor = mod.default;
-
-    function Globe({ graphData, onNodeClick, highlightNodes, selectedId }: GlobeProps) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const graphRef = useRef<any>(null);
-      const mountRef = useRef<HTMLDivElement>(null);
-
-      useEffect(() => {
-        const container = mountRef.current;
-        if (!container) return;
-
-        // Create graph instance using 'new'
-        const graph = new ForceGraph3DConstructor(container);
-        graphRef.current = graph;
-
-        // Configure
-        graph
-          .backgroundColor("#0a0a0a")
-          .showNavInfo(false)
-          .nodeColor((node: object) => {
-            const n = node as GraphNodeObj;
-            return n.colour || "#737373";
-          })
-          .nodeVal((node: object) => (node as GraphNodeObj).val || 2)
-          .nodeLabel((node: object) => {
-            const n = node as GraphNodeObj;
-            return `${n.name} (${n.entity_type})`;
-          })
-          .nodeOpacity(0.9)
-          .linkColor(() => "rgba(0,255,65,0.15)")
-          .linkWidth(1)
-          .linkDirectionalArrowLength(3)
-          .linkDirectionalArrowRelPos(1)
-          .linkOpacity(0.4)
-          .onNodeClick((node: object) => {
-            const n = node as GraphNodeObj;
-            onNodeClick(n);
-            // Zoom camera toward clicked node
-            const distance = 200;
-            const distRatio = 1 + distance / Math.hypot(n.x || 0, n.y || 0, n.z || 0);
-            graph.cameraPosition(
-              {
-                x: (n.x || 0) * distRatio,
-                y: (n.y || 0) * distRatio,
-                z: (n.z || 0) * distRatio,
-              },
-              { x: n.x || 0, y: n.y || 0, z: n.z || 0 },
-              1000
-            );
-          })
-          .graphData(graphData);
-
-        // Handle resize
-        function handleResize() {
-          if (container && graph) {
-            graph.width(container.clientWidth);
-            graph.height(container.clientHeight);
-          }
-        }
-
-        const observer = new ResizeObserver(handleResize);
-        observer.observe(container);
-        handleResize();
-
-        return () => {
-          observer.disconnect();
-          if (graph && typeof graph._destructor === "function") {
-            graph._destructor();
-          } else {
-            // Fallback: remove canvas elements
-            const canvases = container.querySelectorAll("canvas");
-            canvases.forEach((c: HTMLCanvasElement) => c.remove());
-          }
-          graphRef.current = null;
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, []);
-
-      // Update data when graphData changes (but not on mount)
-      const isFirstRender = useRef(true);
-      useEffect(() => {
-        if (isFirstRender.current) {
-          isFirstRender.current = false;
-          return;
-        }
-        if (graphRef.current) {
-          graphRef.current.graphData(graphData);
-        }
-      }, [graphData]);
-
-      // Update highlight state
-      useEffect(() => {
-        if (graphRef.current) {
-          graphRef.current.nodeColor((node: object) => {
-            const n = node as GraphNodeObj;
-            if (highlightNodes.size === 0) return n.colour || "#737373";
-            return highlightNodes.has(n.id) ? (n.colour || "#737373") : withAlpha(n.colour || "#737373", 0.15);
-          });
-        }
-      }, [highlightNodes]);
-
-      // Zoom to selected node when selectedId changes from registry click
-      useEffect(() => {
-        if (!selectedId || !graphRef.current) return;
-        const graph = graphRef.current;
-        const data = graph.graphData();
-        const node = (data.nodes as GraphNodeObj[]).find((n: GraphNodeObj) => n.id === selectedId);
-        if (!node) return;
-        const distance = 200;
-        const distRatio = 1 + distance / Math.hypot(node.x || 0, node.y || 0, node.z || 0);
-        graph.cameraPosition(
-          {
-            x: (node.x || 0) * distRatio,
-            y: (node.y || 0) * distRatio,
-            z: (node.z || 0) * distRatio,
-          },
-          { x: node.x || 0, y: node.y || 0, z: node.z || 0 },
-          1000
-        );
-      }, [selectedId]);
-
-      return (
-        <div
-          ref={mountRef}
-          style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
-        />
-      );
-    }
-
-    return Globe;
-  }),
+const ForceGraph3D = dynamic(
+  () => import("react-force-graph-3d").then((mod) => mod.default),
   {
     ssr: false,
     loading: () => (
       <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
-        <span
-          className="text-[10px] text-[#00ff41] animate-pulse"
-          style={{ fontFamily: "'JetBrains Mono', monospace" }}
-        >
-          Initializing 3D globe...
-        </span>
+        <div className="flex flex-col items-center gap-3">
+          {/* Shimmer skeleton */}
+          <div className="w-48 h-2 rounded bg-[#1a1a1a] overflow-hidden">
+            <div
+              className="h-full w-1/3 rounded"
+              style={{
+                background: "linear-gradient(90deg, transparent, rgba(0,255,65,0.3), transparent)",
+                animation: "shimmer 1.5s infinite",
+              }}
+            />
+          </div>
+          <span
+            className="text-[10px] text-[#00ff41] animate-pulse"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            Initializing 3D globe...
+          </span>
+          <div className="flex gap-1 mt-2">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="w-8 h-1 rounded bg-[#1a1a1a]"
+                style={{
+                  animation: `shimmer 1.5s infinite ${i * 0.2}s`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     ),
   }
@@ -308,7 +226,7 @@ function RegistrySection({
             >
               <span
                 className="shrink-0 w-1.5 h-1.5 rounded-full"
-                style={{ background: statusDot(item.status) }}
+                style={{ background: statusDotFromRecency(item.last_updated, item.status) }}
               />
               <span
                 className="truncate"
@@ -322,6 +240,80 @@ function RegistrySection({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Workflow Step Diagram ─────────────────────────────────────── */
+
+function WorkflowDiagram({
+  description,
+}: {
+  description: string;
+}) {
+  // Parse description into steps — look for numbered items or sentence fragments
+  const steps = useMemo(() => {
+    // Try numbered steps first: "1. Foo 2. Bar" or "Step 1: ..."
+    const numberedPattern = /(?:^|\n)\s*(?:step\s*)?(\d+)[.:)\-]\s*([^\n]+)/gi;
+    const matches = [...description.matchAll(numberedPattern)];
+    if (matches.length >= 2) {
+      return matches.map((m) => ({
+        number: parseInt(m[1]),
+        action: m[2].trim(),
+      }));
+    }
+    // Fall back to splitting on sentence boundaries
+    const sentences = description
+      .split(/[.;]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 5 && s.length < 120);
+    if (sentences.length >= 2) {
+      return sentences.slice(0, 6).map((s, i) => ({
+        number: i + 1,
+        action: s,
+      }));
+    }
+    return [];
+  }, [description]);
+
+  if (steps.length === 0) return null;
+
+  return (
+    <div>
+      <div className="text-[9px] text-[#737373] tracking-wider mb-2">
+        WORKFLOW STEPS ({steps.length})
+      </div>
+      <div className="flex items-start gap-0 overflow-x-auto pb-2">
+        {steps.map((step, i) => (
+          <div key={i} className="flex items-center shrink-0">
+            <div
+              className="flex flex-col items-center px-3 py-2 rounded border min-w-[120px] max-w-[180px]"
+              style={{
+                background: "rgba(168,85,247,0.08)",
+                borderColor: "rgba(168,85,247,0.25)",
+              }}
+            >
+              <span
+                className="text-[9px] font-bold mb-1"
+                style={{ color: "#a855f7" }}
+              >
+                STEP {step.number}
+              </span>
+              <span className="text-[10px] text-[#d4d4d4] text-center leading-tight">
+                {step.action}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className="flex items-center px-1 shrink-0">
+                <svg width="24" height="12" viewBox="0 0 24 12">
+                  <line x1="0" y1="6" x2="18" y2="6" stroke="#a855f7" strokeWidth="1.5" strokeOpacity="0.5" />
+                  <polygon points="18,2 24,6 18,10" fill="#a855f7" fillOpacity="0.5" />
+                </svg>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -345,9 +337,12 @@ function DetailCard({
   onClose: () => void;
   onNavigate: (name: string) => void;
 }) {
+  const [viewMode, setViewMode] = useState<"operations" | "technical">("operations");
+
   if (!node && !loading) return null;
 
   const relationships = detail?.relationships || [];
+  const executionLog = detail?.execution_log || [];
   const relatedWorkflows = edges
     .filter(
       (e) =>
@@ -360,26 +355,20 @@ function DetailCard({
     )
     .map((e) => (e.source === node?.id ? e.target : e.source));
 
-  const capabilities = detail?.entity?.description
-    ? detail.entity.description
-        .split(/[,;]/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && s.length < 50)
-        .slice(0, 8)
-    : [];
+  const isWorkflow = node?.entity_type === "workflow";
 
   return (
     <div
       className="absolute bottom-0 left-0 right-0 z-20 flex flex-col transition-all duration-300"
       style={{
-        height: "40%",
-        background: "rgba(10,10,10,0.95)",
+        height: isWorkflow ? "50%" : "42%",
+        background: "rgba(10,10,10,0.97)",
         borderTop: "1px solid rgba(0,255,65,0.3)",
-        backdropFilter: "blur(8px)",
+        backdropFilter: "blur(12px)",
         fontFamily: "'JetBrains Mono', monospace",
       }}
     >
-      {/* ROW 1: Header */}
+      {/* Header */}
       <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-[#00ff41]/20">
         {node && (
           <>
@@ -392,8 +381,8 @@ function DetailCard({
             <span
               className="text-[9px] px-1.5 py-0.5 rounded"
               style={{
-                background: withAlpha(typeBadgeColour(node.entity_type), 0.15),
-                color: typeBadgeColour(node.entity_type),
+                background: withAlpha(nodeColour(node.entity_type), 0.15),
+                color: nodeColour(node.entity_type),
               }}
             >
               {node.entity_type.toUpperCase()}
@@ -402,11 +391,39 @@ function DetailCard({
               className="w-2 h-2 rounded-full"
               style={{ background: statusDot(node.status) }}
             />
+            <span className="text-[9px] text-[#737373]">{node.status}</span>
           </>
         )}
+
+        {/* View toggle */}
+        <div className="ml-auto flex items-center gap-1 mr-3">
+          <button
+            onClick={() => setViewMode("operations")}
+            className="text-[9px] px-2 py-0.5 rounded transition-colors"
+            style={{
+              background: viewMode === "operations" ? "rgba(0,255,65,0.15)" : "transparent",
+              color: viewMode === "operations" ? "#00ff41" : "#737373",
+              border: `1px solid ${viewMode === "operations" ? "rgba(0,255,65,0.3)" : "rgba(115,115,115,0.2)"}`,
+            }}
+          >
+            OPERATIONS
+          </button>
+          <button
+            onClick={() => setViewMode("technical")}
+            className="text-[9px] px-2 py-0.5 rounded transition-colors"
+            style={{
+              background: viewMode === "technical" ? "rgba(0,255,65,0.15)" : "transparent",
+              color: viewMode === "technical" ? "#00ff41" : "#737373",
+              border: `1px solid ${viewMode === "technical" ? "rgba(0,255,65,0.3)" : "rgba(115,115,115,0.2)"}`,
+            }}
+          >
+            TECHNICAL
+          </button>
+        </div>
+
         <button
           onClick={onClose}
-          className="ml-auto text-[#737373] hover:text-[#00ff41] text-sm"
+          className="text-[#737373] hover:text-[#00ff41] text-sm transition-colors"
         >
           [X]
         </button>
@@ -415,127 +432,297 @@ function DetailCard({
       {/* Body */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3">
         {loading && (
-          <div className="text-[10px] text-[#737373] animate-pulse">
-            Loading entity data...
+          <div className="space-y-2 animate-pulse">
+            <div className="h-3 w-3/4 rounded bg-[#1a1a1a]" />
+            <div className="h-3 w-1/2 rounded bg-[#1a1a1a]" />
+            <div className="h-3 w-2/3 rounded bg-[#1a1a1a]" />
           </div>
         )}
 
-        {/* ROW 2: Description */}
-        {(node?.description || detail?.entity?.description) && (
-          <div className="text-[11px] text-[#88cc88] leading-relaxed">
-            {detail?.entity?.description || node?.description}
-          </div>
-        )}
+        {/* ── OPERATIONS VIEW ── */}
+        {viewMode === "operations" && !loading && (
+          <>
+            {/* One-sentence description */}
+            {(node?.description || detail?.entity?.description) && (
+              <div className="text-[11px] text-[#88cc88] leading-relaxed">
+                {(detail?.entity?.description || node?.description || "").split(/[.!?]/)[0]}.
+              </div>
+            )}
 
-        {/* ROW 3: Stats bar */}
-        <div className="flex gap-4 text-[9px]">
-          {detail && (
-            <>
-              <span className="text-[#737373]">
-                RELATIONS: <span className="text-[#00ff41]">{relationships.length}</span>
-              </span>
-              <span className="text-[#737373]">
-                WORKFLOWS: <span className="text-[#a855f7]">{relatedWorkflows.length}</span>
-              </span>
-              {detail.entity.last_updated && (
-                <span className="text-[#737373]">
-                  UPDATED:{" "}
-                  <span className="text-[#d4d4d4]">
-                    {new Date(detail.entity.last_updated).toLocaleDateString("en-GB")}
+            {/* Stats row */}
+            <div className="flex gap-4 text-[9px]">
+              {detail && (
+                <>
+                  <span className="text-[#737373]">
+                    RELATIONS: <span className="text-[#00ff41]">{relationships.length}</span>
                   </span>
-                </span>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* ROW 4: Two columns */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Relationships */}
-          {relationships.length > 0 && (
-            <div>
-              <div className="text-[9px] text-[#737373] tracking-wider mb-1">
-                RELATIONSHIPS ({relationships.length})
-              </div>
-              <div className="space-y-0.5 max-h-24 overflow-y-auto">
-                {relationships.map((r, i) => (
-                  <button
-                    key={`${r.target}-${r.type}-${i}`}
-                    onClick={() => onNavigate(r.target)}
-                    className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px]"
-                  >
-                    <span className="text-[#00ff41]">
-                      {r.direction === "outgoing" ? "->" : "<-"}
+                  <span className="text-[#737373]">
+                    WORKFLOWS: <span className="text-[#a855f7]">{relatedWorkflows.length}</span>
+                  </span>
+                  {detail.entity.last_updated && (
+                    <span className="text-[#737373]">
+                      UPDATED:{" "}
+                      <span className="text-[#d4d4d4]">
+                        {new Date(detail.entity.last_updated).toLocaleDateString("en-GB")}
+                      </span>
                     </span>
-                    <span className="text-[#00b4d8] truncate flex-1">{r.target}</span>
-                    <span className="text-[#404040]">{r.type}</span>
-                  </button>
-                ))}
-              </div>
+                  )}
+                </>
+              )}
             </div>
-          )}
 
-          {/* Workflows */}
-          {relatedWorkflows.length > 0 && (
-            <div>
-              <div className="text-[9px] text-[#737373] tracking-wider mb-1">
-                WORKFLOWS ({relatedWorkflows.length})
-              </div>
-              <div className="space-y-0.5 max-h-24 overflow-y-auto">
-                {relatedWorkflows.map((w) => (
-                  <button
-                    key={w}
-                    onClick={() => onNavigate(w)}
-                    className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px] text-[#a855f7]"
-                  >
-                    {w}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ROW 5: Capabilities as tag pills */}
-        {capabilities.length > 0 && (
-          <div>
-            <div className="text-[9px] text-[#737373] tracking-wider mb-1">CAPABILITIES</div>
-            <div className="flex flex-wrap gap-1">
-              {capabilities.map((cap, i) => (
-                <span
-                  key={i}
-                  className="text-[9px] px-1.5 py-0.5 rounded"
-                  style={{
-                    background: "rgba(0,255,65,0.08)",
-                    color: "#88cc88",
-                    border: "1px solid rgba(0,255,65,0.15)",
-                  }}
-                >
-                  {cap}
+            {/* Health indicator */}
+            {detail?.entity?.status && (
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] text-[#737373] tracking-wider">HEALTH</span>
+                <div className="flex-1 h-1.5 rounded-full bg-[#1a1a1a] overflow-hidden max-w-[200px]">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: detail.entity.status === "operational" ? "100%" :
+                             detail.entity.status === "beta" || detail.entity.status === "partial" ? "60%" : "20%",
+                      background: statusDot(detail.entity.status),
+                    }}
+                  />
+                </div>
+                <span className="text-[9px]" style={{ color: statusDot(detail.entity.status) }}>
+                  {detail.entity.status.toUpperCase()}
                 </span>
-              ))}
+              </div>
+            )}
+
+            {/* Last 5 actions from execution_log */}
+            {executionLog.length > 0 && (
+              <div>
+                <div className="text-[9px] text-[#737373] tracking-wider mb-1">
+                  RECENT ACTIONS ({executionLog.length})
+                </div>
+                <div className="space-y-0.5 max-h-20 overflow-y-auto">
+                  {executionLog.map((log, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 px-1 py-0.5 text-[10px] rounded hover:bg-[#1a1a1a]"
+                    >
+                      <span className="text-[#404040] tabular-nums shrink-0 w-12">
+                        {new Date(log.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <span className="text-[#00ff41] truncate flex-1">{log.operation}</span>
+                      {log.tool_or_service && (
+                        <span className="text-[#737373] truncate max-w-[100px]">{log.tool_or_service}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Related projects as tags */}
+            {detail?.entity?.related_projects && detail.entity.related_projects.length > 0 && (
+              <div>
+                <div className="text-[9px] text-[#737373] tracking-wider mb-1">PROJECTS</div>
+                <div className="flex flex-wrap gap-1">
+                  {detail.entity.related_projects.map((p) => (
+                    <span
+                      key={p}
+                      className="text-[9px] px-1.5 py-0.5 rounded"
+                      style={{ background: "rgba(0,255,65,0.1)", color: "#00ff41" }}
+                    >
+                      {p}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Two columns: relationships + workflows */}
+            <div className="grid grid-cols-2 gap-4">
+              {relationships.length > 0 && (
+                <div>
+                  <div className="text-[9px] text-[#737373] tracking-wider mb-1">
+                    RELATIONSHIPS ({relationships.length})
+                  </div>
+                  <div className="space-y-0.5 max-h-24 overflow-y-auto">
+                    {relationships.map((r, i) => (
+                      <button
+                        key={`${r.target}-${r.type}-${i}`}
+                        onClick={() => onNavigate(r.target)}
+                        className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px]"
+                      >
+                        <span className="text-[#00ff41]">
+                          {r.direction === "outgoing" ? "->" : "<-"}
+                        </span>
+                        <span className="text-[#00b4d8] truncate flex-1">{r.target}</span>
+                        <span className="text-[#404040]">{r.type}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {relatedWorkflows.length > 0 && (
+                <div>
+                  <div className="text-[9px] text-[#737373] tracking-wider mb-1">
+                    WORKFLOWS ({relatedWorkflows.length})
+                  </div>
+                  <div className="space-y-0.5 max-h-24 overflow-y-auto">
+                    {relatedWorkflows.map((w) => (
+                      <button
+                        key={w}
+                        onClick={() => onNavigate(w)}
+                        className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px] text-[#a855f7]"
+                      >
+                        {w}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          </>
         )}
 
-        {/* Related projects */}
-        {detail?.entity?.related_projects && detail.entity.related_projects.length > 0 && (
-          <div>
-            <div className="text-[9px] text-[#737373] tracking-wider mb-1">PROJECTS</div>
-            <div className="flex flex-wrap gap-1">
-              {detail.entity.related_projects.map((p) => (
-                <span
-                  key={p}
-                  className="text-[9px] px-1.5 py-0.5 rounded"
-                  style={{ background: "rgba(0,255,65,0.1)", color: "#00ff41" }}
-                >
-                  {p}
+        {/* ── TECHNICAL VIEW ── */}
+        {viewMode === "technical" && !loading && (
+          <>
+            {/* Full description */}
+            {(node?.description || detail?.entity?.description) && (
+              <div className="text-[11px] text-[#88cc88] leading-relaxed">
+                {detail?.entity?.description || node?.description}
+              </div>
+            )}
+
+            {/* Entity metadata */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
+              <div>
+                <span className="text-[#737373]">ID: </span>
+                <span className="text-[#d4d4d4]">{node?.id}</span>
+              </div>
+              <div>
+                <span className="text-[#737373]">TYPE: </span>
+                <span style={{ color: nodeColour(node?.entity_type || "unknown") }}>
+                  {node?.entity_type}
                 </span>
-              ))}
+              </div>
+              <div>
+                <span className="text-[#737373]">STATUS: </span>
+                <span style={{ color: statusDot(node?.status || "") }}>
+                  {node?.status}
+                </span>
+              </div>
+              {detail?.entity?.last_updated && (
+                <div>
+                  <span className="text-[#737373]">LAST_UPDATED: </span>
+                  <span className="text-[#d4d4d4]">{detail.entity.last_updated}</span>
+                </div>
+              )}
             </div>
-          </div>
+
+            {/* Raw JSON (expandable) */}
+            <details className="group">
+              <summary className="text-[9px] text-[#737373] tracking-wider cursor-pointer hover:text-[#d4d4d4] transition-colors">
+                RAW ENTITY JSON
+              </summary>
+              <pre
+                className="mt-1 text-[9px] text-[#737373] bg-[#0d0d0d] border border-[#1e1e1e] rounded p-2 overflow-x-auto max-h-32 overflow-y-auto"
+              >
+                {JSON.stringify(detail?.entity || node, null, 2)}
+              </pre>
+            </details>
+
+            {/* Relationships */}
+            {relationships.length > 0 && (
+              <div>
+                <div className="text-[9px] text-[#737373] tracking-wider mb-1">
+                  RELATIONSHIPS ({relationships.length})
+                </div>
+                <div className="space-y-0.5 max-h-32 overflow-y-auto">
+                  {relationships.map((r, i) => (
+                    <button
+                      key={`${r.target}-${r.type}-${i}`}
+                      onClick={() => onNavigate(r.target)}
+                      className="w-full text-left flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px]"
+                    >
+                      <span className="text-[#00ff41] shrink-0">
+                        {r.direction === "outgoing" ? "->" : "<-"}
+                      </span>
+                      <span className="text-[#00b4d8] truncate">{r.target}</span>
+                      <span className="text-[#404040] shrink-0">{r.type}</span>
+                      <span className="text-[#333] shrink-0">{r.direction}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Workflows */}
+            {relatedWorkflows.length > 0 && (
+              <div>
+                <div className="text-[9px] text-[#737373] tracking-wider mb-1">
+                  WORKFLOWS ({relatedWorkflows.length})
+                </div>
+                <div className="space-y-0.5">
+                  {relatedWorkflows.map((w) => (
+                    <button
+                      key={w}
+                      onClick={() => onNavigate(w)}
+                      className="w-full text-left px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px] text-[#a855f7]"
+                    >
+                      {w}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Workflow step diagram (both views, if workflow entity) ── */}
+        {isWorkflow && (detail?.entity?.description || node?.description) && (
+          <WorkflowDiagram description={detail?.entity?.description || node?.description || ""} />
         )}
       </div>
+    </div>
+  );
+}
+
+/* ── Metric with tooltip ──────────────────────────────────────── */
+
+function MetricBadge({
+  label,
+  value,
+  colour,
+  tooltip,
+}: {
+  label: string;
+  value: number | string;
+  colour: string;
+  tooltip: string;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div
+      className="flex items-center gap-1.5 relative"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <span className="text-[9px] text-text-muted tracking-wider">{label}</span>
+      <span className="text-sm font-bold tabular-nums" style={{ color: colour }}>
+        {value}
+      </span>
+      {showTooltip && (
+        <div
+          className="absolute top-full left-0 mt-1 px-2 py-1 rounded text-[9px] whitespace-nowrap z-50"
+          style={{
+            background: "rgba(20,20,20,0.95)",
+            border: "1px solid rgba(0,255,65,0.2)",
+            color: "#737373",
+            fontFamily: "'JetBrains Mono', monospace",
+          }}
+        >
+          {tooltip}
+        </div>
+      )}
     </div>
   );
 }
@@ -547,11 +734,31 @@ export default function BattlefieldTab() {
   const [edges, setEdges] = useState<RagEdge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fetchTimestamp, setFetchTimestamp] = useState<string | null>(null);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<EntityDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [filterText, setFilterText] = useState("");
+
+  const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [reloading, setReloading] = useState(false);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const graphRef = useRef<any>(null);
+
+  // Fetch health status
+  const fetchHealth = useCallback(async () => {
+    try {
+      const res = await fetch("/api/health");
+      if (res.ok) {
+        const data: HealthStatus = await res.json();
+        setHealth(data);
+      }
+    } catch {
+      setHealth({ rag: "down", supabase: "down", timestamp: new Date().toISOString() });
+    }
+  }, []);
 
   // Fetch graph data from API route
   const fetchGraph = useCallback(async () => {
@@ -560,13 +767,17 @@ export default function BattlefieldTab() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
-      const rawNodes: RagNode[] = data.nodes || [];
+      const rawNodes: RagNode[] = (data.nodes || []).map((n: RagNode) => ({
+        ...n,
+        last_updated: n.last_updated || null,
+      }));
       const rawEdges: RagEdge[] = data.edges || data.links || [];
 
       setNodes(rawNodes);
       setEdges(rawEdges);
       setLoading(false);
       setError(null);
+      setFetchTimestamp(new Date().toISOString());
     } catch (err) {
       console.error("Failed to fetch graph:", err);
       setError(String(err));
@@ -574,7 +785,14 @@ export default function BattlefieldTab() {
     }
   }, []);
 
-  // Fetch detail for selected node
+  // Reload button handler
+  const handleReload = useCallback(async () => {
+    setReloading(true);
+    await Promise.all([fetchGraph(), fetchHealth()]);
+    setReloading(false);
+  }, [fetchGraph, fetchHealth]);
+
+  // Fetch detail for selected node (lazy-load on click)
   const fetchDetail = useCallback(async (name: string) => {
     setDetailLoading(true);
     setDetail(null);
@@ -596,6 +814,50 @@ export default function BattlefieldTab() {
       const id = typeof nodeOrId === "string" ? nodeOrId : nodeOrId.id;
       setSelectedId(id);
       fetchDetail(id);
+
+      // Zoom camera to clicked node if it has coordinates
+      if (graphRef.current && typeof nodeOrId === "object" && nodeOrId.x !== undefined) {
+        const node = nodeOrId;
+        const distance = 200;
+        const distRatio = 1 + distance / Math.hypot(node.x || 0, node.y || 0, node.z || 0);
+        graphRef.current.cameraPosition(
+          {
+            x: (node.x || 0) * distRatio,
+            y: (node.y || 0) * distRatio,
+            z: (node.z || 0) * distRatio,
+          },
+          { x: node.x || 0, y: node.y || 0, z: node.z || 0 },
+          1000
+        );
+      }
+    },
+    [fetchDetail]
+  );
+
+  // Handle registry click — find node in graph data and zoom
+  const handleRegistryClick = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      fetchDetail(id);
+
+      // Try to zoom to this node in the 3D graph
+      if (graphRef.current) {
+        const data = graphRef.current.graphData();
+        const node = (data.nodes as GraphNodeObj[]).find((n: GraphNodeObj) => n.id === id);
+        if (node && node.x !== undefined) {
+          const distance = 200;
+          const distRatio = 1 + distance / Math.hypot(node.x || 0, node.y || 0, node.z || 0);
+          graphRef.current.cameraPosition(
+            {
+              x: (node.x || 0) * distRatio,
+              y: (node.y || 0) * distRatio,
+              z: (node.z || 0) * distRatio,
+            },
+            { x: node.x || 0, y: node.y || 0, z: node.z || 0 },
+            1000
+          );
+        }
+      }
     },
     [fetchDetail]
   );
@@ -612,9 +874,14 @@ export default function BattlefieldTab() {
   // Initial fetch + polling
   useEffect(() => {
     fetchGraph();
-    const interval = setInterval(fetchGraph, 60000);
-    return () => clearInterval(interval);
-  }, [fetchGraph]);
+    fetchHealth();
+    const graphInterval = setInterval(fetchGraph, 60000);
+    const healthInterval = setInterval(fetchHealth, 30000);
+    return () => {
+      clearInterval(graphInterval);
+      clearInterval(healthInterval);
+    };
+  }, [fetchGraph, fetchHealth]);
 
   // Compute edge counts per node
   const edgeCounts = useMemo(() => {
@@ -626,13 +893,20 @@ export default function BattlefieldTab() {
     return counts;
   }, [edges]);
 
-  // Build graph data for 3d-force-graph
+  // Build graph data for react-force-graph-3d
   const graphData: GraphData = useMemo(() => {
-    const graphNodes: GraphNodeObj[] = nodes.map((n) => ({
-      ...n,
-      colour: nodeColour(n.entity_type),
-      val: Math.max(2, (edgeCounts.get(n.id) || 0) + 1),
-    }));
+    const graphNodes: GraphNodeObj[] = nodes.map((n) => {
+      const isSovereign = n.name.toUpperCase() === "SOVEREIGN";
+      const intensity = recencyIntensity(n.last_updated);
+      return {
+        ...n,
+        colour: n.entity_type === "gap" ? "#ff0040" :
+                n.status?.toLowerCase().includes("locked") ? "#404040" :
+                nodeColour(n.entity_type),
+        val: isSovereign ? 8 : Math.max(2, (edgeCounts.get(n.id) || 0) + 1),
+        intensity,
+      };
+    });
 
     const nodeIds = new Set(nodes.map((n) => n.id));
     const graphLinks: GraphLinkObj[] = edges
@@ -683,6 +957,12 @@ export default function BattlefieldTab() {
 
   const selectedNode = nodes.find((n) => n.id === selectedId) || null;
 
+  const healthDotColour = !health ? "#737373" :
+    (health.rag === "ok" && health.supabase === "ok") ? "#00ff41" :
+    (health.rag === "ok" || health.supabase === "ok") ? "#ffb800" : "#ff0040";
+
+  const isRagDown = health?.rag === "down" && !loading && nodes.length === 0;
+
   return (
     <div className="h-full flex overflow-hidden">
       {/* LEFT PANE: System Registry */}
@@ -703,7 +983,7 @@ export default function BattlefieldTab() {
             type="text"
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
-            placeholder="Filter..."
+            placeholder="Filter entities..."
             className="w-full bg-[#1a1a1a] border border-[#00ff41]/20 rounded px-2 py-0.5 text-[10px] text-[#d4d4d4] placeholder-[#404040] outline-none focus:border-[#00ff41]/50"
             style={{ fontFamily: "'JetBrains Mono', monospace" }}
           />
@@ -717,7 +997,7 @@ export default function BattlefieldTab() {
               colour="#00ff41"
               items={groupedNodes.agents}
               selectedId={selectedId}
-              onSelect={handleNodeClick}
+              onSelect={handleRegistryClick}
             />
           )}
           {groupedNodes.services.length > 0 && (
@@ -726,7 +1006,7 @@ export default function BattlefieldTab() {
               colour="#00b4d8"
               items={groupedNodes.services}
               selectedId={selectedId}
-              onSelect={handleNodeClick}
+              onSelect={handleRegistryClick}
             />
           )}
           {groupedNodes.tools.length > 0 && (
@@ -735,7 +1015,7 @@ export default function BattlefieldTab() {
               colour="#ffd60a"
               items={groupedNodes.tools}
               selectedId={selectedId}
-              onSelect={handleNodeClick}
+              onSelect={handleRegistryClick}
             />
           )}
           {groupedNodes.workflows.length > 0 && (
@@ -744,7 +1024,7 @@ export default function BattlefieldTab() {
               colour="#a855f7"
               items={groupedNodes.workflows}
               selectedId={selectedId}
-              onSelect={handleNodeClick}
+              onSelect={handleRegistryClick}
             />
           )}
           {groupedNodes.gaps.length > 0 && (
@@ -753,7 +1033,7 @@ export default function BattlefieldTab() {
               colour="#ff0040"
               items={groupedNodes.gaps}
               selectedId={selectedId}
-              onSelect={handleNodeClick}
+              onSelect={handleRegistryClick}
             />
           )}
           {groupedNodes.other.length > 0 && (
@@ -762,7 +1042,7 @@ export default function BattlefieldTab() {
               colour="#737373"
               items={groupedNodes.other}
               selectedId={selectedId}
-              onSelect={handleNodeClick}
+              onSelect={handleRegistryClick}
             />
           )}
 
@@ -777,25 +1057,57 @@ export default function BattlefieldTab() {
       {/* CENTRE PANE: 3D Globe + Detail Card */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Metrics bar */}
-        <div className="shrink-0 px-3 py-1.5 border-b border-border flex items-center gap-5">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] text-text-muted tracking-wider">AGENTS</span>
-            <span className="text-sm font-bold tabular-nums" style={{ color: "#00ff41" }}>
-              {agentCount}
-            </span>
+        <div
+          className="shrink-0 px-3 py-1.5 border-b border-border flex items-center gap-5"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        >
+          {/* Health dot */}
+          <div className="flex items-center gap-1.5 relative group">
+            <span
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{
+                background: healthDotColour,
+                boxShadow: `0 0 6px ${healthDotColour}`,
+              }}
+            />
+            <span className="text-[9px] text-text-muted">SYS</span>
+            {/* Tooltip */}
+            <div
+              className="absolute top-full left-0 mt-1 px-2 py-1 rounded text-[9px] whitespace-nowrap z-50 hidden group-hover:block"
+              style={{
+                background: "rgba(20,20,20,0.95)",
+                border: "1px solid rgba(0,255,65,0.2)",
+                color: "#737373",
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
+            >
+              RAG: {health?.rag || "unknown"} | Supabase: {health?.supabase || "unknown"}
+              {health?.timestamp && (
+                <span className="ml-2 text-[#404040]">
+                  @ {new Date(health.timestamp).toLocaleTimeString("en-GB")}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] text-text-muted tracking-wider">SERVICES</span>
-            <span className="text-sm font-bold tabular-nums" style={{ color: "#00b4d8" }}>
-              {serviceCount}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] text-text-muted tracking-wider">EDGES</span>
-            <span className="text-sm font-bold tabular-nums" style={{ color: "#ffd60a" }}>
-              {edgeCount}
-            </span>
-          </div>
+
+          <MetricBadge
+            label="AGENTS"
+            value={agentCount}
+            colour="#00ff41"
+            tooltip={`memory_search_entities(agent) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
+          />
+          <MetricBadge
+            label="SERVICES"
+            value={serviceCount}
+            colour="#00b4d8"
+            tooltip={`memory_search_entities(service) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
+          />
+          <MetricBadge
+            label="EDGES"
+            value={edgeCount}
+            colour="#ffd60a"
+            tooltip={`rag_traverse(SOVEREIGN+RAG+Supabase) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
+          />
 
           {/* Legend */}
           <div className="ml-auto flex items-center gap-3">
@@ -812,37 +1124,181 @@ export default function BattlefieldTab() {
               </div>
             ))}
           </div>
+
+          {/* Reload button */}
+          <button
+            onClick={handleReload}
+            disabled={reloading}
+            className="ml-2 px-2 py-0.5 rounded text-[9px] transition-all hover:bg-[#1a1a1a]"
+            style={{
+              color: reloading ? "#404040" : "#00ff41",
+              border: "1px solid rgba(0,255,65,0.2)",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {reloading ? "..." : "RELOAD"}
+          </button>
         </div>
 
         {/* 3D Globe */}
         <div className="flex-1 relative" style={{ background: "#0a0a0a" }}>
+          {/* CRT scanline overlay */}
+          <div
+            className="absolute inset-0 z-10 pointer-events-none"
+            style={{
+              backgroundImage: "repeating-linear-gradient(0deg, rgba(0,255,65,0.03) 0px, transparent 1px, transparent 2px)",
+              backgroundSize: "100% 2px",
+            }}
+          />
+
           {!loading && nodes.length > 0 && (
-            <ForceGraph3DComponent
+            <ForceGraph3D
+              ref={graphRef}
               graphData={graphData}
-              onNodeClick={handleNodeClick}
-              highlightNodes={highlightNodes}
-              selectedId={selectedId}
+              backgroundColor="#0a0a0a"
+              showNavInfo={false}
+              nodeId="id"
+              nodeColor={(node: object) => {
+                const n = node as GraphNodeObj;
+                if (highlightNodes.size === 0) return n.colour || "#737373";
+                return highlightNodes.has(n.id) ? (n.colour || "#737373") : withAlpha(n.colour || "#737373", 0.15);
+              }}
+              nodeVal={(node: object) => (node as GraphNodeObj).val || 2}
+              nodeLabel={(node: object) => {
+                const n = node as GraphNodeObj;
+                return `${n.name} (${n.entity_type})`;
+              }}
+              nodeOpacity={0.9}
+              nodeRelSize={5}
+              linkColor={() => "rgba(0,255,65,0.15)"}
+              linkWidth={1}
+              linkDirectionalArrowLength={3}
+              linkDirectionalArrowRelPos={1}
+              linkOpacity={0.4}
+              linkDirectionalParticles={(link: object) => {
+                const l = link as GraphLinkObj;
+                const sourceId = typeof l.source === "string" ? l.source : l.source?.id;
+                const targetId = typeof l.target === "string" ? l.target : l.target?.id;
+                if (sourceId && highlightNodes.has(sourceId) && targetId && highlightNodes.has(targetId)) return 2;
+                return 0;
+              }}
+              linkDirectionalParticleSpeed={0.005}
+              onNodeClick={(node: object) => handleNodeClick(node as GraphNodeObj)}
             />
           )}
 
+          {/* Loading skeleton */}
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-48 h-2 rounded bg-[#1a1a1a] overflow-hidden">
+                  <div
+                    className="h-full w-1/3 rounded"
+                    style={{
+                      background: "linear-gradient(90deg, transparent, rgba(0,255,65,0.3), transparent)",
+                      animation: "shimmer 1.5s infinite",
+                    }}
+                  />
+                </div>
+                <span
+                  className="text-[10px] text-[#00ff41] animate-pulse"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  Fetching graph from RAG...
+                </span>
+                {/* Skeleton nodes */}
+                <div className="flex gap-2 mt-2">
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className="w-6 h-6 rounded-full bg-[#1a1a1a]"
+                      style={{
+                        animation: `pulse-dot 1.5s ease-in-out infinite ${i * 0.15}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reload spinner overlay */}
+          {reloading && !loading && (
+            <div className="absolute top-2 right-2 z-30">
               <span
-                className="text-[10px] text-[#00ff41] animate-pulse"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                className="text-[10px] text-[#00ff41] animate-pulse px-2 py-1 rounded"
+                style={{
+                  background: "rgba(0,0,0,0.8)",
+                  border: "1px solid rgba(0,255,65,0.3)",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
               >
-                Fetching graph from RAG...
+                Reloading...
               </span>
             </div>
           )}
 
-          {error && !loading && nodes.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <span
-                className="text-[10px] text-[#ff1744]"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          {/* Error state: RAG down */}
+          {isRagDown && (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div
+                className="flex flex-col items-center gap-3 p-6 rounded-lg"
+                style={{
+                  background: "rgba(255,0,0,0.05)",
+                  border: "1px solid rgba(255,0,64,0.3)",
+                }}
               >
-                RAG unavailable — {error}
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{
+                    background: "#ff0040",
+                    boxShadow: "0 0 20px rgba(255,0,64,0.5)",
+                    animation: "pulse-dot 1s ease-in-out infinite",
+                  }}
+                />
+                <span
+                  className="text-sm font-bold text-[#ff0040]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  SYSTEM OFFLINE
+                </span>
+                <span
+                  className="text-[10px] text-[#ff1744]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  RAG endpoint unreachable
+                </span>
+                {error && (
+                  <span
+                    className="text-[9px] text-[#737373] max-w-[300px] text-center"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    {error}
+                  </span>
+                )}
+                <button
+                  onClick={handleReload}
+                  className="mt-2 px-3 py-1 rounded text-[10px] text-[#ff0040] border border-[#ff0040]/30 hover:bg-[#ff0040]/10 transition-colors"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  RETRY
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Non-fatal error with data */}
+          {error && !loading && nodes.length > 0 && (
+            <div className="absolute top-2 left-2 z-20">
+              <span
+                className="text-[9px] text-[#ffb800] px-2 py-1 rounded"
+                style={{
+                  background: "rgba(0,0,0,0.8)",
+                  border: "1px solid rgba(255,184,0,0.3)",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
+              >
+                Partial data — {error}
               </span>
             </div>
           )}
