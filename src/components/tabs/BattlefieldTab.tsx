@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, type RefObject } from "react";
 import dynamic from "next/dynamic";
 import { withAlpha } from "@/lib/colours";
 import EventStream from "@/components/EventStream";
@@ -341,7 +341,23 @@ function DetailCard({
 
   if (!node && !loading) return null;
 
-  const relationships = detail?.relationships || [];
+  // Build relationships from local graph edges (primary source — always accurate)
+  const localRelationships = useMemo(() => {
+    if (!node) return [];
+    return edges
+      .filter((e) => e.source === node.id || e.target === node.id)
+      .map((e) => ({
+        target: e.source === node.id ? e.target : e.source,
+        type: e.type || "related_to",
+        direction: e.source === node.id ? "outgoing" : "incoming",
+      }));
+  }, [node, edges]);
+
+  // Use local edges as primary, fall back to API detail if local is empty
+  const relationships = localRelationships.length > 0
+    ? localRelationships
+    : (detail?.relationships || []);
+
   const executionLog = detail?.execution_log || [];
   const relatedWorkflows = edges
     .filter(
@@ -548,11 +564,11 @@ function DetailCard({
                         onClick={() => onNavigate(r.target)}
                         className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px]"
                       >
-                        <span className="text-[#00ff41]">
-                          {r.direction === "outgoing" ? "->" : "<-"}
+                        <span className="text-[#00ff41] shrink-0">
+                          {r.direction === "outgoing" ? "\u2192" : "\u2190"}
                         </span>
+                        <span className="text-[#404040] shrink-0">{r.type}</span>
                         <span className="text-[#00b4d8] truncate flex-1">{r.target}</span>
-                        <span className="text-[#404040]">{r.type}</span>
                       </button>
                     ))}
                   </div>
@@ -643,10 +659,10 @@ function DetailCard({
                       className="w-full text-left flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px]"
                     >
                       <span className="text-[#00ff41] shrink-0">
-                        {r.direction === "outgoing" ? "->" : "<-"}
+                        {r.direction === "outgoing" ? "\u2192" : "\u2190"}
                       </span>
-                      <span className="text-[#00b4d8] truncate">{r.target}</span>
                       <span className="text-[#404040] shrink-0">{r.type}</span>
+                      <span className="text-[#00b4d8] truncate">{r.target}</span>
                       <span className="text-[#333] shrink-0">{r.direction}</span>
                     </button>
                   ))}
@@ -727,6 +743,31 @@ function MetricBadge({
   );
 }
 
+/* ── Container size hook ────────────────────────────────────── */
+
+function useContainerSize(ref: RefObject<HTMLDivElement | null>) {
+  const [size, setSize] = useState({ width: 600, height: 400 });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const measure = () => {
+      const { width, height } = el.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        setSize({ width: Math.round(width), height: Math.round(height) });
+      }
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+
+  return size;
+}
+
 /* ── Main Component ───────────────────────────────────────────── */
 
 export default function BattlefieldTab() {
@@ -746,6 +787,8 @@ export default function BattlefieldTab() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graphRef = useRef<any>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const canvasSize = useContainerSize(canvasContainerRef);
 
   // Fetch health status
   const fetchHealth = useCallback(async () => {
@@ -871,6 +914,21 @@ export default function BattlefieldTab() {
     [fetchDetail]
   );
 
+  // Configure d3 forces after graph mounts (CP3: spread nodes, centre them)
+  useEffect(() => {
+    const fg = graphRef.current;
+    if (!fg || loading || nodes.length === 0) return;
+
+    // Stronger repulsion so nodes spread out
+    fg.d3Force("charge")?.strength(-120).distanceMax(500);
+    // Keep cluster centred in canvas
+    fg.d3Force("center")?.strength(1);
+    // Consistent link distance
+    fg.d3Force("link")?.distance(80);
+    // Re-heat to apply new force parameters
+    fg.d3ReheatSimulation();
+  }, [loading, nodes.length]);
+
   // Initial fetch + polling
   useEffect(() => {
     fetchGraph();
@@ -896,14 +954,16 @@ export default function BattlefieldTab() {
   // Build graph data for react-force-graph-3d
   const graphData: GraphData = useMemo(() => {
     const graphNodes: GraphNodeObj[] = nodes.map((n) => {
-      const isSovereign = n.name.toUpperCase() === "SOVEREIGN";
       const intensity = recencyIntensity(n.last_updated);
+      const ec = edgeCounts.get(n.id) || 0;
+      // nodeVal scales with edge count: SOVEREIGN (most edges) is the largest
+      const val = Math.max(2, ec * 1.5);
       return {
         ...n,
         colour: n.entity_type === "gap" ? "#ff0040" :
                 n.status?.toLowerCase().includes("locked") ? "#404040" :
                 nodeColour(n.entity_type),
-        val: isSovereign ? 8 : Math.max(2, (edgeCounts.get(n.id) || 0) + 1),
+        val,
         intensity,
       };
     });
@@ -1141,7 +1201,7 @@ export default function BattlefieldTab() {
         </div>
 
         {/* 3D Globe */}
-        <div className="flex-1 relative" style={{ background: "#0a0a0a" }}>
+        <div ref={canvasContainerRef} className="flex-1 relative" style={{ background: "#0a0a0a" }}>
           {/* CRT scanline overlay */}
           <div
             className="absolute inset-0 z-10 pointer-events-none"
@@ -1155,6 +1215,8 @@ export default function BattlefieldTab() {
             <ForceGraph3D
               ref={graphRef}
               graphData={graphData}
+              width={canvasSize.width}
+              height={canvasSize.height}
               backgroundColor="#0a0a0a"
               showNavInfo={false}
               nodeId="id"
@@ -1163,13 +1225,31 @@ export default function BattlefieldTab() {
                 if (highlightNodes.size === 0) return n.colour || "#737373";
                 return highlightNodes.has(n.id) ? (n.colour || "#737373") : withAlpha(n.colour || "#737373", 0.15);
               }}
-              nodeVal={(node: object) => (node as GraphNodeObj).val || 2}
+              nodeVal={(node: object) => (node as GraphNodeObj).val || 1}
               nodeLabel={(node: object) => {
                 const n = node as GraphNodeObj;
                 return `${n.name} (${n.entity_type})`;
               }}
               nodeOpacity={0.9}
-              nodeRelSize={5}
+              nodeRelSize={4}
+              nodeThreeObject={(node: object) => {
+                const n = node as GraphNodeObj;
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                const SpriteText = require("three-spritetext").default;
+                const sprite = new SpriteText(n.name);
+                sprite.color = n.colour || "#737373";
+                sprite.textHeight = 2 + (n.val / 12) * 2;
+                sprite.backgroundColor = "rgba(0,0,0,0.6)";
+                sprite.padding = 1;
+                sprite.borderRadius = 2;
+                return sprite;
+              }}
+              nodeThreeObjectExtend={true}
+              /* ── Force simulation tuning (CP3) ── */
+              d3AlphaDecay={0.02}
+              d3VelocityDecay={0.3}
+              warmupTicks={100}
+              cooldownTicks={300}
               linkColor={() => "rgba(0,255,65,0.15)"}
               linkWidth={1}
               linkDirectionalArrowLength={3}
@@ -1323,7 +1403,7 @@ export default function BattlefieldTab() {
 
       {/* RIGHT PANE: Event Stream */}
       <div
-        className="w-[220px] shrink-0"
+        className="w-[280px] shrink-0 flex flex-col h-full overflow-hidden"
         style={{
           background: "#0d0d0d",
           borderLeft: "1px solid rgba(0,255,65,0.2)",

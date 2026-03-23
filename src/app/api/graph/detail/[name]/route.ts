@@ -90,6 +90,82 @@ function extractContent(result: Record<string, unknown> | null): unknown[] {
   return [];
 }
 
+interface TraverseEntity {
+  name: string;
+  relationship: string;
+  direction: string;
+  depth: number;
+  entity_type?: string;
+}
+
+interface TraverseResponse {
+  start_entity?: string;
+  entities?: TraverseEntity[];
+}
+
+/**
+ * Extract relationships from rag_traverse response.
+ * rag_traverse returns { start_entity, entities: [{ name, relationship, direction, depth }] }.
+ * Convert to { target, type, direction } relative to the queried entity.
+ */
+function extractTraverseRelationships(
+  result: Record<string, unknown> | null,
+  queriedName: string
+): Array<{ target: string; type: string; direction: string }> {
+  if (!result) return [];
+
+  let traverseData: TraverseResponse | null = null;
+
+  // Navigate JSON-RPC result -> content[].text
+  const rpcResult = result.result as Record<string, unknown> | undefined;
+  if (rpcResult) {
+    const content = rpcResult.content as Array<{ text?: string }> | undefined;
+    if (content && Array.isArray(content)) {
+      for (const item of content) {
+        if (item.text) {
+          try {
+            const parsed = JSON.parse(item.text);
+            if (parsed.start_entity && parsed.entities) {
+              traverseData = parsed as TraverseResponse;
+              break;
+            }
+          } catch {
+            continue;
+          }
+        }
+      }
+    }
+  }
+
+  // Handle case where result itself is the traverse response (no JSON-RPC wrapper)
+  if (!traverseData) {
+    const direct = result as unknown as TraverseResponse;
+    if (direct.start_entity && direct.entities) {
+      traverseData = direct;
+    }
+  }
+
+  if (!traverseData || !traverseData.entities) return [];
+
+  const relationships: Array<{ target: string; type: string; direction: string }> = [];
+
+  for (const ent of traverseData.entities) {
+    if (!ent.name || !ent.relationship) continue;
+    if (isBlocked(ent.name)) continue;
+
+    const dir = (ent.direction || "outbound").toLowerCase();
+    const direction = (dir === "inbound" || dir === "incoming") ? "incoming" : "outgoing";
+
+    relationships.push({
+      target: ent.name,
+      type: ent.relationship,
+      direction,
+    });
+  }
+
+  return relationships;
+}
+
 interface ExecutionLogEntry {
   operation: string;
   tool_or_service: string | null;
@@ -134,30 +210,19 @@ export async function GET(
   try {
     const [entityResult, traverseResult, executionLog] = await Promise.all([
       ragCall("memory_search_entities", { query: name, top_k: 5 }, 1),
-      ragCall("rag_traverse", { start_node: name, max_depth: 1 }, 2),
+      ragCall("rag_traverse", { entity_name: name, max_depth: 1 }, 2),
       fetchExecutionLog(name),
     ]);
 
     const entities = extractContent(entityResult) as Array<Record<string, unknown>>;
-    const relations = extractContent(traverseResult) as Array<Record<string, unknown>>;
 
     // Find best-match entity
     const entity = entities.find(
       (e) => (e.name as string || "").toLowerCase() === name.toLowerCase()
     ) || entities[0] || { name, entity_type: "unknown", description: "" };
 
-    // Build relationships list, filtering R17
-    const relationships = relations
-      .filter((r) => {
-        const src = (r.source as string) || "";
-        const tgt = (r.target as string) || "";
-        return !isBlocked(src) && !isBlocked(tgt);
-      })
-      .map((r) => ({
-        target: (r.target as string) || (r.source as string) || "",
-        type: (r.relation_type as string) || (r.type as string) || "related_to",
-        direction: ((r.source as string) || "").toLowerCase() === name.toLowerCase() ? "outgoing" : "incoming",
-      }));
+    // Extract relationships from rag_traverse using the proper parser
+    const relationships = extractTraverseRelationships(traverseResult, name);
 
     return NextResponse.json({
       entity: {

@@ -56,7 +56,7 @@ export default function EventStream() {
   }
 
   return (
-    <div className="flex flex-col h-full border-r border-border">
+    <div className="flex flex-col h-full">
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-2 py-1 border-b border-border">
         <div className="flex items-center gap-2">
