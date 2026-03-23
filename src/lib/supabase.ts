@@ -2,22 +2,47 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let _supabase: SupabaseClient | null = null;
 
-function getSupabase(): SupabaseClient {
+function getSupabase(): SupabaseClient | null {
   if (!_supabase) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_KEY;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) {
-      throw new Error("Supabase env vars not set");
+      console.warn(
+        "Supabase env vars not set — running in degraded mode. " +
+          `Missing: ${[!url && "NEXT_PUBLIC_SUPABASE_URL", !key && "NEXT_PUBLIC_SUPABASE_ANON_KEY"].filter(Boolean).join(", ")}`
+      );
+      return null;
     }
     _supabase = createClient(url, key);
   }
   return _supabase;
 }
 
-// Proxy that lazily initializes — avoids crash during Next.js static build
+// No-op stub: any property access returns a chainable function that resolves to
+// { data: null, error: { message: "Supabase not configured" } }.
+// This prevents crashes when env vars are missing at runtime.
+const NO_OP_RESULT = { data: null, error: { message: "Supabase not configured" } };
+
+function createNoOpChain(): unknown {
+  const fn = (..._args: unknown[]): unknown => createNoOpChain();
+  fn.then = (resolve: (v: unknown) => unknown) => Promise.resolve(NO_OP_RESULT).then(resolve);
+  return new Proxy(fn, {
+    get(_target, prop) {
+      if (prop === "then") return fn.then;
+      return fn;
+    },
+  });
+}
+
+// Proxy that lazily initializes — avoids crash during Next.js static build.
+// Returns no-op stubs when env vars are missing instead of throwing.
 export const supabase = new Proxy({} as SupabaseClient, {
   get(_target, prop) {
-    return (getSupabase() as unknown as Record<string | symbol, unknown>)[prop];
+    const client = getSupabase();
+    if (!client) {
+      return createNoOpChain();
+    }
+    return (client as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
 
