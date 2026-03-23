@@ -24,6 +24,7 @@ interface GraphNode {
   entity_type: string;
   description: string;
   status: string;
+  related_projects?: string[];
 }
 
 interface GraphEdge {
@@ -135,14 +136,16 @@ function isBlocked(name: string): boolean {
 
 export async function GET() {
   try {
-    // Step A & B: fetch agents and services in parallel
-    const [agentsResult, servicesResult] = await Promise.all([
+    // Step A, B, C: fetch agents, services, and workflows in parallel
+    const [agentsResult, servicesResult, workflowsResult] = await Promise.all([
       ragCall("memory_search_entities", { query: "agent", entity_type: "agent", top_k: 50 }, 1),
       ragCall("memory_search_entities", { query: "service", entity_type: "service", top_k: 50 }, 2),
+      ragCall("memory_search_entities", { query: "workflow", entity_type: "workflow", top_k: 20 }, 6),
     ]);
 
     const agentEntities = extractContent(agentsResult) as RagEntity[];
     const serviceEntities = extractContent(servicesResult) as RagEntity[];
+    const workflowEntities = extractContent(workflowsResult) as RagEntity[];
 
     // Step C & D: traverse for edges
     const [sovereignTraverse, ragTraverse, supaTraverse] = await Promise.all([
@@ -163,6 +166,7 @@ export async function GET() {
         entity_type: "agent",
         description: (e.description as string) || "",
         status: (e.status as string) || "operational",
+        related_projects: Array.isArray(e.related_projects) ? (e.related_projects as string[]) : [],
       });
     }
 
@@ -175,7 +179,23 @@ export async function GET() {
         entity_type: "service",
         description: (e.description as string) || "",
         status: (e.status as string) || "operational",
+        related_projects: Array.isArray(e.related_projects) ? (e.related_projects as string[]) : [],
       });
+    }
+
+    for (const e of workflowEntities) {
+      const name = e.name || "";
+      if (!name || isBlocked(name)) continue;
+      if (!nodeMap.has(name)) {
+        nodeMap.set(name, {
+          id: name,
+          name,
+          entity_type: "workflow",
+          description: (e.description as string) || "",
+          status: (e.status as string) || "operational",
+          related_projects: Array.isArray(e.related_projects) ? (e.related_projects as string[]) : [],
+        });
+      }
     }
 
     // Build edge set
@@ -219,11 +239,11 @@ export async function GET() {
     const nodes = Array.from(nodeMap.values());
     const edges = Array.from(edgeSet.values());
 
-    return NextResponse.json({ nodes, edges }, {
+    return NextResponse.json({ nodes, edges, links: edges }, {
       headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (err) {
     console.error("Graph API error:", err);
-    return NextResponse.json({ nodes: [], edges: [], error: String(err) }, { status: 500 });
+    return NextResponse.json({ nodes: [], edges: [], links: [], error: String(err) }, { status: 500 });
   }
 }
