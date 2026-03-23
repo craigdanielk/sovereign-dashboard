@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Shell from "@/components/shell/Shell";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -8,8 +9,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SOVEREIGN Dashboard",
-  description: "Operations cockpit for multi-agent orchestration",
+  title: "SOVEREIGN \u2014 Command Surface",
+  description: "Spatial operations workspace for multi-agent orchestration",
 };
 
 export default function RootLayout({
@@ -20,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${geistMono.variable} antialiased`}>
-        {children}
+        <Shell>{children}</Shell>
       </body>
     </html>
   );

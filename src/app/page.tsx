@@ -1,61 +1,64 @@
 "use client";
 
-import LiveLogs from "@/components/LiveLogs";
-import BriefQueue from "@/components/BriefQueue";
-import AgentDispatch from "@/components/AgentDispatch";
-import SystemHealth from "@/components/SystemHealth";
-import Retrospectives from "@/components/Retrospectives";
+import WorkspaceCard from "@/components/workspace/WorkspaceCard";
+import { WORKSPACES } from "@/lib/types";
 
-export default function Dashboard() {
+// Spatial positions for the 4 workspace cards on the canvas
+const CARD_POSITIONS: Record<string, React.CSSProperties> = {
+  "north-star": { top: "8%", left: "6%" },
+  r17: { top: "6%", right: "8%" },
+  "champion-grip": { bottom: "12%", left: "8%" },
+  "comms-hub": { bottom: "10%", right: "6%" },
+};
+
+export default function RootWhiteboard() {
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Top bar */}
-      <header className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-border bg-bg-secondary">
-        <div className="flex items-center gap-3">
-          <span className="text-lg font-bold tracking-widest text-accent-cyan">SOVEREIGN</span>
-          <span className="text-xs text-text-muted border-l border-border pl-3">
-            Operations Dashboard
-          </span>
-        </div>
-        <div className="flex items-center gap-4 text-xs text-text-muted">
-          <span>
-            {new Date().toLocaleDateString("en-GB", {
-              weekday: "short",
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-          </span>
-          <span className="text-accent-green">APQC 1.0</span>
-        </div>
-      </header>
+    <div className="relative w-full h-full overflow-hidden bg-bg-primary">
+      {/* Grid background pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
 
-      {/* Main grid */}
-      <div className="flex-1 grid grid-cols-12 grid-rows-2 gap-0 overflow-hidden min-h-0">
-        {/* Execution Log — full left side */}
-        <div className="col-span-7 row-span-2 border-r border-border min-h-0">
-          <LiveLogs />
+      {/* Center label */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="text-center">
+          <h1 className="text-4xl font-black tracking-[0.3em] text-text-muted/20 uppercase">
+            Command Surface
+          </h1>
+          <p className="text-xs text-text-muted/15 mt-2 tracking-widest uppercase">
+            SOVEREIGN Orchestration Workspace
+          </p>
         </div>
+      </div>
 
-        {/* Top right: Brief Queue + Agent Dispatch */}
-        <div className="col-span-5 row-span-1 border-b border-border overflow-hidden grid grid-cols-2 gap-0 min-h-0">
-          <div className="border-r border-border overflow-hidden">
-            <BriefQueue />
-          </div>
-          <div className="overflow-hidden">
-            <AgentDispatch />
-          </div>
-        </div>
+      {/* Workspace cards — spatially positioned */}
+      {WORKSPACES.map((ws) => (
+        <WorkspaceCard
+          key={ws.slug}
+          workspace={ws}
+          style={CARD_POSITIONS[ws.slug]}
+        />
+      ))}
 
-        {/* Bottom right: System Health + Retrospectives */}
-        <div className="col-span-5 row-span-1 overflow-hidden grid grid-cols-2 gap-0 min-h-0">
-          <div className="border-r border-border overflow-hidden">
-            <SystemHealth />
-          </div>
-          <div className="overflow-hidden">
-            <Retrospectives />
-          </div>
-        </div>
+      {/* Quick stats footer */}
+      <div className="absolute bottom-0 left-0 right-0 px-6 py-2 flex items-center gap-6 text-[10px] text-text-muted border-t border-border/50 bg-bg-primary/80 backdrop-blur-sm">
+        <span>4 workspaces</span>
+        <span className="text-border">|</span>
+        <span>
+          {new Date().toLocaleDateString("en-GB", {
+            weekday: "short",
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
+        </span>
+        <span className="text-border">|</span>
+        <span className="text-accent-cyan">cmd+k to search</span>
       </div>
     </div>
   );
