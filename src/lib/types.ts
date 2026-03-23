@@ -1,42 +1,67 @@
-// ── Workspace types ──────────────────────────────────────────────
+// ── Tab definitions ─────────────────────────────────────────────
+export interface TabDef {
+  key: string;
+  label: string;
+  shortLabel: string;
+  path: string;
+}
+
+export const TABS: TabDef[] = [
+  { key: "root", label: "Root", shortLabel: "ROOT", path: "/" },
+  { key: "north-star", label: "North Star", shortLabel: "NS", path: "/north-star" },
+  { key: "battlefield", label: "Battlefield", shortLabel: "BF", path: "/battlefield" },
+  { key: "recon", label: "RECON", shortLabel: "RCN", path: "/recon" },
+  { key: "r17", label: "R17", shortLabel: "R17", path: "/r17" },
+  { key: "comms", label: "Comms", shortLabel: "COM", path: "/comms" },
+  { key: "artifacts", label: "Artifacts", shortLabel: "ART", path: "/artifacts" },
+  { key: "command", label: "Command", shortLabel: "CMD", path: "/command" },
+];
+
+// ── Workspace types (Root tab cards) ────────────────────────────
 export interface Workspace {
   slug: string;
   name: string;
-  colour: string; // tailwind colour token e.g. "accent-cyan"
+  colour: string;
   description: string;
-  icon: string; // text icon/emoji
-  pinCount?: number;
+  icon: string;
+  supabaseTable?: string;
+  statusField?: string;
 }
 
-// Static workspace definitions (root whiteboard cards)
 export const WORKSPACES: Workspace[] = [
   {
     slug: "north-star",
     name: "North Star",
-    colour: "accent-cyan",
-    description: "Strategic goals, OKRs, and long-term vision",
+    colour: "accent-green",
+    description: "BRIEFs, agents, strategic goals",
     icon: "NS",
+    supabaseTable: "briefs",
+    statusField: "status",
   },
   {
     slug: "r17",
     name: "R17 Ventures",
     colour: "accent-purple",
-    description: "Client projects, briefs, and deliverables",
+    description: "Client projects and deliverables",
     icon: "R17",
+    supabaseTable: "r17_briefs",
+    statusField: "status",
   },
   {
-    slug: "champion-grip",
-    name: "Champion Grip",
-    colour: "accent-green",
-    description: "Product development and operations",
-    icon: "CG",
+    slug: "battlefield",
+    name: "Battlefield",
+    colour: "accent-cyan",
+    description: "System graph, agents, workflows",
+    icon: "BF",
+    supabaseTable: "execution_log",
   },
   {
-    slug: "comms-hub",
+    slug: "comms",
     name: "Comms Hub",
     colour: "accent-yellow",
-    description: "Unified communications across all platforms",
+    description: "Unified communications inbox",
     icon: "CH",
+    supabaseTable: "communications",
   },
 ];
 
@@ -104,6 +129,39 @@ export interface Artifact {
   url: string | null;
   brief_id: number | null;
   workspace_slug: string | null;
+  status: string | null;
+  created_at: string;
+}
+
+export interface FeedSource {
+  id: number;
+  name: string;
+  url: string | null;
+  source_type: string;
+  status: string;
+  last_fetched_at: string | null;
+  created_at: string;
+}
+
+export interface PatternDetection {
+  id: number;
+  feed_source_id: number | null;
+  pattern_type: string;
+  signal: string;
+  confidence: number | null;
+  client_slug: string | null;
+  status: string;
+  created_at: string;
+  payload: Record<string, unknown> | null;
+}
+
+export interface Contact {
+  id: number;
+  name: string;
+  email: string | null;
+  company: string | null;
+  platform: string | null;
+  client_slug: string | null;
   created_at: string;
 }
 
@@ -119,6 +177,9 @@ export const STATUS_COLOURS: Record<string, string> = {
   DONE: "accent-green",
   BLOCKED: "accent-red",
   DRAFT: "text-muted",
+  GO: "accent-green",
+  GAP: "accent-yellow",
+  SKIP: "accent-red",
 };
 
 export const PRIORITY_COLOURS: Record<string, string> = {

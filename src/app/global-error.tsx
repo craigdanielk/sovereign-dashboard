@@ -1,20 +1,17 @@
 "use client";
 
-// This page must be completely self-contained (own <html>/<body>) and
-// must not import any component that calls useRouter/usePathname during SSR.
-
 export default function GlobalError({
-  reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  unstable_retry: () => void;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
         style={{
-          background: "#0a0a0f",
-          color: "#e4e4ef",
+          background: "#0a0a0a",
+          color: "#d4d4d4",
           fontFamily: "monospace",
           display: "flex",
           alignItems: "center",
@@ -24,22 +21,23 @@ export default function GlobalError({
         }}
       >
         <div style={{ textAlign: "center" }}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
-            Something went wrong
+          <h2 style={{ fontSize: "1rem", color: "#ff1744", marginBottom: "1rem" }}>
+            SYSTEM ERROR
           </h2>
           <button
-            onClick={() => reset()}
+            onClick={() => unstable_retry()}
             style={{
               padding: "0.5rem 1rem",
-              background: "#1a1a2e",
-              border: "1px solid #2a2a40",
-              color: "#e4e4ef",
-              borderRadius: "0.375rem",
+              background: "#141414",
+              border: "1px solid #1e1e1e",
+              color: "#00ff41",
+              borderRadius: "0.25rem",
               cursor: "pointer",
               fontSize: "0.75rem",
+              fontFamily: "monospace",
             }}
           >
-            Try again
+            RETRY
           </button>
         </div>
       </body>

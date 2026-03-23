@@ -1,16 +1,19 @@
-// CSS colour values for dynamic usage (avoiding Tailwind dynamic class generation issues)
-// These map to the theme tokens defined in globals.css
+// MIROFISH war-room terminal colour values
+// Maps to theme tokens in globals.css
 
 export const COLOUR_VALUES: Record<string, string> = {
-  "accent-green": "#22c55e",
-  "accent-yellow": "#eab308",
-  "accent-red": "#ef4444",
-  "accent-blue": "#3b82f6",
-  "accent-purple": "#a855f7",
-  "accent-cyan": "#06b6d4",
-  "text-primary": "#e4e4ef",
-  "text-secondary": "#8888a0",
-  "text-muted": "#555570",
+  "accent-green": "#00ff41",
+  "accent-green-dim": "#00cc33",
+  "accent-lime": "#39ff14",
+  "accent-yellow": "#ffb800",
+  "accent-red": "#ff1744",
+  "accent-blue": "#00b0ff",
+  "accent-purple": "#b388ff",
+  "accent-cyan": "#00e5ff",
+  "accent-orange": "#ff6d00",
+  "text-primary": "#d4d4d4",
+  "text-secondary": "#737373",
+  "text-muted": "#404040",
 };
 
 export function getStatusColour(status: string): string {
@@ -52,13 +55,24 @@ export function getPlatformColour(platform: string): string {
 }
 
 export function getWorkspaceColour(colourToken: string): string {
-  return COLOUR_VALUES[colourToken] || COLOUR_VALUES["accent-cyan"];
+  return COLOUR_VALUES[colourToken] || COLOUR_VALUES["accent-green"];
 }
 
 export function withAlpha(hex: string, alpha: number): string {
-  // Convert hex to rgba
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// Agent type colour mapping for event stream
+export function getAgentColour(agent: string): string {
+  const a = agent.toUpperCase();
+  if (a === "SOVEREIGN" || a === "SOVEREIGN-R17") return COLOUR_VALUES["accent-green"];
+  if (a === "FORGE" || a === "DELIVER") return COLOUR_VALUES["accent-cyan"];
+  if (a === "RECON" || a === "PRISM") return COLOUR_VALUES["accent-blue"];
+  if (a === "SCRIBE" || a === "LORE") return COLOUR_VALUES["accent-purple"];
+  if (a === "KIRA" || a === "COMPASS") return COLOUR_VALUES["accent-orange"];
+  if (a === "VERIFY" || a === "PULSE") return COLOUR_VALUES["accent-yellow"];
+  return COLOUR_VALUES["accent-lime"];
 }

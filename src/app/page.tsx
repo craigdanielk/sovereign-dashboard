@@ -1,53 +1,194 @@
 "use client";
 
-import WorkspaceCard from "@/components/workspace/WorkspaceCard";
+import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { WORKSPACES } from "@/lib/types";
+import { getWorkspaceColour, withAlpha } from "@/lib/colours";
 
-// Spatial positions for the 4 workspace cards on the canvas
-const CARD_POSITIONS: Record<string, React.CSSProperties> = {
-  "north-star": { top: "8%", left: "6%" },
-  r17: { top: "6%", right: "8%" },
-  "champion-grip": { bottom: "12%", left: "8%" },
-  "comms-hub": { bottom: "10%", right: "6%" },
-};
+interface WorkspaceLiveCounts {
+  [slug: string]: number;
+}
+
+interface PinnedItem {
+  id: number;
+  workspace_slug: string;
+  item_type: string;
+  item_id: number;
+  label?: string;
+}
 
 export default function RootWhiteboard() {
-  return (
-    <div className="relative w-full h-full overflow-hidden bg-bg-primary">
-      {/* Grid background pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            "linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
+  const [counts, setCounts] = useState<WorkspaceLiveCounts>({});
+  const [pins, setPins] = useState<PinnedItem[]>([]);
+  const [tick, setTick] = useState(0);
 
-      {/* Center label */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-center">
-          <h1 className="text-4xl font-black tracking-[0.3em] text-text-muted/20 uppercase">
-            Command Surface
-          </h1>
-          <p className="text-xs text-text-muted/15 mt-2 tracking-widest uppercase">
-            SOVEREIGN Orchestration Workspace
-          </p>
+  // Live tick every 5s for status freshness
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchCounts = useCallback(async () => {
+    // Briefs count (active)
+    const { data: briefs } = await supabase
+      .from("briefs")
+      .select("id")
+      .in("status", ["QUEUED", "CLAIMED", "IN_PROGRESS"]);
+
+    // R17 briefs count
+    const { data: r17 } = await supabase
+      .from("r17_briefs")
+      .select("id")
+      .in("status", ["QUEUED", "CLAIMED", "IN_PROGRESS"]);
+
+    // Execution log count (last 1h)
+    const cutoff = new Date(Date.now() - 3600000).toISOString();
+    const { data: logs } = await supabase
+      .from("execution_log")
+      .select("id")
+      .gte("created_at", cutoff);
+
+    // Comms unread count
+    const { data: comms } = await supabase
+      .from("communications")
+      .select("id")
+      .eq("is_read", false);
+
+    setCounts({
+      "north-star": briefs?.length || 0,
+      r17: r17?.length || 0,
+      battlefield: logs?.length || 0,
+      comms: comms?.length || 0,
+    });
+  }, []);
+
+  const fetchPins = useCallback(async () => {
+    const { data } = await supabase
+      .from("workspace_pins")
+      .select("*")
+      .order("position", { ascending: true })
+      .limit(8);
+    if (data) setPins(data as PinnedItem[]);
+  }, []);
+
+  useEffect(() => {
+    fetchCounts();
+    fetchPins();
+
+    const channel = supabase
+      .channel("root-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "briefs" }, () => fetchCounts())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchCounts, fetchPins]);
+
+  // Suppress unused tick warning — tick drives re-render for time display
+  void tick;
+
+  return (
+    <div className="h-full flex flex-col bg-bg-primary">
+      {/* Grid background */}
+      <div className="flex-1 relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage:
+              "linear-gradient(#1e1e1e 1px, transparent 1px), linear-gradient(90deg, #1e1e1e 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }}
+        />
+
+        {/* Center title */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <h1 className="text-2xl font-black tracking-[0.4em] text-accent-green/10 uppercase glow-green">
+              COMMAND SURFACE
+            </h1>
+          </div>
+        </div>
+
+        {/* Workspace cards — 2x2 grid */}
+        <div className="absolute inset-4 grid grid-cols-2 grid-rows-2 gap-3">
+          {WORKSPACES.map((ws) => {
+            const colour = getWorkspaceColour(ws.colour);
+            const count = counts[ws.slug] || 0;
+            return (
+              <Link
+                key={ws.slug}
+                href={`/${ws.slug === "north-star" ? "north-star" : ws.slug === "comms" ? "comms" : ws.slug}`}
+                className="group relative rounded border border-border hover:border-border-bright bg-bg-card hover:bg-bg-card-hover transition-all"
+                style={{ borderLeftColor: withAlpha(colour, 0.5), borderLeftWidth: 3 }}
+              >
+                <div className="p-4 h-full flex flex-col">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-lg font-black"
+                        style={{ color: colour }}
+                      >
+                        {ws.icon}
+                      </span>
+                      <span className="text-xs font-bold text-text-primary group-hover:text-white transition-colors">
+                        {ws.name}
+                      </span>
+                    </div>
+                    <span
+                      className="text-xl font-black tabular-nums"
+                      style={{ color: withAlpha(colour, 0.7) }}
+                    >
+                      {count}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-[10px] text-text-secondary flex-1">
+                    {ws.description}
+                  </p>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between mt-2">
+                    <span
+                      className="text-[9px] uppercase tracking-widest font-bold"
+                      style={{ color: withAlpha(colour, 0.6) }}
+                    >
+                      /{ws.slug}
+                    </span>
+                    <span className="text-[9px] text-text-muted group-hover:text-text-secondary transition-colors">
+                      OPEN &gt;
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
-      {/* Workspace cards — spatially positioned */}
-      {WORKSPACES.map((ws) => (
-        <WorkspaceCard
-          key={ws.slug}
-          workspace={ws}
-          style={CARD_POSITIONS[ws.slug]}
-        />
-      ))}
+      {/* Pinned items row */}
+      {pins.length > 0 && (
+        <div className="shrink-0 px-4 py-1.5 border-t border-border flex items-center gap-3 overflow-x-auto">
+          <span className="text-[9px] text-text-muted font-bold tracking-wider shrink-0">
+            PINNED
+          </span>
+          {pins.map((pin) => (
+            <span
+              key={pin.id}
+              className="text-[10px] text-text-secondary px-2 py-0.5 bg-bg-card rounded border border-border shrink-0"
+            >
+              {pin.item_type} #{pin.item_id}
+            </span>
+          ))}
+        </div>
+      )}
 
-      {/* Quick stats footer */}
-      <div className="absolute bottom-0 left-0 right-0 px-6 py-2 flex items-center gap-6 text-[10px] text-text-muted border-t border-border/50 bg-bg-primary/80 backdrop-blur-sm">
-        <span>4 workspaces</span>
+      {/* Status bar */}
+      <div className="shrink-0 px-4 py-1 border-t border-border flex items-center gap-4 text-[9px] text-text-muted">
+        <span>{WORKSPACES.length} workspaces</span>
         <span className="text-border">|</span>
         <span>
           {new Date().toLocaleDateString("en-GB", {
@@ -58,7 +199,7 @@ export default function RootWhiteboard() {
           })}
         </span>
         <span className="text-border">|</span>
-        <span className="text-accent-cyan">cmd+k to search</span>
+        <span className="text-accent-green/50">SOVEREIGN v2</span>
       </div>
     </div>
   );

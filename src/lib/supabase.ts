@@ -24,6 +24,7 @@ function getSupabase(): SupabaseClient | null {
 const NO_OP_RESULT = { data: null, error: { message: "Supabase not configured" } };
 
 function createNoOpChain(): unknown {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const fn = (..._args: unknown[]): unknown => createNoOpChain();
   fn.then = (resolve: (v: unknown) => unknown) => Promise.resolve(NO_OP_RESULT).then(resolve);
   return new Proxy(fn, {
