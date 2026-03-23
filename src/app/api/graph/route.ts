@@ -11,12 +11,22 @@ interface RagEntity {
   [key: string]: unknown;
 }
 
-interface RagRelation {
-  source?: string;
-  target?: string;
-  relation_type?: string;
-  type?: string;
-  [key: string]: unknown;
+// Shape returned by rag_traverse inside the entities array
+interface TraverseEntity {
+  name: string;
+  relationship: string;
+  direction: string; // "outbound" | "inbound" | "outgoing" | "incoming"
+  depth: number;
+  entity_type?: string;
+  description?: string;
+}
+
+// Full rag_traverse response (inside content[].text)
+interface TraverseResponse {
+  status?: string;
+  start_entity?: string;
+  entities?: TraverseEntity[];
+  count?: number;
 }
 
 interface GraphNode {
@@ -122,6 +132,77 @@ function extractContent(result: Record<string, unknown> | null): unknown[] {
   return [];
 }
 
+/**
+ * Extract edges from a rag_traverse JSON-RPC response.
+ *
+ * rag_traverse returns: { start_entity, entities: [{ name, relationship, direction, depth }] }
+ * We convert each entity into a { source, target, type } edge relative to start_entity.
+ * For depth-2 entities we still connect them to start_entity since the flat list
+ * doesn't indicate which intermediate node is the parent.
+ */
+function extractTraverseEdges(result: Record<string, unknown> | null): { edges: GraphEdge[]; entities: TraverseEntity[] } {
+  if (!result) return { edges: [], entities: [] };
+
+  // Navigate JSON-RPC result → content[].text
+  let traverseData: TraverseResponse | null = null;
+
+  const rpcResult = result.result as Record<string, unknown> | undefined;
+  if (rpcResult) {
+    const content = rpcResult.content as Array<{ text?: string }> | undefined;
+    if (content && Array.isArray(content)) {
+      for (const item of content) {
+        if (item.text) {
+          try {
+            const parsed = JSON.parse(item.text);
+            if (parsed.start_entity && parsed.entities) {
+              traverseData = parsed as TraverseResponse;
+              break;
+            }
+          } catch {
+            continue;
+          }
+        }
+      }
+    }
+  }
+
+  // Also handle case where result itself is the traverse response (no JSON-RPC wrapper)
+  if (!traverseData) {
+    const direct = result as unknown as TraverseResponse;
+    if (direct.start_entity && direct.entities) {
+      traverseData = direct;
+    }
+  }
+
+  if (!traverseData || !traverseData.start_entity || !traverseData.entities) {
+    return { edges: [], entities: [] };
+  }
+
+  const startEntity = traverseData.start_entity;
+  const edges: GraphEdge[] = [];
+
+  for (const ent of traverseData.entities) {
+    if (!ent.name || !ent.relationship) continue;
+
+    const dir = (ent.direction || "outbound").toLowerCase();
+    // For outbound/outgoing: start_entity → entity (source=start, target=entity)
+    // For inbound/incoming: entity → start_entity (source=entity, target=start)
+    let source: string;
+    let target: string;
+    if (dir === "inbound" || dir === "incoming") {
+      source = ent.name;
+      target = startEntity;
+    } else {
+      source = startEntity;
+      target = ent.name;
+    }
+
+    edges.push({ source, target, type: ent.relationship });
+  }
+
+  return { edges, entities: traverseData.entities };
+}
+
 // R17 firewall: never expose these
 const R17_BLOCKED = new Set([
   "r17-ventures",
@@ -139,7 +220,7 @@ function isBlocked(name: string): boolean {
 // Normalize entity names: strip "agent::", "service::", etc. prefixes to canonical short names
 function canonicalName(raw: string): string {
   // Remove known prefixes
-  const prefixes = ["agent::", "service::", "tool::", "workflow::", "gap::"];
+  const prefixes = ["agent::", "service::", "tool::", "workflow::", "gap::", "repository::"];
   let name = raw;
   for (const prefix of prefixes) {
     if (name.toLowerCase().startsWith(prefix)) {
@@ -173,13 +254,6 @@ export async function GET() {
       ragCall("rag_traverse", { entity_name: "agent::SOVEREIGN", max_depth: 2 }, 3),
       ragCall("rag_traverse", { entity_name: "RAG-System", max_depth: 1 }, 4),
       ragCall("rag_traverse", { entity_name: "Supabase", max_depth: 1 }, 5),
-    ]);
-
-    // Also try with start_node param (RAG MCP may use either field name)
-    const [sovTraverse2, ragTraverse2, supaTraverse2] = await Promise.all([
-      ragCall("rag_traverse", { start_node: "agent::SOVEREIGN", max_depth: 2 }, 7),
-      ragCall("rag_traverse", { start_node: "RAG-System", max_depth: 1 }, 8),
-      ragCall("rag_traverse", { start_node: "Supabase", max_depth: 1 }, 9),
     ]);
 
     // Build node map with deduplication
@@ -240,17 +314,25 @@ export async function GET() {
       upsertNode(name, "workflow", (e.description as string) || "", (e.status as string) || "operational", (e.last_updated as string) || null, Array.isArray(e.related_projects) ? (e.related_projects as string[]) : []);
     }
 
-    // Build edge set from all traverse results
+    // Build edge set from all traverse results using extractTraverseEdges
+    // which correctly parses the rag_traverse response format:
+    // { start_entity: "...", entities: [{ name, relationship, direction, depth }] }
     const edgeSet = new Map<string, GraphEdge>();
 
-    const allTraverseResults = [sovereignTraverse, ragTraverse, supaTraverse, sovTraverse2, ragTraverse2, supaTraverse2];
+    const allTraverseResults = [sovereignTraverse, ragTraverse, supaTraverse];
 
     for (const traverseResult of allTraverseResults) {
-      const relations = extractContent(traverseResult) as RagRelation[];
-      for (const r of relations) {
-        const rawSource = r.source || "";
-        const rawTarget = r.target || "";
-        if (!rawSource || !rawTarget) continue;
+      const { edges: rawEdges, entities: travEntities } = extractTraverseEdges(traverseResult);
+
+      // Upsert nodes discovered via traversal (with entity_type from traverse)
+      for (const ent of travEntities) {
+        if (!ent.name) continue;
+        upsertNode(ent.name, ent.entity_type || "unknown", ent.description || "", "operational", null);
+      }
+
+      for (const e of rawEdges) {
+        const rawSource = e.source;
+        const rawTarget = e.target;
         if (isNodeCard(rawSource) || isNodeCard(rawTarget)) continue;
 
         const source = canonicalName(rawSource);
@@ -258,7 +340,7 @@ export async function GET() {
         if (!source || !target || source === target) continue;
         if (isBlocked(source) || isBlocked(target)) continue;
 
-        const relType = r.relation_type || r.type || "related_to";
+        const relType = e.type || "related_to";
         const key = `${source}--${relType}--${target}`;
         // Also check reverse to avoid duplicated bidirectional edges
         const reverseKey = `${target}--${relType}--${source}`;
