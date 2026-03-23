@@ -7,7 +7,7 @@ import { getPlatformColour } from "@/lib/colours";
 
 const PLATFORMS = ["all", "gmail", "slack", "monday", "whatsapp", "linkedin", "github"];
 
-export default function CommsPage() {
+export default function CommsTab() {
   const [messages, setMessages] = useState<Communication[]>([]);
   const [platformFilter, setPlatformFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState<string | null>(null);
@@ -148,14 +148,12 @@ export default function CommsPage() {
                 msg.is_read ? "opacity-50" : ""
               }`}
             >
-              {/* Unread dot */}
               <span className="w-2 shrink-0 flex justify-center">
                 {!msg.is_read && (
                   <span className="w-1.5 h-1.5 rounded-full bg-accent-blue" />
                 )}
               </span>
 
-              {/* Platform label */}
               <span
                 className="text-[9px] uppercase font-bold shrink-0 w-14"
                 style={{ color: getPlatformColour(msg.platform) }}
@@ -163,7 +161,6 @@ export default function CommsPage() {
                 {msg.platform}
               </span>
 
-              {/* Sender */}
               <span
                 className={`text-[10px] shrink-0 w-28 truncate ${
                   msg.is_read ? "text-text-secondary" : "text-text-primary font-bold"
@@ -172,7 +169,6 @@ export default function CommsPage() {
                 {msg.sender}
               </span>
 
-              {/* Subject + preview */}
               <div className="flex-1 flex items-baseline gap-2 min-w-0">
                 <span
                   className={`text-[10px] truncate ${
@@ -186,14 +182,12 @@ export default function CommsPage() {
                 </span>
               </div>
 
-              {/* Client slug */}
               {msg.client_slug && (
                 <span className="text-[9px] text-accent-purple shrink-0">
                   {msg.client_slug}
                 </span>
               )}
 
-              {/* Time */}
               <span className="text-[9px] text-text-muted shrink-0 w-8 text-right">
                 {timeAgo(msg.created_at)}
               </span>

@@ -11,7 +11,7 @@ interface AgentStripItem {
   briefId: number | null;
 }
 
-export default function NorthStarPage() {
+export default function NorthStarTab() {
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [agents, setAgents] = useState<AgentStripItem[]>([]);
   const [logs, setLogs] = useState<ExecutionLog[]>([]);
@@ -101,7 +101,6 @@ export default function NorthStarPage() {
   const filtered = briefs.filter((b) => b.status === briefTab);
   const tabs: Array<"QUEUED" | "CLAIMED" | "COMPLETED" | "FAILED"> = ["QUEUED", "CLAIMED", "COMPLETED", "FAILED"];
 
-  // Demo gate: count completed vs total for demo-related briefs
   const demoBriefs = briefs.filter((b) => b.name?.toLowerCase().includes("demo"));
   const demoCompleted = demoBriefs.filter((b) => b.status === "COMPLETED").length;
   const demoTotal = Math.max(demoBriefs.length, 5);
@@ -153,7 +152,7 @@ export default function NorthStarPage() {
         )}
       </div>
 
-      {/* Main content: 3 columns */}
+      {/* Main content: 2 columns */}
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left: BRIEF Queue */}
         <div className="flex-1 flex flex-col border-r border-border min-w-0">
@@ -162,7 +161,6 @@ export default function NorthStarPage() {
               <span className="text-[10px] font-bold text-accent-blue tracking-wider">
                 BRIEF QUEUE
               </span>
-              {/* Demo gate */}
               <span className="text-[9px] text-text-muted ml-auto">
                 DEMO GATE{" "}
                 <span className="text-accent-green font-bold">{demoCompleted}</span>

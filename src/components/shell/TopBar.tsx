@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { TABS } from "@/lib/types";
 
 export default function TopBar() {
   const [clock, setClock] = useState("");
   const [agentCount, setAgentCount] = useState(0);
   const [queueDepth, setQueueDepth] = useState(0);
   const [healthStatus, setHealthStatus] = useState<"ok" | "warn" | "error">("ok");
+  const [activeTab, setActiveTabLocal] = useState("root");
 
   // Live clock
   useEffect(() => {
@@ -27,16 +29,23 @@ export default function TopBar() {
     return () => clearInterval(interval);
   }, []);
 
+  // Listen for tab changes
+  useEffect(() => {
+    function onTabChange(e: Event) {
+      setActiveTabLocal((e as CustomEvent).detail);
+    }
+    window.addEventListener("tab-change", onTabChange);
+    return () => window.removeEventListener("tab-change", onTabChange);
+  }, []);
+
   // Live counts from Supabase
   const fetchCounts = useCallback(async () => {
-    // Queue depth: QUEUED + IN_PROGRESS briefs
     const { data: queued } = await supabase
       .from("briefs")
       .select("id")
-      .in("status", ["QUEUED", "IN_PROGRESS"]);
+      .in("status", ["QUEUED", "CLAIMED"]);
     setQueueDepth(queued?.length || 0);
 
-    // Active agents: distinct agents from recent execution_log (last 30min)
     const cutoff = new Date(Date.now() - 30 * 60000).toISOString();
     const { data: recentLogs } = await supabase
       .from("execution_log")
@@ -47,7 +56,6 @@ export default function TopBar() {
       setAgentCount(unique.size);
     }
 
-    // Health: check for recent failures
     const { data: failedRecent } = await supabase
       .from("briefs")
       .select("id")
@@ -79,9 +87,13 @@ export default function TopBar() {
     error: "bg-accent-red",
   };
 
+  // Breadcrumb
+  const currentTab = TABS.find((t) => t.key === activeTab);
+  const breadcrumb = currentTab && activeTab !== "root" ? currentTab.label : null;
+
   return (
     <header className="shrink-0 flex items-center justify-between px-4 py-1.5 border-b border-border bg-bg-secondary">
-      {/* Left: System name */}
+      {/* Left: System name + breadcrumb */}
       <div className="flex items-center gap-3">
         <span className="text-sm font-bold tracking-[0.2em] text-accent-green glow-green">
           SOVEREIGN
@@ -90,6 +102,14 @@ export default function TopBar() {
         <span className="text-[10px] text-text-secondary tracking-wider">
           WAR ROOM
         </span>
+        {breadcrumb && (
+          <>
+            <span className="text-text-muted text-[10px]">/</span>
+            <span className="text-[10px] text-accent-green/70 tracking-wider uppercase">
+              {breadcrumb}
+            </span>
+          </>
+        )}
       </div>
 
       {/* Right: Live stats + clock */}

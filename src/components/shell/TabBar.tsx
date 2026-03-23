@@ -1,31 +1,42 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { TABS } from "@/lib/types";
 
 export default function TabBar() {
-  const pathname = usePathname();
+  const [activeTab, setActiveTabLocal] = useState("root");
 
-  function isActive(tab: { key: string; path: string }): boolean {
-    if (tab.key === "root") return pathname === "/";
-    return pathname.startsWith(tab.path);
+  // Sync with global tab state
+  useEffect(() => {
+    function onTabChange(e: Event) {
+      setActiveTabLocal((e as CustomEvent).detail);
+    }
+    window.addEventListener("tab-change", onTabChange);
+    return () => window.removeEventListener("tab-change", onTabChange);
+  }, []);
+
+  function switchTab(key: string) {
+    const setter = (window as unknown as Record<string, unknown>).__setActiveTab as
+      | ((tab: string) => void)
+      | undefined;
+    if (setter) setter(key);
   }
 
   return (
     <nav className="shrink-0 flex items-center gap-0 px-2 border-b border-border bg-bg-primary overflow-x-auto">
-      {TABS.map((tab) => {
-        const active = isActive(tab);
+      {TABS.map((tab, idx) => {
+        const active = activeTab === tab.key;
         return (
-          <Link
+          <button
             key={tab.key}
-            href={tab.path}
+            onClick={() => switchTab(tab.key)}
             className={`px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase transition-colors whitespace-nowrap ${
               active ? "tab-active" : "tab-inactive"
             }`}
+            title={`${tab.label} (Ctrl+${idx + 1})`}
           >
             {tab.shortLabel}
-          </Link>
+          </button>
         );
       })}
 

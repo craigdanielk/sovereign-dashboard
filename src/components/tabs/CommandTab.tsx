@@ -13,12 +13,11 @@ interface ApprovalItem {
   created_at: string;
 }
 
-export default function CommandPage() {
+export default function CommandTab() {
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [recentBriefs, setRecentBriefs] = useState<Brief[]>([]);
 
   const fetchApprovals = useCallback(async () => {
-    // Fetch briefs that need approval (HITL gates)
     const { data: pendingBriefs } = await supabase
       .from("briefs")
       .select("*")
@@ -29,7 +28,6 @@ export default function CommandPage() {
     const items: ApprovalItem[] = [];
     if (pendingBriefs) {
       for (const b of pendingBriefs as Brief[]) {
-        // Check if it's an OUTREACH or LORE approval
         const name = b.name?.toLowerCase() || "";
         if (name.includes("outreach") || name.includes("lore") || name.includes("go lead")) {
           items.push({

@@ -1,10 +1,13 @@
 "use client";
 
+// Minimal global error boundary — must not use any hooks that require
+// navigation context because this page gets prerendered in isolation.
+
 export default function GlobalError({
-  unstable_retry,
+  reset,
 }: {
   error: Error & { digest?: string };
-  unstable_retry: () => void;
+  reset: () => void;
 }) {
   return (
     <html lang="en">
@@ -25,7 +28,7 @@ export default function GlobalError({
             SYSTEM ERROR
           </h2>
           <button
-            onClick={() => unstable_retry()}
+            onClick={() => reset()}
             style={{
               padding: "0.5rem 1rem",
               background: "#141414",

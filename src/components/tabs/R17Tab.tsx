@@ -13,7 +13,7 @@ interface ClientCard {
   latestUpdate: string | null;
 }
 
-export default function R17Page() {
+export default function R17Tab() {
   const [clients, setClients] = useState<ClientCard[]>([]);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [briefs, setBriefs] = useState<R17Brief[]>([]);

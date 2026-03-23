@@ -11,7 +11,7 @@ const SIGNAL_COLOURS: Record<string, string> = {
   SKIP: "#ff1744",
 };
 
-export default function ReconPage() {
+export default function ReconTab() {
   const [feedSources, setFeedSources] = useState<FeedSource[]>([]);
   const [patterns, setPatterns] = useState<PatternDetection[]>([]);
   const [signalFilter, setSignalFilter] = useState<string | null>(null);

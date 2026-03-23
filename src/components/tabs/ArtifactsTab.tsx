@@ -14,7 +14,7 @@ const TYPE_COLOURS: Record<string, string> = {
   outreach: "#ff6d00",
 };
 
-export default function ArtifactsPage() {
+export default function ArtifactsTab() {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
@@ -48,14 +48,12 @@ export default function ArtifactsPage() {
     };
   }, [fetchArtifacts]);
 
-  // Compute type counts
   const typeCounts: Record<string, number> = {};
   artifacts.forEach((a) => {
     typeCounts[a.type] = (typeCounts[a.type] || 0) + 1;
   });
   const types = Object.keys(typeCounts).sort();
 
-  // OUTREACH gate progress
   const outreachArtifacts = artifacts.filter((a) => a.type === "outreach");
   const outreachApproved = outreachArtifacts.filter((a) => a.status === "APPROVED").length;
 
@@ -108,7 +106,6 @@ export default function ArtifactsPage() {
           ))}
         </div>
 
-        {/* OUTREACH gate */}
         {outreachArtifacts.length > 0 && (
           <>
             <span className="text-text-muted text-[10px] ml-auto">|</span>

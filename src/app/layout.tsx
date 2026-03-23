@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Shell from "@/components/shell/Shell";
+import ClientShell from "@/components/shell/ClientShell";
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains",
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${jetbrainsMono.variable} antialiased`}>
-        <Shell>{children}</Shell>
+        <ClientShell>{children}</ClientShell>
       </body>
     </html>
   );

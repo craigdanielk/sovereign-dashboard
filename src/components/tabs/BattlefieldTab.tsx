@@ -30,7 +30,6 @@ interface MetricItem {
   colour: string;
 }
 
-// Simple canvas-based force graph (no D3 dependency)
 function useForceGraph(
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
   nodes: GraphNode[],
@@ -63,13 +62,10 @@ function useForceGraph(
       const h = canvas.height;
       const ns = nodesRef.current;
 
-      // Simple force simulation
       for (let i = 0; i < ns.length; i++) {
-        // Center gravity
         ns[i].vx += (w / 2 - ns[i].x) * 0.001;
         ns[i].vy += (h / 2 - ns[i].y) * 0.001;
 
-        // Node repulsion
         for (let j = i + 1; j < ns.length; j++) {
           const dx = ns[i].x - ns[j].x;
           const dy = ns[i].y - ns[j].y;
@@ -82,7 +78,6 @@ function useForceGraph(
         }
       }
 
-      // Edge attraction
       for (const edge of edges) {
         const src = ns.find((n) => n.id === edge.source);
         const tgt = ns.find((n) => n.id === edge.target);
@@ -97,7 +92,6 @@ function useForceGraph(
         tgt.vy -= (dy / dist) * force;
       }
 
-      // Apply velocity with damping
       for (const n of ns) {
         n.vx *= 0.9;
         n.vy *= 0.9;
@@ -107,10 +101,8 @@ function useForceGraph(
         n.y = Math.max(40, Math.min(h - 40, n.y));
       }
 
-      // Draw
       ctx.clearRect(0, 0, w, h);
 
-      // Edges
       for (const edge of edges) {
         const src = ns.find((n) => n.id === edge.source);
         const tgt = ns.find((n) => n.id === edge.target);
@@ -123,9 +115,7 @@ function useForceGraph(
         ctx.stroke();
       }
 
-      // Nodes
       for (const n of ns) {
-        // Glow for active nodes
         if (n.active) {
           ctx.beginPath();
           ctx.arc(n.x, n.y, n.size * 2 + 8, 0, Math.PI * 2);
@@ -141,7 +131,6 @@ function useForceGraph(
         ctx.lineWidth = n.active ? 2 : 1;
         ctx.stroke();
 
-        // Label
         ctx.fillStyle = n.active ? n.colour : "rgba(115, 115, 115, 0.8)";
         ctx.font = `${n.active ? "bold " : ""}16px monospace`;
         ctx.textAlign = "center";
@@ -160,7 +149,7 @@ function useForceGraph(
   }, [canvasRef, edges]);
 }
 
-export default function BattlefieldPage() {
+export default function BattlefieldTab() {
   const [metrics, setMetrics] = useState<MetricItem[]>([]);
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
@@ -189,7 +178,6 @@ export default function BattlefieldPage() {
   }, []);
 
   const fetchGraph = useCallback(async () => {
-    // Build graph from execution_log agent data
     const { data: recentLogs } = await supabase
       .from("execution_log")
       .select("agent, operation, brief_id, created_at")
@@ -213,7 +201,6 @@ export default function BattlefieldPage() {
       }
       agentSet.get(log.agent)!.count++;
 
-      // Create edges between agents that share brief_ids
       if (log.brief_id) {
         for (const [otherAgent, otherData] of agentSet) {
           if (otherAgent !== log.agent && otherData.briefId === log.brief_id) {
@@ -230,7 +217,6 @@ export default function BattlefieldPage() {
       }
     }
 
-    // Add SOVEREIGN as central node always
     if (!agentSet.has("sovereign")) {
       agentSet.set("sovereign", { count: 0, active: false, briefId: null });
     }
@@ -256,7 +242,6 @@ export default function BattlefieldPage() {
         active: data.active,
       });
 
-      // Connect all agents to SOVEREIGN
       if (agent !== "sovereign") {
         const key = ["sovereign", agent].sort().join("-sov-");
         edgeSet.set(key, { source: "sovereign", target: agent, label: "dispatch" });
