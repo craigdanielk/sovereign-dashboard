@@ -220,7 +220,7 @@ function isBlocked(name: string): boolean {
 // Normalize entity names: strip "agent::", "service::", etc. prefixes to canonical short names
 function canonicalName(raw: string): string {
   // Remove known prefixes
-  const prefixes = ["agent::", "service::", "tool::", "workflow::", "gap::", "repository::"];
+  const prefixes = ["agent::", "service::", "tool::", "workflow::", "content::", "gap::", "repository::"];
   let name = raw;
   for (const prefix of prefixes) {
     if (name.toLowerCase().startsWith(prefix)) {
@@ -239,15 +239,17 @@ function isNodeCard(name: string): boolean {
 export async function GET() {
   try {
     // Step A, B, C: fetch agents, services, and workflows in parallel
-    const [agentsResult, servicesResult, workflowsResult] = await Promise.all([
+    const [agentsResult, servicesResult, workflowsResult, contentResult] = await Promise.all([
       ragCall("memory_search_entities", { query: "agent", entity_type: "agent", top_k: 50 }, 1),
       ragCall("memory_search_entities", { query: "service", entity_type: "service", top_k: 50 }, 2),
       ragCall("memory_search_entities", { query: "workflow", entity_type: "workflow", top_k: 20 }, 6),
+      ragCall("memory_search_entities", { query: "content", entity_type: "content", top_k: 30 }, 7),
     ]);
 
     const agentEntities = extractContent(agentsResult) as RagEntity[];
     const serviceEntities = extractContent(servicesResult) as RagEntity[];
     const workflowEntities = extractContent(workflowsResult) as RagEntity[];
+    const contentEntities = extractContent(contentResult) as RagEntity[];
 
     // Step C: traverse for edges from hub entities that actually store relationships.
     // Most relationships are stored as outbound edges on SOVEREIGN, RAG-System, and Supabase.
@@ -314,6 +316,12 @@ export async function GET() {
       const name = e.name || "";
       if (!name) continue;
       upsertNode(name, "workflow", (e.description as string) || "", (e.status as string) || "operational", (e.last_updated as string) || null, Array.isArray(e.related_projects) ? (e.related_projects as string[]) : []);
+    }
+
+    for (const e of contentEntities) {
+      const name = e.name || "";
+      if (!name) continue;
+      upsertNode(name, "content", (e.description as string) || "", (e.status as string) || "operational", (e.last_updated as string) || null, Array.isArray(e.related_projects) ? (e.related_projects as string[]) : []);
     }
 
     // Build edge set from all traverse results using extractTraverseEdges

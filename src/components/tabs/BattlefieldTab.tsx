@@ -65,6 +65,8 @@ function nodeColour(entityType: string): string {
       return "#ffd60a";
     case "workflow":
       return "#a855f7";
+    case "content":
+      return "#e879f9";
     case "gap":
       return "#ff0040";
     default:
@@ -1043,9 +1045,10 @@ export default function BattlefieldTab() {
       services: filtered.filter((n) => n.entity_type === "service"),
       tools: filtered.filter((n) => n.entity_type === "tool"),
       workflows: filtered.filter((n) => n.entity_type === "workflow"),
+      content: filtered.filter((n) => n.entity_type === "content"),
       gaps: filtered.filter((n) => n.entity_type === "gap"),
       other: filtered.filter(
-        (n) => !["agent", "service", "tool", "workflow", "gap"].includes(n.entity_type)
+        (n) => !["agent", "service", "tool", "workflow", "content", "gap"].includes(n.entity_type)
       ),
     };
   }, [nodes, filterText]);
@@ -1123,6 +1126,15 @@ export default function BattlefieldTab() {
               title="WORKFLOWS"
               colour="#a855f7"
               items={groupedNodes.workflows}
+              selectedId={selectedId}
+              onSelect={handleRegistryClick}
+            />
+          )}
+          {groupedNodes.content.length > 0 && (
+            <RegistrySection
+              title="CONTENT"
+              colour="#e879f9"
+              items={groupedNodes.content}
               selectedId={selectedId}
               onSelect={handleRegistryClick}
             />
@@ -1216,6 +1228,7 @@ export default function BattlefieldTab() {
               { label: "Service", colour: "#00b4d8" },
               { label: "Tool", colour: "#ffd60a" },
               { label: "Workflow", colour: "#a855f7" },
+              { label: "Content", colour: "#e879f9" },
               { label: "Gap", colour: "#ff0040" },
             ].map((l) => (
               <div key={l.label} className="flex items-center gap-1">
