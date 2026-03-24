@@ -249,12 +249,26 @@ export async function GET() {
     const serviceEntities = extractContent(servicesResult) as RagEntity[];
     const workflowEntities = extractContent(workflowsResult) as RagEntity[];
 
-    // Step C & D: traverse for edges from multiple roots
-    const [sovereignTraverse, ragTraverse, supaTraverse] = await Promise.all([
-      ragCall("rag_traverse", { entity_name: "agent::SOVEREIGN", max_depth: 2 }, 3),
-      ragCall("rag_traverse", { entity_name: "RAG-System", max_depth: 1 }, 4),
-      ragCall("rag_traverse", { entity_name: "Supabase", max_depth: 1 }, 5),
-    ]);
+    // Step C: traverse for edges from every agent + key services.
+    // Using actual entity names from search results (not hardcoded prefixes).
+    // Cap at 15 agents + 10 services to avoid overloading RAG.
+    const agentNamesForTraverse = agentEntities
+      .map((e) => e.name as string)
+      .filter(Boolean)
+      .slice(0, 15);
+
+    const serviceNamesForTraverse = serviceEntities
+      .map((e) => e.name as string)
+      .filter(Boolean)
+      .slice(0, 10);
+
+    const allTraverseNames = [...agentNamesForTraverse, ...serviceNamesForTraverse];
+
+    const allTraverseResultsRaw = await Promise.all(
+      allTraverseNames.map((name, i) =>
+        ragCall("rag_traverse", { entity_name: name, max_depth: 1 }, 100 + i)
+      )
+    );
 
     // Build node map with deduplication
     const nodeMap = new Map<string, GraphNode>();
@@ -319,9 +333,7 @@ export async function GET() {
     // { start_entity: "...", entities: [{ name, relationship, direction, depth }] }
     const edgeSet = new Map<string, GraphEdge>();
 
-    const allTraverseResults = [sovereignTraverse, ragTraverse, supaTraverse];
-
-    for (const traverseResult of allTraverseResults) {
+    for (const traverseResult of allTraverseResultsRaw) {
       const { edges: rawEdges, entities: travEntities } = extractTraverseEdges(traverseResult);
 
       // Upsert nodes discovered via traversal (with entity_type from traverse)
