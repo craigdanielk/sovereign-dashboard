@@ -19,16 +19,25 @@ interface BriefOption {
   completed_at: string;
 }
 
+interface ServicePulse {
+  from: string;
+  to: string;
+  tool: string;
+  timestamp: number;
+}
+
 interface ReplayControlsProps {
   onEventFire: (event: ReplayEvent, resolvedAgent: string | null) => void;
   onReset: () => void;
+  onServicePulse?: (pulse: ServicePulse) => void;
 }
 
-export type { ReplayEvent };
+export type { ReplayEvent, ServicePulse };
 
 export default function ReplayControls({
   onEventFire,
   onReset,
+  onServicePulse,
 }: ReplayControlsProps) {
   const [briefs, setBriefs] = useState<BriefOption[]>([]);
   const [selectedBrief, setSelectedBrief] = useState<number | null>(null);
@@ -38,7 +47,7 @@ export default function ReplayControls({
   >(null);
   const [resolvedAgent, setResolvedAgent] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(5);
+  const [speed, setSpeed] = useState(10);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -91,6 +100,21 @@ export default function ReplayControls({
     [onReset]
   );
 
+  // Resolve tool_or_service to a service name for pulse animation
+  const resolveServiceForPulse = useCallback(
+    (tool: string | null): string | null => {
+      if (!tool) return null;
+      if (tool.includes("Supabase")) return "Supabase";
+      if (tool.includes("rag_system") || tool.includes("Claude_Web_MCP"))
+        return "RAG";
+      if (tool.includes("Vercel")) return "Vercel";
+      if (tool.includes("monday")) return "Monday";
+      if (tool.includes("github") || tool.includes("gh")) return "GitHub";
+      return null;
+    },
+    []
+  );
+
   // Playback loop using requestAnimationFrame
   useEffect(() => {
     if (!playing || events.length === 0) return;
@@ -104,8 +128,26 @@ export default function ReplayControls({
 
       // Find all events up to current elapsed time
       let newIndex = lastIndexRef.current;
-      while (newIndex < events.length && events[newIndex].relative_ms <= elapsed) {
-        onEventFire(events[newIndex], resolvedAgent);
+      while (
+        newIndex < events.length &&
+        events[newIndex].relative_ms <= elapsed
+      ) {
+        const ev = events[newIndex];
+        onEventFire(ev, resolvedAgent);
+
+        // Emit service pulse for tool calls
+        if (onServicePulse && ev.tool_or_service) {
+          const serviceName = resolveServiceForPulse(ev.tool_or_service);
+          if (serviceName) {
+            onServicePulse({
+              from: ev.agent,
+              to: serviceName,
+              tool: ev.tool_or_service,
+              timestamp: performance.now(),
+            });
+          }
+        }
+
         newIndex++;
       }
 
@@ -124,7 +166,15 @@ export default function ReplayControls({
 
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [playing, events, speed, onEventFire]);
+  }, [
+    playing,
+    events,
+    speed,
+    onEventFire,
+    onServicePulse,
+    resolveServiceForPulse,
+    resolvedAgent,
+  ]);
 
   const handleSelectBrief = (id: number) => {
     setSelectedBrief(id);
@@ -198,9 +248,9 @@ export default function ReplayControls({
         {loading ? "..." : playing ? "||" : ">"}
       </button>
 
-      {/* Speed */}
+      {/* Speed — 1x/5x/10x/25x with 10x default */}
       <div className="flex items-center gap-1">
-        {[1, 2, 5, 10].map((s) => (
+        {[1, 5, 10, 25].map((s) => (
           <button
             key={s}
             onClick={() => setSpeed(s)}
