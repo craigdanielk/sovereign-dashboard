@@ -249,26 +249,14 @@ export async function GET() {
     const serviceEntities = extractContent(servicesResult) as RagEntity[];
     const workflowEntities = extractContent(workflowsResult) as RagEntity[];
 
-    // Step C: traverse for edges from every agent + key services.
-    // Using actual entity names from search results (not hardcoded prefixes).
-    // Cap at 15 agents + 10 services to avoid overloading RAG.
-    const agentNamesForTraverse = agentEntities
-      .map((e) => e.name as string)
-      .filter(Boolean)
-      .slice(0, 15);
-
-    const serviceNamesForTraverse = serviceEntities
-      .map((e) => e.name as string)
-      .filter(Boolean)
-      .slice(0, 10);
-
-    const allTraverseNames = [...agentNamesForTraverse, ...serviceNamesForTraverse];
-
-    const allTraverseResultsRaw = await Promise.all(
-      allTraverseNames.map((name, i) =>
-        ragCall("rag_traverse", { entity_name: name, max_depth: 1 }, 100 + i)
-      )
-    );
+    // Step C: traverse for edges from hub entities that actually store relationships.
+    // Most relationships are stored as outbound edges on SOVEREIGN, RAG-System, and Supabase.
+    // Traversing individual agents returns 0 entities, so we target the hubs instead.
+    const allTraverseResultsRaw = await Promise.all([
+      ragCall("rag_traverse", { entity_name: "SOVEREIGN", max_depth: 2 }, 100),
+      ragCall("rag_traverse", { entity_name: "RAG-System", max_depth: 1 }, 101),
+      ragCall("rag_traverse", { entity_name: "Supabase", max_depth: 1 }, 102),
+    ]);
 
     // Build node map with deduplication
     const nodeMap = new Map<string, GraphNode>();
@@ -358,6 +346,15 @@ export async function GET() {
         const reverseKey = `${target}--${relType}--${source}`;
         if (!edgeSet.has(key) && !edgeSet.has(reverseKey)) {
           edgeSet.set(key, { source, target, type: relType });
+          // Create reverse edge so every node has at least one visible connection.
+          // e.g. SOVEREIGN→FORGE also yields FORGE→SOVEREIGN.
+          const reverseRelType = relType.replace("orchestrates", "orchestrated_by")
+            .replace("manages", "managed_by")
+            .replace("uses", "used_by");
+          const revKey = `${target}--${reverseRelType}--${source}`;
+          if (reverseRelType !== relType && !edgeSet.has(revKey)) {
+            edgeSet.set(revKey, { source: target, target: source, type: reverseRelType });
+          }
         }
 
         // Ensure both endpoints exist as nodes

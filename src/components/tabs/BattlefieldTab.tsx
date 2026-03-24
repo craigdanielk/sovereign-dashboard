@@ -378,7 +378,8 @@ function DetailCard({
     <div
       className="shrink-0 flex flex-col transition-all duration-300 overflow-auto"
       style={{
-        height: isWorkflow ? "50%" : "42%",
+        height: isWorkflow ? "420px" : "340px",
+        maxHeight: "50vh",
         background: "rgba(10,10,10,0.97)",
         borderTop: "1px solid rgba(0,255,65,0.3)",
         fontFamily: "'JetBrains Mono', monospace",

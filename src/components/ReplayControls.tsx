@@ -33,6 +33,9 @@ export default function ReplayControls({
   const [briefs, setBriefs] = useState<BriefOption[]>([]);
   const [selectedBrief, setSelectedBrief] = useState<number | null>(null);
   const [events, setEvents] = useState<ReplayEvent[]>([]);
+  const [replayMode, setReplayMode] = useState<
+    "brief_id" | "time_range" | "global" | null
+  >(null);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(5);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -75,8 +78,10 @@ export default function ReplayControls({
         const res = await fetch(`/api/replay/${briefId}`);
         const data = await res.json();
         setEvents(data.events || []);
+        setReplayMode(data.mode || null);
       } catch {
         setEvents([]);
+        setReplayMode(null);
       } finally {
         setLoading(false);
       }
@@ -221,10 +226,26 @@ export default function ReplayControls({
         disabled={events.length === 0}
       />
 
-      {/* Event counter */}
+      {/* Event counter + mode badge */}
       <span className="text-[9px] text-[#737373] whitespace-nowrap">
         {currentIndex}/{events.length}
       </span>
+      {replayMode && replayMode !== "brief_id" && (
+        <span
+          className="text-[8px] px-1 py-0.5 rounded whitespace-nowrap"
+          style={{
+            ...font,
+            color: replayMode === "global" ? "#ffb800" : "#00ff41",
+            background:
+              replayMode === "global"
+                ? "rgba(255,184,0,0.1)"
+                : "rgba(0,255,65,0.1)",
+            border: `1px solid ${replayMode === "global" ? "rgba(255,184,0,0.3)" : "rgba(0,255,65,0.2)"}`,
+          }}
+        >
+          {replayMode === "global" ? "GLOBAL" : "TIME"}
+        </span>
+      )}
 
       {/* Current event */}
       {currentEvent && (
