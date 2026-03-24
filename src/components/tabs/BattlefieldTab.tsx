@@ -843,12 +843,33 @@ export default function BattlefieldTab() {
     setReloading(false);
   }, [fetchGraph, fetchHealth]);
 
-  // Replay event handler — highlight agent nodes for 2s
-  const handleReplayEvent = useCallback((event: ReplayEvent) => {
+  // Replay agent/service resolution
+  const resolveAgent = useCallback((agentName: string, resolvedAgent: string | null): string => {
+    const known = ["SOVEREIGN","FORGE","KIRA","LORE","SAGE","VERIFY","RECON","ARAGON","DELIVER","PRISM","SCRIBE","COMPASS","ATLAS","PULSE","OUTREACH"];
+    if (known.includes(agentName)) return agentName;
+    if (resolvedAgent) return resolvedAgent;
+    return "SOVEREIGN";
+  }, []);
+
+  const resolveService = useCallback((tool: string | null): string | null => {
+    if (!tool) return null;
+    if (tool.includes("Supabase")) return "Supabase";
+    if (tool.includes("rag_system") || tool.includes("Claude_Web_MCP")) return "RAG-System";
+    if (tool.includes("Vercel")) return "Vercel";
+    return null;
+  }, []);
+
+  // Replay event handler — highlight agent + service nodes for 2s
+  const handleReplayEvent = useCallback((event: ReplayEvent, resolvedAgentFromApi: string | null) => {
+    const agentNode = resolveAgent(event.agent, resolvedAgentFromApi);
+    const serviceNode = resolveService(event.tool_or_service);
+    const targetNode = event.target_agent || null;
+
     setReplayActiveNodes((prev) => {
       const next = new Set(prev);
-      next.add(event.agent);
-      if (event.target_agent) next.add(event.target_agent);
+      next.add(agentNode);
+      if (targetNode) next.add(targetNode);
+      if (serviceNode) next.add(serviceNode);
       return next;
     });
     const clearNode = (nodeId: string) => {
@@ -864,9 +885,10 @@ export default function BattlefieldTab() {
       }, 2000);
       replayTimeoutsRef.current.set(nodeId, timeout);
     };
-    clearNode(event.agent);
-    if (event.target_agent) clearNode(event.target_agent);
-  }, []);
+    clearNode(agentNode);
+    if (targetNode) clearNode(targetNode);
+    if (serviceNode) clearNode(serviceNode);
+  }, [resolveAgent, resolveService]);
 
   const handleReplayReset = useCallback(() => {
     replayTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));

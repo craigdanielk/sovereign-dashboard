@@ -17,7 +17,7 @@ export async function GET(
 
   // Get the BRIEF's claimed_at and completed_at for time-range fallback
   const briefRes = await fetch(
-    `${supabaseUrl}/rest/v1/briefs?id=eq.${briefId}&select=name,claimed_at,completed_at`,
+    `${supabaseUrl}/rest/v1/briefs?id=eq.${briefId}&select=name,claimed_at,completed_at,payload`,
     {
       headers: {
         apikey: supabaseKey,
@@ -27,6 +27,10 @@ export async function GET(
   );
   const briefs = await briefRes.json();
   const brief = briefs[0];
+
+  // Extract resolved agent from BRIEF routing metadata
+  const resolvedAgent: string | null =
+    brief?.payload?.routing?.target_agent || null;
 
   let events = [];
   let mode: "brief_id" | "time_range" | "global" = "brief_id";
@@ -99,6 +103,7 @@ export async function GET(
   return NextResponse.json({
     brief_id: briefId,
     brief_name: brief?.name || null,
+    resolved_agent: resolvedAgent,
     event_count: events.length,
     mode,
     events,

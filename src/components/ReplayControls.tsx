@@ -20,7 +20,7 @@ interface BriefOption {
 }
 
 interface ReplayControlsProps {
-  onEventFire: (event: ReplayEvent) => void;
+  onEventFire: (event: ReplayEvent, resolvedAgent: string | null) => void;
   onReset: () => void;
 }
 
@@ -36,6 +36,7 @@ export default function ReplayControls({
   const [replayMode, setReplayMode] = useState<
     "brief_id" | "time_range" | "global" | null
   >(null);
+  const [resolvedAgent, setResolvedAgent] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(5);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -79,6 +80,7 @@ export default function ReplayControls({
         const data = await res.json();
         setEvents(data.events || []);
         setReplayMode(data.mode || null);
+        setResolvedAgent(data.resolved_agent || null);
       } catch {
         setEvents([]);
         setReplayMode(null);
@@ -103,7 +105,7 @@ export default function ReplayControls({
       // Find all events up to current elapsed time
       let newIndex = lastIndexRef.current;
       while (newIndex < events.length && events[newIndex].relative_ms <= elapsed) {
-        onEventFire(events[newIndex]);
+        onEventFire(events[newIndex], resolvedAgent);
         newIndex++;
       }
 
@@ -146,7 +148,7 @@ export default function ReplayControls({
     // Reset and replay up to scrub point
     onReset();
     for (let i = 0; i <= index && i < events.length; i++) {
-      onEventFire(events[i]);
+      onEventFire(events[i], resolvedAgent);
     }
     setCurrentIndex(index);
     lastIndexRef.current = index;
