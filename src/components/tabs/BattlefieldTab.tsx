@@ -66,6 +66,7 @@ function nodeColour(entityType: string): string {
     case "workflow":
       return "#a855f7";
     case "content":
+    case "skill":
       return "#e879f9";
     case "gap":
       return "#ff0040";
@@ -1066,11 +1067,12 @@ export default function BattlefieldTab() {
       agents: filtered.filter((n) => n.entity_type === "agent"),
       services: filtered.filter((n) => n.entity_type === "service"),
       tools: filtered.filter((n) => n.entity_type === "tool"),
+      skills: filtered.filter((n) => n.entity_type === "skill"),
       workflows: filtered.filter((n) => n.entity_type === "workflow"),
       content: filtered.filter((n) => n.entity_type === "content"),
       gaps: filtered.filter((n) => n.entity_type === "gap"),
       other: filtered.filter(
-        (n) => !["agent", "service", "tool", "workflow", "content", "gap"].includes(n.entity_type)
+        (n) => !["agent", "service", "tool", "skill", "workflow", "content", "gap"].includes(n.entity_type)
       ),
     };
   }, [nodes, filterText]);
@@ -1078,6 +1080,8 @@ export default function BattlefieldTab() {
   // Counts for metrics bar
   const agentCount = nodes.filter((n) => n.entity_type === "agent").length;
   const serviceCount = nodes.filter((n) => n.entity_type === "service").length;
+  const skillCount = nodes.filter((n) => n.entity_type === "skill").length;
+  const workflowCount = nodes.filter((n) => n.entity_type === "workflow").length;
   const edgeCount = edges.length;
 
   const selectedNode = nodes.find((n) => n.id === selectedId) || null;
@@ -1139,6 +1143,15 @@ export default function BattlefieldTab() {
               title="TOOLS"
               colour="#ffd60a"
               items={groupedNodes.tools}
+              selectedId={selectedId}
+              onSelect={handleRegistryClick}
+            />
+          )}
+          {groupedNodes.skills.length > 0 && (
+            <RegistrySection
+              title="SKILLS"
+              colour="#e879f9"
+              items={groupedNodes.skills}
               selectedId={selectedId}
               onSelect={handleRegistryClick}
             />
@@ -1237,6 +1250,18 @@ export default function BattlefieldTab() {
             tooltip={`memory_search_entities(service) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
           />
           <MetricBadge
+            label="SKILLS"
+            value={skillCount}
+            colour="#e879f9"
+            tooltip={`memory_search_entities(skill) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
+          />
+          <MetricBadge
+            label="WORKFLOWS"
+            value={workflowCount}
+            colour="#a855f7"
+            tooltip={`memory_search_entities(workflow) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
+          />
+          <MetricBadge
             label="EDGES"
             value={edgeCount}
             colour="#ffd60a"
@@ -1249,6 +1274,7 @@ export default function BattlefieldTab() {
               { label: "Agent", colour: "#00ff41" },
               { label: "Service", colour: "#00b4d8" },
               { label: "Tool", colour: "#ffd60a" },
+              { label: "Skill", colour: "#e879f9" },
               { label: "Workflow", colour: "#a855f7" },
               { label: "Content", colour: "#e879f9" },
               { label: "Gap", colour: "#ff0040" },

@@ -238,18 +238,20 @@ function isNodeCard(name: string): boolean {
 
 export async function GET() {
   try {
-    // Step A, B, C: fetch agents, services, and workflows in parallel
-    const [agentsResult, servicesResult, workflowsResult, contentResult] = await Promise.all([
+    // Step A, B, C, D, E: fetch agents, services, workflows, content, and skills in parallel
+    const [agentsResult, servicesResult, workflowsResult, contentResult, skillsResult] = await Promise.all([
       ragCall("memory_search_entities", { query: "agent", entity_type: "agent", top_k: 50 }, 1),
       ragCall("memory_search_entities", { query: "service", entity_type: "service", top_k: 50 }, 2),
       ragCall("memory_search_entities", { query: "workflow", entity_type: "workflow", top_k: 20 }, 6),
       ragCall("memory_search_entities", { query: "content", entity_type: "content", top_k: 30 }, 7),
+      ragCall("memory_search_entities", { query: "skill", entity_type: "skill", top_k: 50 }, 8),
     ]);
 
     const agentEntities = extractContent(agentsResult) as RagEntity[];
     const serviceEntities = extractContent(servicesResult) as RagEntity[];
     const workflowEntities = extractContent(workflowsResult) as RagEntity[];
     const contentEntities = extractContent(contentResult) as RagEntity[];
+    const skillEntities = extractContent(skillsResult) as RagEntity[];
 
     // Step C: traverse for edges from hub entities that actually store relationships.
     // Most relationships are stored as outbound edges on SOVEREIGN, RAG-System, and Supabase.
@@ -322,6 +324,12 @@ export async function GET() {
       const name = e.name || "";
       if (!name) continue;
       upsertNode(name, "content", (e.description as string) || "", (e.status as string) || "operational", (e.last_updated as string) || null, Array.isArray(e.related_projects) ? (e.related_projects as string[]) : []);
+    }
+
+    for (const e of skillEntities) {
+      const name = e.name || "";
+      if (!name) continue;
+      upsertNode(name, "skill", (e.description as string) || "", (e.status as string) || "operational", (e.last_updated as string) || null, Array.isArray(e.related_projects) ? (e.related_projects as string[]) : []);
     }
 
     // Build edge set from all traverse results using extractTraverseEdges
