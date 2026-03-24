@@ -34,20 +34,24 @@ export async function GET() {
     ragStatus = "down";
   }
 
-  // Ping Supabase
+  // Ping Supabase — actual query to confirm connectivity
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (url && key) {
-      const res = await fetch(`${url}/rest/v1/`, {
-        method: "HEAD",
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-        },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (res.ok || res.status === 200) {
+      const res = await fetch(
+        `${url}/rest/v1/briefs?select=id&limit=1`,
+        {
+          method: "GET",
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          signal: AbortSignal.timeout(5000),
+        }
+      );
+      if (res.ok) {
         supabaseStatus = "ok";
       }
     }

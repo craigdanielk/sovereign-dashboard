@@ -4,40 +4,116 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase, type ExecutionLog } from "@/lib/supabase";
 import { getAgentColour } from "@/lib/colours";
 
+/* Unified event type for both execution_log and system_events */
+interface StreamEvent {
+  id: string;
+  source: string; // agent name or event source
+  event_type: string; // operation or event_type
+  summary: string;
+  created_at: string;
+  origin: "execution_log" | "system_events";
+}
+
+function toStreamEvent(ev: ExecutionLog): StreamEvent {
+  return {
+    id: `exec-${ev.id}`,
+    source: ev.agent,
+    event_type: ev.operation,
+    summary: ev.input_summary ? ev.input_summary.slice(0, 60) : ev.operation,
+    created_at: ev.created_at,
+    origin: "execution_log",
+  };
+}
+
+interface SystemEvent {
+  id: number;
+  source: string;
+  event_type: string;
+  brief_id: number | null;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+}
+
+function systemEventToStream(ev: SystemEvent): StreamEvent {
+  const briefLabel = ev.brief_id ? `BRIEF-${ev.brief_id}` : "";
+  const payloadSummary = ev.payload?.summary || ev.payload?.message || "";
+  const summary = [briefLabel, payloadSummary].filter(Boolean).join(" ").slice(0, 60) || ev.event_type;
+  return {
+    id: `sys-${ev.id}`,
+    source: ev.source,
+    event_type: ev.event_type,
+    summary,
+    created_at: ev.created_at,
+    origin: "system_events",
+  };
+}
+
 export default function EventStream() {
-  const [events, setEvents] = useState<ExecutionLog[]>([]);
+  const [events, setEvents] = useState<StreamEvent[]>([]);
   const [connected, setConnected] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handleInsert = useCallback((payload: { new: ExecutionLog }) => {
-    setEvents((prev) => [...prev.slice(-99), payload.new as ExecutionLog]);
+  const handleExecInsert = useCallback((payload: { new: ExecutionLog }) => {
+    const ev = toStreamEvent(payload.new);
+    setEvents((prev) => [...prev.slice(-99), ev]);
+  }, []);
+
+  const handleSystemInsert = useCallback((payload: { new: SystemEvent }) => {
+    const ev = systemEventToStream(payload.new);
+    setEvents((prev) => [...prev.slice(-99), ev]);
   }, []);
 
   useEffect(() => {
-    supabase
+    // Fetch initial execution_log events
+    const fetchExecLog = supabase
       .from("execution_log")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        if (data) setEvents(data.reverse());
+      .limit(30)
+      .then(({ data }: { data: ExecutionLog[] | null }) => {
+        return (data || []).reverse().map(toStreamEvent);
       });
 
+    // Fetch initial system_events
+    const fetchSystemEvents = supabase
+      .from("system_events")
+      .select("id,source,event_type,brief_id,payload,created_at")
+      .in("event_type", ["hook_fired", "status_transition", "quality_grade"])
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }: { data: SystemEvent[] | null }) => {
+        return (data || []).reverse().map(systemEventToStream);
+      });
+
+    Promise.all([fetchExecLog, fetchSystemEvents]).then(([execEvents, sysEvents]) => {
+      // Merge and sort by created_at
+      const merged = [...execEvents, ...sysEvents].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      setEvents(merged.slice(-50));
+    });
+
+    // Real-time subscriptions for both tables
     const channel = supabase
-      .channel("event-stream-realtime")
+      .channel("event-stream-realtime-v2")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "execution_log" },
-        handleInsert
+        handleExecInsert
       )
-      .subscribe((status) => {
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "system_events" },
+        handleSystemInsert
+      )
+      .subscribe((status: string) => {
         setConnected(status === "SUBSCRIBED");
       });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [handleInsert]);
+  }, [handleExecInsert, handleSystemInsert]);
 
   // Auto-scroll
   useEffect(() => {
@@ -53,6 +129,14 @@ export default function EventStream() {
       minute: "2-digit",
       hour12: false,
     });
+  }
+
+  // Event type badge colour
+  function eventTypeBadge(eventType: string): string {
+    if (eventType === "hook_fired") return "#ffb800";
+    if (eventType === "status_transition") return "#00b4d8";
+    if (eventType === "quality_grade") return "#a855f7";
+    return "#737373";
   }
 
   return (
@@ -84,19 +168,25 @@ export default function EventStream() {
             <span className="text-text-muted shrink-0 w-10 tabular-nums">
               [{formatTime(ev.created_at)}]
             </span>
-            <span className="shrink-0 w-1">+</span>
+            {ev.origin === "system_events" ? (
+              <span
+                className="shrink-0 w-1.5 h-1.5 rounded-full mt-0.5"
+                style={{ background: eventTypeBadge(ev.event_type) }}
+              />
+            ) : (
+              <span className="shrink-0 w-1">+</span>
+            )}
             <span
               className="shrink-0 font-bold truncate"
               style={{
-                color: getAgentColour(ev.agent),
+                color: getAgentColour(ev.source),
                 maxWidth: "60px",
               }}
             >
-              {ev.agent.toUpperCase()}
+              {ev.source.toUpperCase()}
             </span>
             <span className="text-text-secondary truncate flex-1">
-              {ev.operation}
-              {ev.input_summary ? ` ${ev.input_summary.slice(0, 40)}` : ""}
+              {ev.summary}
             </span>
           </div>
         ))}

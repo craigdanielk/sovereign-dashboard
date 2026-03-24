@@ -772,6 +772,149 @@ function useContainerSize(ref: RefObject<HTMLDivElement | null>) {
   return size;
 }
 
+/* ── Edge category helpers ──────────────────────────────────── */
+
+type EdgeCategory = "structural" | "integration" | "execution";
+
+const EDGE_CATEGORIES: Record<EdgeCategory, { label: string; types: Set<string>; colour: string }> = {
+  structural: {
+    label: "Structural",
+    types: new Set(["depends_on", "part_of", "maintained_by", "orchestrates", "orchestrated_by", "manages", "managed_by"]),
+    colour: "#00ff41",
+  },
+  integration: {
+    label: "Integration",
+    types: new Set(["integrates_with", "deployed_on", "related_to"]),
+    colour: "#00b4d8",
+  },
+  execution: {
+    label: "Execution",
+    types: new Set(["used_by", "uses", "maintains", "triggers"]),
+    colour: "#a855f7",
+  },
+};
+
+function edgeCategory(type: string): EdgeCategory {
+  for (const [cat, def] of Object.entries(EDGE_CATEGORIES) as [EdgeCategory, typeof EDGE_CATEGORIES[EdgeCategory]][]) {
+    if (def.types.has(type)) return cat;
+  }
+  return "structural"; // default
+}
+
+/* ── Node Filter Bar ──────────────────────────────────────────── */
+
+interface NodeFilterState {
+  agent: boolean;
+  service: boolean;
+  workflow: boolean;
+  skill: boolean;
+  brief: boolean;
+}
+
+function NodeFilterBar({
+  filters,
+  onChange,
+  counts,
+}: {
+  filters: NodeFilterState;
+  onChange: (key: keyof NodeFilterState) => void;
+  counts: Record<string, number>;
+}) {
+  const items: { key: keyof NodeFilterState; label: string; colour: string }[] = [
+    { key: "agent", label: "Agents", colour: "#00ff41" },
+    { key: "service", label: "Services", colour: "#00b4d8" },
+    { key: "workflow", label: "Workflows", colour: "#a855f7" },
+    { key: "skill", label: "Skills", colour: "#e879f9" },
+    { key: "brief", label: "Briefs", colour: "#ffb800" },
+  ];
+
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-1 border-b border-[#1e1e1e]"
+      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+    >
+      <span className="text-[9px] text-[#737373] tracking-wider mr-1">NODES</span>
+      {items.map((item) => (
+        <label
+          key={item.key}
+          className="flex items-center gap-1 cursor-pointer select-none"
+        >
+          <input
+            type="checkbox"
+            checked={filters[item.key]}
+            onChange={() => onChange(item.key)}
+            className="sr-only"
+          />
+          <span
+            className="w-3 h-3 rounded-sm border flex items-center justify-center text-[8px]"
+            style={{
+              borderColor: filters[item.key] ? item.colour : "#404040",
+              background: filters[item.key] ? `${item.colour}22` : "transparent",
+              color: filters[item.key] ? item.colour : "#404040",
+            }}
+          >
+            {filters[item.key] ? "\u2713" : ""}
+          </span>
+          <span
+            className="text-[9px]"
+            style={{ color: filters[item.key] ? item.colour : "#737373" }}
+          >
+            {item.label} ({counts[item.key] || 0})
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+/* ── Edge Filter Bar ─────────────────────────────────────────── */
+
+interface EdgeFilterState {
+  structural: boolean;
+  integration: boolean;
+  execution: boolean;
+}
+
+function EdgeFilterBar({
+  filters,
+  onChange,
+  counts,
+}: {
+  filters: EdgeFilterState;
+  onChange: (key: keyof EdgeFilterState) => void;
+  counts: Record<string, number>;
+}) {
+  const items: { key: keyof EdgeFilterState; label: string; colour: string; desc: string }[] = [
+    { key: "structural", label: "Structural", colour: "#00ff41", desc: "depends_on, part_of, maintained_by" },
+    { key: "integration", label: "Integration", colour: "#00b4d8", desc: "integrates_with, deployed_on" },
+    { key: "execution", label: "Execution", colour: "#a855f7", desc: "used_by, maintains, triggers" },
+  ];
+
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-1 border-b border-[#1e1e1e]"
+      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+    >
+      <span className="text-[9px] text-[#737373] tracking-wider mr-1">EDGES</span>
+      {items.map((item) => (
+        <button
+          key={item.key}
+          onClick={() => onChange(item.key)}
+          className="text-[9px] px-2 py-0.5 rounded-full transition-all"
+          title={item.desc}
+          style={{
+            background: filters[item.key] ? `${item.colour}20` : "transparent",
+            color: filters[item.key] ? item.colour : "#404040",
+            border: `1px solid ${filters[item.key] ? `${item.colour}50` : "#1e1e1e"}`,
+          }}
+        >
+          {item.label} ({counts[item.key] || 0})
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* ── Main Component ───────────────────────────────────────────── */
 
 export default function BattlefieldTab() {
@@ -786,6 +929,22 @@ export default function BattlefieldTab() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [filterText, setFilterText] = useState("");
+
+  // Fix 1: Node type filters — agents/services/workflows on by default, skills/briefs off
+  const [nodeFilters, setNodeFilters] = useState<NodeFilterState>({
+    agent: true,
+    service: true,
+    workflow: true,
+    skill: false,
+    brief: false,
+  });
+
+  // Fix 2: Edge layer filters — all on by default
+  const [edgeFilters, setEdgeFilters] = useState<EdgeFilterState>({
+    structural: true,
+    integration: true,
+    execution: true,
+  });
 
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [reloading, setReloading] = useState(false);
@@ -812,10 +971,10 @@ export default function BattlefieldTab() {
     }
   }, []);
 
-  // Fetch graph data from API route
+  // Fetch graph data from API route — request all types so we have full counts
   const fetchGraph = useCallback(async () => {
     try {
-      const res = await fetch("/api/graph");
+      const res = await fetch("/api/graph?types=agent,service,workflow,skill,content");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
@@ -1016,9 +1175,55 @@ export default function BattlefieldTab() {
     return counts;
   }, [edges]);
 
+  // Map entity_type to our filter keys
+  const typeToFilterKey = useCallback((entityType: string): keyof NodeFilterState | null => {
+    if (entityType === "agent") return "agent";
+    if (entityType === "service") return "service";
+    if (entityType === "workflow") return "workflow";
+    if (entityType === "skill" || entityType === "content") return "skill";
+    return null;
+  }, []);
+
+  // Filtered nodes based on node type toggles (Fix 1)
+  const filteredNodes = useMemo(() => {
+    return nodes.filter((n) => {
+      const key = typeToFilterKey(n.entity_type);
+      if (!key) return nodeFilters.agent; // show unknowns if agents are shown
+      return nodeFilters[key];
+    });
+  }, [nodes, nodeFilters, typeToFilterKey]);
+
+  // Filtered edges based on edge type toggles (Fix 2)
+  const filteredEdges = useMemo(() => {
+    const filteredNodeIds = new Set(filteredNodes.map((n) => n.id));
+    return edges.filter((e) => {
+      if (!filteredNodeIds.has(e.source) || !filteredNodeIds.has(e.target)) return false;
+      const cat = edgeCategory(e.type);
+      return edgeFilters[cat];
+    });
+  }, [edges, filteredNodes, edgeFilters]);
+
+  // Counts for filter bars
+  const nodeFilterCounts = useMemo(() => ({
+    agent: nodes.filter((n) => n.entity_type === "agent").length,
+    service: nodes.filter((n) => n.entity_type === "service").length,
+    workflow: nodes.filter((n) => n.entity_type === "workflow").length,
+    skill: nodes.filter((n) => n.entity_type === "skill" || n.entity_type === "content").length,
+    brief: 0,
+  }), [nodes]);
+
+  const edgeFilterCounts = useMemo(() => {
+    const counts = { structural: 0, integration: 0, execution: 0 };
+    for (const e of edges) {
+      const cat = edgeCategory(e.type);
+      counts[cat]++;
+    }
+    return counts;
+  }, [edges]);
+
   // Build graph data for react-force-graph-3d
   const graphData: GraphData = useMemo(() => {
-    const graphNodes: GraphNodeObj[] = nodes.map((n) => {
+    const graphNodes: GraphNodeObj[] = filteredNodes.map((n) => {
       const intensity = recencyIntensity(n.last_updated);
       const ec = edgeCounts.get(n.id) || 0;
       // nodeVal scales with edge count: SOVEREIGN (most edges) is the largest
@@ -1033,13 +1238,13 @@ export default function BattlefieldTab() {
       };
     });
 
-    const nodeIds = new Set(nodes.map((n) => n.id));
-    const graphLinks: GraphLinkObj[] = edges
+    const nodeIds = new Set(filteredNodes.map((n) => n.id));
+    const graphLinks: GraphLinkObj[] = filteredEdges
       .filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target))
       .map((e) => ({ ...e }));
 
     return { nodes: graphNodes, links: graphLinks };
-  }, [nodes, edges, edgeCounts]);
+  }, [filteredNodes, filteredEdges, edgeCounts]);
 
   // Highlight set for selected node
   const highlightNodes = useMemo(() => {
@@ -1077,12 +1282,12 @@ export default function BattlefieldTab() {
     };
   }, [nodes, filterText]);
 
-  // Counts for metrics bar
+  // Counts for metrics bar (full, not filtered)
   const agentCount = nodes.filter((n) => n.entity_type === "agent").length;
   const serviceCount = nodes.filter((n) => n.entity_type === "service").length;
   const skillCount = nodes.filter((n) => n.entity_type === "skill").length;
   const workflowCount = nodes.filter((n) => n.entity_type === "workflow").length;
-  const edgeCount = edges.length;
+  const edgeCount = filteredEdges.length;
 
   const selectedNode = nodes.find((n) => n.id === selectedId) || null;
 
@@ -1300,6 +1505,20 @@ export default function BattlefieldTab() {
             {reloading ? "..." : "RELOAD"}
           </button>
         </div>
+
+        {/* Fix 1: Node type filter bar */}
+        <NodeFilterBar
+          filters={nodeFilters}
+          onChange={(key) => setNodeFilters((prev) => ({ ...prev, [key]: !prev[key] }))}
+          counts={nodeFilterCounts}
+        />
+
+        {/* Fix 2: Edge layer filter bar */}
+        <EdgeFilterBar
+          filters={edgeFilters}
+          onChange={(key) => setEdgeFilters((prev) => ({ ...prev, [key]: !prev[key] }))}
+          counts={edgeFilterCounts}
+        />
 
         {/* Replay Controls */}
         <ReplayControls onEventFire={handleReplayEvent} onReset={handleReplayReset} />

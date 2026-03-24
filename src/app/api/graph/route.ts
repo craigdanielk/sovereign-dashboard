@@ -236,7 +236,12 @@ function isNodeCard(name: string): boolean {
   return name.toLowerCase().startsWith("node-card::");
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  // entity_type filter: default to agent,service,workflow (no content noise)
+  const typesParam = searchParams.get("types") || "agent,service,workflow";
+  const requestedTypes = new Set(typesParam.split(",").map((t) => t.trim().toLowerCase()));
+
   try {
     // Step A, B, C, D, E: fetch agents, services, workflows, content, and skills in parallel
     const [agentsResult, servicesResult, workflowsResult, contentResult, skillsResult] = await Promise.all([
@@ -379,10 +384,22 @@ export async function GET() {
       }
     }
 
-    const nodes = Array.from(nodeMap.values());
-    const edges = Array.from(edgeSet.values());
+    // Filter nodes by requested entity types
+    const allNodes = Array.from(nodeMap.values());
+    const nodes = allNodes.filter((n) => requestedTypes.has(n.entity_type));
+    const nodeIds = new Set(nodes.map((n) => n.id));
+    // Only include edges where both endpoints are in the filtered node set
+    const edges = Array.from(edgeSet.values()).filter(
+      (e) => nodeIds.has(e.source) && nodeIds.has(e.target)
+    );
 
-    return NextResponse.json({ nodes, edges, links: edges }, {
+    return NextResponse.json({ nodes, edges, links: edges, total_counts: {
+      agent: allNodes.filter((n) => n.entity_type === "agent").length,
+      service: allNodes.filter((n) => n.entity_type === "service").length,
+      workflow: allNodes.filter((n) => n.entity_type === "workflow").length,
+      skill: allNodes.filter((n) => n.entity_type === "skill").length,
+      content: allNodes.filter((n) => n.entity_type === "content").length,
+    } }, {
       headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (err) {
