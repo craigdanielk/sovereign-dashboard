@@ -15,6 +15,7 @@ export const TABS: TabDef[] = [
   { key: "comms", label: "Comms", shortLabel: "COM", path: "/comms" },
   { key: "artifacts", label: "Artifacts", shortLabel: "ART", path: "/artifacts" },
   { key: "command", label: "Command", shortLabel: "CMD", path: "/command" },
+  { key: "review", label: "Review", shortLabel: "REV", path: "/review" },
 ];
 
 // ── Workspace types (Root tab cards) ────────────────────────────
