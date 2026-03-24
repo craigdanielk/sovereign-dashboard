@@ -81,6 +81,7 @@ export interface Brief {
   summary: string | null;
   payload: Record<string, unknown> | null;
   wsjf_score: number | null;
+  quality_grade: string | null;
 }
 
 export interface SessionRetrospective {
@@ -99,4 +100,9 @@ export interface SessionRetrospective {
   files_modified: string[] | null;
   files_created: string[] | null;
   errors_encountered: Record<string, unknown> | null;
+  false_assumptions: Record<string, unknown> | null;
+  data_quality: string | null;
+  retrospective_tag: Record<string, unknown> | null;
+  api_cost_estimate: number | null;
+  model_used: string | null;
 }

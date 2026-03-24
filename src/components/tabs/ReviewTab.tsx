@@ -10,12 +10,14 @@ interface OvernightBrief {
   priority: string;
   status: string;
   claimed_at: string | null;
+  quality_grade: string | null;
   title: string | null;
   artifact_type: string | null;
   location: string | null;
   test_url: string | null;
   artifact_status: string | null;
   verified_by_human: boolean | null;
+  payload: Record<string, unknown> | null;
 }
 
 interface UnverifiedArtifact {
@@ -57,6 +59,8 @@ interface CostEntry {
   events: number;
 }
 
+type ReviewContext = "all" | "northstar" | "r17";
+
 // ── Helpers ──────────────────────────────────────────────────────
 function timeAgo(ts: string): string {
   const diff = Date.now() - new Date(ts).getTime();
@@ -73,9 +77,17 @@ function statusBadge(status: string | null, verified: boolean | null) {
   return { colour: "#ffb800", label: "NEEDS REVIEW" };
 }
 
+function gradeColour(grade: string | null): string {
+  if (!grade) return "#404040";
+  const g = grade.toUpperCase();
+  if (g === "GREEN") return "#00ff41";
+  if (g === "YELLOW") return "#ffb800";
+  if (g === "RED") return "#ff1744";
+  return "#404040";
+}
+
 // ── Section: Overnight Summary ───────────────────────────────────
 function OvernightSummary({ items }: { items: OvernightBrief[] }) {
-  // Deduplicate by brief id, collect artifacts per brief
   const briefMap = new Map<
     number,
     { brief: OvernightBrief; artifacts: OvernightBrief[] }
@@ -120,6 +132,11 @@ function OvernightSummary({ items }: { items: OvernightBrief[] }) {
                   <span className="text-[9px] font-bold text-accent-yellow">
                     #{brief.id}
                   </span>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: gradeColour(brief.quality_grade) }}
+                    title={brief.quality_grade ? `Quality: ${brief.quality_grade}` : "No grade"}
+                  />
                   <span className="text-[10px] text-text-primary">
                     {brief.name}
                   </span>
@@ -479,22 +496,21 @@ export default function ReviewTab() {
   const [costs, setCosts] = useState<CostEntry[]>([]);
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [lastRefresh, setLastRefresh] = useState<string>("");
+  const [context, setContext] = useState<ReviewContext>("all");
 
   const fetchAll = useCallback(async () => {
-    // 1. Overnight summary — completed BRIEFs with their artifacts (last 24h)
     const twentyFourHoursAgo = new Date(
       Date.now() - 24 * 60 * 60 * 1000
     ).toISOString();
 
     const { data: briefData } = await supabase
       .from("briefs")
-      .select("id, name, priority, status, claimed_at")
+      .select("id, name, priority, status, claimed_at, quality_grade, payload")
       .eq("status", "COMPLETED")
       .gte("claimed_at", twentyFourHoursAgo)
       .order("claimed_at", { ascending: false });
 
     if (briefData && briefData.length > 0) {
-      // Fetch artifacts for these briefs
       const briefNames = briefData.map(
         (b: { name: string }) => b.name
       );
@@ -577,7 +593,6 @@ export default function ReviewTab() {
     if (costData) {
       setCosts(costData as CostEntry[]);
     } else {
-      // Fallback: query execution_log directly
       const { data: logData } = await supabase
         .from("execution_log")
         .select("agent, session_id")
@@ -612,7 +627,6 @@ export default function ReviewTab() {
   useEffect(() => {
     fetchAll();
 
-    // Realtime subscription for artifacts changes
     const channel = supabase
       .channel("review-realtime")
       .on(
@@ -664,6 +678,20 @@ export default function ReviewTab() {
     }
   }
 
+  // Filter overnight BRIEFs by context
+  function isR17Brief(b: OvernightBrief): boolean {
+    if (!b.payload) return false;
+    const labels = b.payload.labels as Record<string, unknown> | undefined;
+    return labels?.r17_client === true;
+  }
+
+  const filteredOvernight =
+    context === "all"
+      ? overnight
+      : context === "r17"
+      ? overnight.filter(isR17Brief)
+      : overnight.filter((b) => !isR17Brief(b));
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
@@ -671,12 +699,34 @@ export default function ReviewTab() {
         <span className="text-[10px] font-bold text-accent-green tracking-wider glow-green">
           MORNING REVIEW
         </span>
-        <span className="text-[9px] text-text-muted">
+
+        {/* Context sub-tabs */}
+        <div className="flex gap-1 ml-2">
+          {(["all", "northstar", "r17"] as const).map((ctx) => (
+            <button
+              key={ctx}
+              onClick={() => setContext(ctx)}
+              className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                context === ctx
+                  ? ctx === "r17"
+                    ? "border-accent-purple text-accent-purple"
+                    : ctx === "northstar"
+                    ? "border-accent-green text-accent-green"
+                    : "border-accent-blue text-accent-blue"
+                  : "border-border text-text-muted hover:text-text-secondary"
+              }`}
+            >
+              {ctx === "all" ? "ALL" : ctx === "northstar" ? "NORTHSTAR" : "R17"}
+            </button>
+          ))}
+        </div>
+
+        <span className="text-[9px] text-text-muted ml-auto">
           Last refresh: {lastRefresh || "loading..."}
         </span>
         <button
           onClick={fetchAll}
-          className="ml-auto text-[9px] px-2 py-0.5 rounded border border-border text-text-muted hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          className="text-[9px] px-2 py-0.5 rounded border border-border text-text-muted hover:text-accent-green hover:border-accent-green/30 transition-colors"
         >
           REFRESH
         </button>
@@ -687,7 +737,7 @@ export default function ReviewTab() {
         <div className="grid grid-cols-2 gap-0">
           {/* Left column */}
           <div className="border-r border-border">
-            <OvernightSummary items={overnight} />
+            <OvernightSummary items={filteredOvernight} />
             <div className="border-t border-border">
               <NeedsVerification
                 items={unverified}

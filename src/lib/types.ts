@@ -15,6 +15,7 @@ export const TABS: TabDef[] = [
   { key: "comms", label: "Comms", shortLabel: "COM", path: "/comms" },
   { key: "artifacts", label: "Artifacts", shortLabel: "ART", path: "/artifacts" },
   { key: "command", label: "Command", shortLabel: "CMD", path: "/command" },
+  { key: "cost", label: "Cost", shortLabel: "COST", path: "/cost" },
   { key: "review", label: "Review", shortLabel: "REV", path: "/review" },
 ];
 
@@ -124,14 +125,20 @@ export interface CommsThread {
 }
 
 export interface Artifact {
-  id: number;
-  type: string;
-  name: string;
-  url: string | null;
-  brief_id: number | null;
-  workspace_slug: string | null;
+  id: string;
+  brief_name: string | null;
+  agent: string | null;
+  artifact_type: string | null;
+  title: string | null;
+  location: string | null;
+  commit: string | null;
+  test_url: string | null;
   status: string | null;
+  verified_by_human: boolean | null;
+  verified_at: string | null;
+  notes: string | null;
   created_at: string;
+  updated_at: string | null;
 }
 
 export interface FeedSource {

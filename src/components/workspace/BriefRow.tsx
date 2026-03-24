@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { getStatusColour, getPriorityColour, withAlpha } from "@/lib/colours";
 
+const GRADE_COLOURS: Record<string, string> = {
+  GREEN: "#00ff41",
+  YELLOW: "#ffb800",
+  RED: "#ff1744",
+};
+
 interface BriefRowProps {
   id: number;
   name: string;
@@ -10,11 +16,13 @@ interface BriefRowProps {
   priority: string;
   wsjfScore?: number | null;
   claimedBy?: string | null;
+  qualityGrade?: string | null;
 }
 
-export default function BriefRow({ id, name, status, priority, wsjfScore, claimedBy }: BriefRowProps) {
+export default function BriefRow({ id, name, status, priority, wsjfScore, claimedBy, qualityGrade }: BriefRowProps) {
   const statusCol = getStatusColour(status);
   const priorityCol = getPriorityColour(priority);
+  const gradeCol = qualityGrade ? GRADE_COLOURS[qualityGrade.toUpperCase()] || "#404040" : "#404040";
 
   return (
     <Link
@@ -24,6 +32,13 @@ export default function BriefRow({ id, name, status, priority, wsjfScore, claime
       <span className="text-accent-yellow text-[10px] font-bold shrink-0 w-10">
         #{id}
       </span>
+
+      {/* Quality grade dot */}
+      <span
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ backgroundColor: gradeCol }}
+        title={qualityGrade ? `Quality: ${qualityGrade}` : "No grade"}
+      />
 
       <span className="text-xs text-text-primary flex-1 truncate group-hover:text-white transition-colors">
         {name}

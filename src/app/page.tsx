@@ -10,6 +10,7 @@ import R17Tab from "@/components/tabs/R17Tab";
 import CommsTab from "@/components/tabs/CommsTab";
 import ArtifactsTab from "@/components/tabs/ArtifactsTab";
 import CommandTab from "@/components/tabs/CommandTab";
+import CostTab from "@/components/tabs/CostTab";
 import ReviewTab from "@/components/tabs/ReviewTab";
 
 // Map tab keys to components — all rendered in one page, zero routing latency
@@ -22,6 +23,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   comms: CommsTab,
   artifacts: ArtifactsTab,
   command: CommandTab,
+  cost: CostTab,
   review: ReviewTab,
 };
 

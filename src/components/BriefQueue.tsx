@@ -106,6 +106,16 @@ export default function BriefQueue() {
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <span className="text-accent-yellow text-xs font-bold">#{brief.id}</span>
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{
+                    backgroundColor:
+                      brief.quality_grade === "GREEN" ? "#00ff41" :
+                      brief.quality_grade === "YELLOW" ? "#ffb800" :
+                      brief.quality_grade === "RED" ? "#ff1744" : "#404040",
+                  }}
+                  title={brief.quality_grade ? `Quality: ${brief.quality_grade}` : "No grade"}
+                />
                 <span className="text-xs font-medium text-text-primary truncate max-w-[180px]">
                   {brief.name}
                 </span>

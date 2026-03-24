@@ -58,7 +58,21 @@ export async function POST(request: Request) {
     .eq("id", artifact_id)
     .single();
 
-  // 3. Auto-create a new P0 BRIEF for the rejection
+  // 3. Log rejection to system_events
+  await supabase.from("system_events").insert({
+    event_type: "human_rejection",
+    source: "morning-review",
+    brief_name: artifact?.brief_name || null,
+    payload: {
+      artifact_id,
+      artifact_title: artifact?.title || null,
+      artifact_type: artifact?.artifact_type || null,
+      rejection_reason: reason.trim(),
+      rejected_at: new Date().toISOString(),
+    },
+  });
+
+  // 4. Auto-create a new P0 BRIEF for the rejection
   const briefName = `fix-rejected-${artifact_id}-${Date.now()}`;
   const { error: insertError } = await supabase.from("briefs").insert({
     name: briefName,
@@ -75,7 +89,6 @@ export async function POST(request: Request) {
   });
 
   if (insertError) {
-    // Artifact was already marked failed, so still return partial success
     return NextResponse.json(
       {
         ok: true,

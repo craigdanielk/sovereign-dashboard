@@ -196,6 +196,16 @@ export default function NorthStarTab() {
                     <span className="text-accent-yellow text-[10px] font-bold shrink-0">
                       #{brief.id}
                     </span>
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor:
+                          brief.quality_grade === "GREEN" ? "#00ff41" :
+                          brief.quality_grade === "YELLOW" ? "#ffb800" :
+                          brief.quality_grade === "RED" ? "#ff1744" : "#404040",
+                      }}
+                      title={brief.quality_grade ? `Quality: ${brief.quality_grade}` : "No grade"}
+                    />
                     <span className="text-[10px] text-text-primary truncate">
                       {brief.name}
                     </span>
