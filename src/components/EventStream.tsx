@@ -48,7 +48,12 @@ function systemEventToStream(ev: SystemEvent): StreamEvent {
   };
 }
 
-export default function EventStream() {
+interface EventStreamProps {
+  /** Optional: only show events from this source (agent name or service). Case-insensitive match. */
+  filterSource?: string | null;
+}
+
+export default function EventStream({ filterSource }: EventStreamProps = {}) {
   const [events, setEvents] = useState<StreamEvent[]>([]);
   const [connected, setConnected] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -131,6 +136,11 @@ export default function EventStream() {
     });
   }
 
+  // Filter events by source if filterSource is set
+  const displayEvents = filterSource
+    ? events.filter((ev) => ev.source.toLowerCase() === filterSource.toLowerCase())
+    : events;
+
   // Event type badge colour
   function eventTypeBadge(eventType: string): string {
     if (eventType === "hook_fired") return "#ffb800";
@@ -155,12 +165,23 @@ export default function EventStream() {
             }`}
           />
         </div>
-        <span className="text-[9px] text-text-muted">{events.length}</span>
+        <span className="text-[9px] text-text-muted">
+          {filterSource ? `${displayEvents.length}/${events.length}` : events.length}
+        </span>
       </div>
+
+      {/* Filter indicator */}
+      {filterSource && (
+        <div className="shrink-0 px-2 py-0.5 border-b border-border">
+          <span className="text-[9px] text-[#ffb800]">
+            Filtered: {filterSource.toUpperCase()}
+          </span>
+        </div>
+      )}
 
       {/* Events */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-1 space-y-0">
-        {events.map((ev) => (
+        {displayEvents.map((ev) => (
           <div
             key={ev.id}
             className="flex items-start gap-1 px-1 py-0.5 text-[10px] leading-tight hover:bg-bg-card-hover rounded animate-[fade-in-up_0.2s_ease-out]"
@@ -190,7 +211,7 @@ export default function EventStream() {
             </span>
           </div>
         ))}
-        {events.length === 0 && (
+        {displayEvents.length === 0 && (
           <div className="text-[10px] text-text-muted text-center py-4">
             Awaiting events...
           </div>

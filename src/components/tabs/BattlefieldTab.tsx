@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback, useRef, useMemo, type RefObject } fro
 import dynamic from "next/dynamic";
 import { withAlpha } from "@/lib/colours";
 import EventStream from "@/components/EventStream";
-import ReplayControls, { type ReplayEvent } from "@/components/ReplayControls";
+import ReplayControls, { type ReplayEvent, type ServicePulse } from "@/components/ReplayControls";
+import NavigationTree, { type ViewMode } from "@/components/battlefield/NavigationTree";
+import WorkflowMatrix from "@/components/shared/WorkflowMatrix";
 
 /* ── Types ────────────────────────────────────────────────────── */
 
@@ -930,6 +932,10 @@ export default function BattlefieldTab() {
   const [showDetail, setShowDetail] = useState(false);
   const [filterText, setFilterText] = useState("");
 
+  // Drilldown view mode: WAR_ROOM shows all, others filter to subgraph
+  const [viewMode, setViewMode] = useState<ViewMode>("WAR_ROOM");
+  const [drilldownEntityId, setDrilldownEntityId] = useState<string | null>(null);
+
   // Fix 1: Node type filters — agents/services/workflows on by default, skills/briefs off
   const [nodeFilters, setNodeFilters] = useState<NodeFilterState>({
     agent: true,
@@ -949,9 +955,15 @@ export default function BattlefieldTab() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [reloading, setReloading] = useState(false);
 
+  // View mode: globe (3D) or matrix (2D workflow visualization)
+  const [graphView, setGraphView] = useState<"globe" | "matrix">("globe");
+
   // Replay state
   const [replayActiveNodes, setReplayActiveNodes] = useState<Set<string>>(new Set());
   const replayTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  // Service pulse state for animated data flow lines
+  const [servicePulses, setServicePulses] = useState<ServicePulse[]>([]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graphRef = useRef<any>(null);
@@ -1054,6 +1066,16 @@ export default function BattlefieldTab() {
     replayTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
     replayTimeoutsRef.current.clear();
     setReplayActiveNodes(new Set());
+    setServicePulses([]);
+  }, []);
+
+  // Handle service pulse from replay — animate data flow to service nodes
+  const handleServicePulse = useCallback((pulse: ServicePulse) => {
+    setServicePulses((prev) => [...prev.slice(-20), pulse]); // keep last 20
+    // Auto-expire pulse after 600ms
+    setTimeout(() => {
+      setServicePulses((prev) => prev.filter((p) => p.timestamp !== pulse.timestamp));
+    }, 600);
   }, []);
 
   // Fetch detail for selected node (lazy-load on click)
@@ -1138,6 +1160,49 @@ export default function BattlefieldTab() {
     [fetchDetail]
   );
 
+  // Drilldown: select entity from NavigationTree
+  const handleDrilldownSelect = useCallback(
+    (id: string, mode: ViewMode) => {
+      setViewMode(mode);
+      setDrilldownEntityId(id);
+      setSelectedId(id);
+      setShowDetail(true);
+      fetchDetail(id);
+
+      // Re-heat simulation for the new subgraph after a tick
+      setTimeout(() => {
+        const fg = graphRef.current;
+        if (fg) {
+          fg.d3Force("charge")?.strength(-200).distanceMax(400);
+          fg.d3Force("center")?.strength(1);
+          fg.d3Force("link")?.distance(100);
+          fg.d3ReheatSimulation();
+        }
+      }, 100);
+    },
+    [fetchDetail]
+  );
+
+  // Drilldown: return to War Room
+  const handleBackToWarRoom = useCallback(() => {
+    setViewMode("WAR_ROOM");
+    setDrilldownEntityId(null);
+    setSelectedId(null);
+    setDetail(null);
+    setShowDetail(false);
+
+    // Re-apply default forces
+    setTimeout(() => {
+      const fg = graphRef.current;
+      if (fg) {
+        fg.d3Force("charge")?.strength(-120).distanceMax(500);
+        fg.d3Force("center")?.strength(1);
+        fg.d3Force("link")?.distance(80);
+        fg.d3ReheatSimulation();
+      }
+    }, 100);
+  }, []);
+
   // Configure d3 forces after graph mounts (CP3: spread nodes, centre them)
   useEffect(() => {
     const fg = graphRef.current;
@@ -1203,6 +1268,30 @@ export default function BattlefieldTab() {
     });
   }, [edges, filteredNodes, edgeFilters]);
 
+  // Drilldown subgraph filtering: when a specific entity is drilled into,
+  // show only that entity + its immediate neighbours
+  const drilldownNodes = useMemo(() => {
+    if (viewMode === "WAR_ROOM" || !drilldownEntityId) return filteredNodes;
+
+    // Find all nodes connected to the drilldown entity via edges
+    const neighbourIds = new Set<string>([drilldownEntityId]);
+    for (const e of edges) {
+      if (e.source === drilldownEntityId) neighbourIds.add(e.target);
+      if (e.target === drilldownEntityId) neighbourIds.add(e.source);
+    }
+
+    return filteredNodes.filter((n) => neighbourIds.has(n.id));
+  }, [viewMode, drilldownEntityId, filteredNodes, edges]);
+
+  const drilldownEdges = useMemo(() => {
+    if (viewMode === "WAR_ROOM" || !drilldownEntityId) return filteredEdges;
+
+    const drilldownNodeIds = new Set(drilldownNodes.map((n) => n.id));
+    return filteredEdges.filter(
+      (e) => drilldownNodeIds.has(e.source) && drilldownNodeIds.has(e.target)
+    );
+  }, [viewMode, drilldownEntityId, filteredEdges, drilldownNodes]);
+
   // Counts for filter bars
   const nodeFilterCounts = useMemo(() => ({
     agent: nodes.filter((n) => n.entity_type === "agent").length,
@@ -1221,13 +1310,17 @@ export default function BattlefieldTab() {
     return counts;
   }, [edges]);
 
-  // Build graph data for react-force-graph-3d
+  // Build graph data for react-force-graph-3d (uses drilldown-filtered data)
   const graphData: GraphData = useMemo(() => {
-    const graphNodes: GraphNodeObj[] = filteredNodes.map((n) => {
+    const activeNodes = drilldownNodes;
+    const activeEdges = drilldownEdges;
+
+    const graphNodes: GraphNodeObj[] = activeNodes.map((n) => {
       const intensity = recencyIntensity(n.last_updated);
       const ec = edgeCounts.get(n.id) || 0;
-      // nodeVal scales with edge count: SOVEREIGN (most edges) is the largest
-      const val = Math.max(2, ec * 1.5);
+      // In drilldown mode, make the focal node larger
+      const isDrilldownFocal = viewMode !== "WAR_ROOM" && n.id === drilldownEntityId;
+      const val = isDrilldownFocal ? Math.max(8, ec * 2) : Math.max(2, ec * 1.5);
       return {
         ...n,
         colour: n.entity_type === "gap" ? "#ff0040" :
@@ -1238,13 +1331,13 @@ export default function BattlefieldTab() {
       };
     });
 
-    const nodeIds = new Set(filteredNodes.map((n) => n.id));
-    const graphLinks: GraphLinkObj[] = filteredEdges
+    const nodeIds = new Set(activeNodes.map((n) => n.id));
+    const graphLinks: GraphLinkObj[] = activeEdges
       .filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target))
       .map((e) => ({ ...e }));
 
     return { nodes: graphNodes, links: graphLinks };
-  }, [filteredNodes, filteredEdges, edgeCounts]);
+  }, [drilldownNodes, drilldownEdges, edgeCounts, viewMode, drilldownEntityId]);
 
   // Highlight set for selected node
   const highlightNodes = useMemo(() => {
@@ -1299,115 +1392,50 @@ export default function BattlefieldTab() {
 
   return (
     <div className="h-full flex overflow-hidden">
-      {/* LEFT PANE: System Registry */}
-      <div
-        className="w-[250px] shrink-0 flex flex-col h-full overflow-hidden"
-        style={{
-          background: "#0d0d0d",
-          borderRight: "1px solid rgba(0,255,65,0.2)",
-          fontFamily: "'JetBrains Mono', monospace",
-        }}
-      >
-        {/* Header */}
-        <div className="shrink-0 px-2 py-1.5 border-b border-[#00ff41]/20">
-          <div className="text-[10px] font-bold text-[#00ff41] tracking-wider mb-1.5">
-            SYSTEM REGISTRY
-          </div>
-          <input
-            type="text"
-            value={filterText}
-            onChange={(e) => setFilterText(e.target.value)}
-            placeholder="Filter entities..."
-            className="w-full bg-[#1a1a1a] border border-[#00ff41]/20 rounded px-2 py-0.5 text-[10px] text-[#d4d4d4] placeholder-[#404040] outline-none focus:border-[#00ff41]/50"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          />
-        </div>
-
-        {/* Scrollable registry */}
-        <div className="flex-1 overflow-y-auto p-1">
-          {groupedNodes.agents.length > 0 && (
-            <RegistrySection
-              title="AGENTS"
-              colour="#00ff41"
-              items={groupedNodes.agents}
-              selectedId={selectedId}
-              onSelect={handleRegistryClick}
-            />
-          )}
-          {groupedNodes.services.length > 0 && (
-            <RegistrySection
-              title="SERVICES"
-              colour="#00b4d8"
-              items={groupedNodes.services}
-              selectedId={selectedId}
-              onSelect={handleRegistryClick}
-            />
-          )}
-          {groupedNodes.tools.length > 0 && (
-            <RegistrySection
-              title="TOOLS"
-              colour="#ffd60a"
-              items={groupedNodes.tools}
-              selectedId={selectedId}
-              onSelect={handleRegistryClick}
-            />
-          )}
-          {groupedNodes.skills.length > 0 && (
-            <RegistrySection
-              title="SKILLS"
-              colour="#e879f9"
-              items={groupedNodes.skills}
-              selectedId={selectedId}
-              onSelect={handleRegistryClick}
-            />
-          )}
-          {groupedNodes.workflows.length > 0 && (
-            <RegistrySection
-              title="WORKFLOWS"
-              colour="#a855f7"
-              items={groupedNodes.workflows}
-              selectedId={selectedId}
-              onSelect={handleRegistryClick}
-            />
-          )}
-          {groupedNodes.content.length > 0 && (
-            <RegistrySection
-              title="CONTENT"
-              colour="#e879f9"
-              items={groupedNodes.content}
-              selectedId={selectedId}
-              onSelect={handleRegistryClick}
-            />
-          )}
-          {groupedNodes.gaps.length > 0 && (
-            <RegistrySection
-              title="GAPS"
-              colour="#ff0040"
-              items={groupedNodes.gaps}
-              selectedId={selectedId}
-              onSelect={handleRegistryClick}
-            />
-          )}
-          {groupedNodes.other.length > 0 && (
-            <RegistrySection
-              title="OTHER"
-              colour="#737373"
-              items={groupedNodes.other}
-              selectedId={selectedId}
-              onSelect={handleRegistryClick}
-            />
-          )}
-
-          {nodes.length === 0 && !loading && (
-            <div className="text-[10px] text-[#404040] text-center py-4">
-              No entities loaded
-            </div>
-          )}
-        </div>
-      </div>
+      {/* LEFT PANE: Navigation Tree (drilldown-capable) */}
+      <NavigationTree
+        nodes={nodes}
+        loading={loading}
+        selectedId={selectedId}
+        viewMode={viewMode}
+        onSelectWarRoom={handleBackToWarRoom}
+        onSelectEntity={handleDrilldownSelect}
+      />
 
       {/* CENTRE PANE: 3D Globe + Detail Card */}
       <div className="flex-1 flex flex-col min-w-0 relative">
+        {/* Drilldown breadcrumb bar */}
+        {viewMode !== "WAR_ROOM" && drilldownEntityId && (
+          <div
+            className="shrink-0 flex items-center gap-2 px-3 py-1 border-b border-[#00ff41]/20"
+            style={{ fontFamily: "'JetBrains Mono', monospace", background: "rgba(0,255,65,0.03)" }}
+          >
+            <button
+              onClick={handleBackToWarRoom}
+              className="text-[10px] text-[#00ff41] hover:text-[#39ff14] transition-colors flex items-center gap-1"
+            >
+              <span>&larr;</span>
+              <span>War Room</span>
+            </button>
+            <span className="text-[9px] text-[#404040]">/</span>
+            <span
+              className="text-[10px] font-bold"
+              style={{
+                color: viewMode === "AGENT_VIEW" ? "#00ff41" :
+                       viewMode === "WORKFLOW_VIEW" ? "#a855f7" :
+                       viewMode === "SERVICE_VIEW" ? "#00b4d8" : "#d4d4d4",
+              }}
+            >
+              {drilldownEntityId}
+            </span>
+            <span className="text-[9px] text-[#404040] ml-1">
+              ({viewMode === "AGENT_VIEW" ? "agent subgraph" :
+                viewMode === "WORKFLOW_VIEW" ? "workflow subgraph" :
+                viewMode === "SERVICE_VIEW" ? "service subgraph" : ""} &middot; {drilldownNodes.length} nodes &middot; {drilldownEdges.length} edges)
+            </span>
+          </div>
+        )}
+
         {/* Metrics bar */}
         <div
           className="shrink-0 px-3 py-1.5 border-b border-border flex items-center gap-5"
@@ -1504,6 +1532,25 @@ export default function BattlefieldTab() {
           >
             {reloading ? "..." : "RELOAD"}
           </button>
+
+          {/* Globe / Matrix view toggle */}
+          <div className="flex items-center gap-0.5 ml-2">
+            {(["globe", "matrix"] as const).map((view) => (
+              <button
+                key={view}
+                onClick={() => setGraphView(view)}
+                className="px-2 py-0.5 rounded text-[9px] transition-all"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  color: graphView === view ? "#0a0a0a" : "#00ff41",
+                  background: graphView === view ? "#00ff41" : "transparent",
+                  border: "1px solid rgba(0,255,65,0.2)",
+                }}
+              >
+                {view === "globe" ? "3D" : "MATRIX"}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Fix 1: Node type filter bar */}
@@ -1521,20 +1568,72 @@ export default function BattlefieldTab() {
         />
 
         {/* Replay Controls */}
-        <ReplayControls onEventFire={handleReplayEvent} onReset={handleReplayReset} />
+        <ReplayControls onEventFire={handleReplayEvent} onReset={handleReplayReset} onServicePulse={handleServicePulse} />
 
-        {/* 3D Globe */}
+        {/* 3D Globe or Workflow Matrix */}
         <div ref={canvasContainerRef} className="flex-1 relative" style={{ background: "#0a0a0a" }}>
-          {/* CRT scanline overlay */}
-          <div
-            className="absolute inset-0 z-10 pointer-events-none"
-            style={{
-              backgroundImage: "repeating-linear-gradient(0deg, rgba(0,255,65,0.03) 0px, transparent 1px, transparent 2px)",
-              backgroundSize: "100% 2px",
-            }}
-          />
+          {/* Service pulse animations overlay */}
+          {servicePulses.length > 0 && (
+            <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+              {servicePulses.map((pulse) => {
+                const age = performance.now() - pulse.timestamp;
+                const progress = Math.min(age / 600, 1);
+                const opacity = 1 - progress;
+                return (
+                  <div
+                    key={pulse.timestamp}
+                    className="absolute flex items-center gap-1 px-2 py-0.5 rounded-full whitespace-nowrap"
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "8px",
+                      left: `${30 + progress * 40}%`,
+                      top: `${20 + (pulse.timestamp % 60)}%`,
+                      opacity,
+                      background: "rgba(0,255,65,0.15)",
+                      border: "1px solid rgba(0,255,65,0.3)",
+                      color: "#00ff41",
+                      transform: `translateX(${progress * 100}px)`,
+                      transition: "transform 0.1s linear",
+                    }}
+                  >
+                    <span style={{ color: "#00ff41" }}>{pulse.from}</span>
+                    <span style={{ color: "#737373" }}>&rarr;</span>
+                    <span style={{ color: "#00b4d8" }}>{pulse.to}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-          {!loading && nodes.length > 0 && (
+          {/* Workflow Matrix view */}
+          {graphView === "matrix" && (
+            <div className="absolute inset-0 z-5 overflow-auto">
+              <WorkflowMatrix
+                theme="dark"
+                className="h-full"
+                onNodeClick={(id) => {
+                  // Try to map matrix node ID to a graph node
+                  const matchedNode = nodes.find((n) =>
+                    n.id === id || n.name === id || n.name === id.replace(/^(wf-|sk-|svc-|gate-|ep-)/, "")
+                  );
+                  if (matchedNode) handleNodeClick(matchedNode.id);
+                }}
+              />
+            </div>
+          )}
+
+          {/* CRT scanline overlay */}
+          {graphView === "globe" && (
+            <div
+              className="absolute inset-0 z-10 pointer-events-none"
+              style={{
+                backgroundImage: "repeating-linear-gradient(0deg, rgba(0,255,65,0.03) 0px, transparent 1px, transparent 2px)",
+                backgroundSize: "100% 2px",
+              }}
+            />
+          )}
+
+          {graphView === "globe" && !loading && nodes.length > 0 && (
             <ForceGraph3D
               ref={graphRef}
               graphData={graphData}
@@ -1590,9 +1689,12 @@ export default function BattlefieldTab() {
               linkDirectionalParticleSpeed={0.005}
               onNodeClick={(node: object) => handleNodeClick(node as GraphNodeObj)}
               onBackgroundClick={() => {
-                setSelectedId(null);
-                setDetail(null);
-                setShowDetail(false);
+                if (viewMode === "WAR_ROOM") {
+                  setSelectedId(null);
+                  setDetail(null);
+                  setShowDetail(false);
+                }
+                // In drilldown mode, background click just deselects detail but stays in drilldown
               }}
             />
           )}
@@ -1740,7 +1842,7 @@ export default function BattlefieldTab() {
           borderLeft: "1px solid rgba(0,255,65,0.2)",
         }}
       >
-        <EventStream />
+        <EventStream filterSource={viewMode !== "WAR_ROOM" ? drilldownEntityId : null} />
       </div>
     </div>
   );

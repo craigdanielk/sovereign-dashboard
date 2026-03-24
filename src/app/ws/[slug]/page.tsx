@@ -45,6 +45,7 @@ export default function WorkspaceBoard() {
             summary: (b.client_name as string) || null,
             payload: null,
             wsjf_score: (b.wsjf_score as number) || null,
+            quality_grade: (b.quality_grade as string) || null,
           }))
         );
       } else {
