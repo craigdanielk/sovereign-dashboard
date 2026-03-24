@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo, type RefObject } fro
 import dynamic from "next/dynamic";
 import { withAlpha } from "@/lib/colours";
 import EventStream from "@/components/EventStream";
+import ReplayControls, { type ReplayEvent } from "@/components/ReplayControls";
 
 /* ── Types ────────────────────────────────────────────────────── */
 
@@ -375,12 +376,11 @@ function DetailCard({
 
   return (
     <div
-      className="absolute bottom-0 left-0 right-0 z-20 flex flex-col transition-all duration-300"
+      className="shrink-0 flex flex-col transition-all duration-300 overflow-auto"
       style={{
         height: isWorkflow ? "50%" : "42%",
         background: "rgba(10,10,10,0.97)",
         borderTop: "1px solid rgba(0,255,65,0.3)",
-        backdropFilter: "blur(12px)",
         fontFamily: "'JetBrains Mono', monospace",
       }}
     >
@@ -780,10 +780,15 @@ export default function BattlefieldTab() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<EntityDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const [filterText, setFilterText] = useState("");
 
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [reloading, setReloading] = useState(false);
+
+  // Replay state
+  const [replayActiveNodes, setReplayActiveNodes] = useState<Set<string>>(new Set());
+  const replayTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graphRef = useRef<any>(null);
@@ -835,6 +840,37 @@ export default function BattlefieldTab() {
     setReloading(false);
   }, [fetchGraph, fetchHealth]);
 
+  // Replay event handler — highlight agent nodes for 2s
+  const handleReplayEvent = useCallback((event: ReplayEvent) => {
+    setReplayActiveNodes((prev) => {
+      const next = new Set(prev);
+      next.add(event.agent);
+      if (event.target_agent) next.add(event.target_agent);
+      return next;
+    });
+    const clearNode = (nodeId: string) => {
+      const existing = replayTimeoutsRef.current.get(nodeId);
+      if (existing) clearTimeout(existing);
+      const timeout = setTimeout(() => {
+        setReplayActiveNodes((prev) => {
+          const next = new Set(prev);
+          next.delete(nodeId);
+          return next;
+        });
+        replayTimeoutsRef.current.delete(nodeId);
+      }, 2000);
+      replayTimeoutsRef.current.set(nodeId, timeout);
+    };
+    clearNode(event.agent);
+    if (event.target_agent) clearNode(event.target_agent);
+  }, []);
+
+  const handleReplayReset = useCallback(() => {
+    replayTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+    replayTimeoutsRef.current.clear();
+    setReplayActiveNodes(new Set());
+  }, []);
+
   // Fetch detail for selected node (lazy-load on click)
   const fetchDetail = useCallback(async (name: string) => {
     setDetailLoading(true);
@@ -856,6 +892,7 @@ export default function BattlefieldTab() {
     (nodeOrId: GraphNodeObj | string) => {
       const id = typeof nodeOrId === "string" ? nodeOrId : nodeOrId.id;
       setSelectedId(id);
+      setShowDetail(true);
       fetchDetail(id);
 
       // Zoom camera to clicked node if it has coordinates
@@ -881,6 +918,7 @@ export default function BattlefieldTab() {
   const handleRegistryClick = useCallback(
     (id: string) => {
       setSelectedId(id);
+      setShowDetail(true);
       fetchDetail(id);
 
       // Try to zoom to this node in the 3D graph
@@ -909,6 +947,7 @@ export default function BattlefieldTab() {
   const handleNavigate = useCallback(
     (name: string) => {
       setSelectedId(name);
+      setShowDetail(true);
       fetchDetail(name);
     },
     [fetchDetail]
@@ -1200,6 +1239,9 @@ export default function BattlefieldTab() {
           </button>
         </div>
 
+        {/* Replay Controls */}
+        <ReplayControls onEventFire={handleReplayEvent} onReset={handleReplayReset} />
+
         {/* 3D Globe */}
         <div ref={canvasContainerRef} className="flex-1 relative" style={{ background: "#0a0a0a" }}>
           {/* CRT scanline overlay */}
@@ -1222,6 +1264,8 @@ export default function BattlefieldTab() {
               nodeId="id"
               nodeColor={(node: object) => {
                 const n = node as GraphNodeObj;
+                // Replay highlight — pulsing bright green
+                if (replayActiveNodes.has(n.id) || replayActiveNodes.has(n.name)) return "#00ff41";
                 if (highlightNodes.size === 0) return n.colour || "#737373";
                 return highlightNodes.has(n.id) ? (n.colour || "#737373") : withAlpha(n.colour || "#737373", 0.15);
               }}
@@ -1264,6 +1308,11 @@ export default function BattlefieldTab() {
               }}
               linkDirectionalParticleSpeed={0.005}
               onNodeClick={(node: object) => handleNodeClick(node as GraphNodeObj)}
+              onBackgroundClick={() => {
+                setSelectedId(null);
+                setDetail(null);
+                setShowDetail(false);
+              }}
             />
           )}
 
@@ -1383,22 +1432,23 @@ export default function BattlefieldTab() {
             </div>
           )}
 
-          {/* Detail Card (slides up from bottom) */}
-          {selectedId && (
-            <DetailCard
-              node={selectedNode}
-              detail={detail}
-              loading={detailLoading}
-              edges={edges}
-              nodes={nodes}
-              onClose={() => {
-                setSelectedId(null);
-                setDetail(null);
-              }}
-              onNavigate={handleNavigate}
-            />
-          )}
         </div>
+
+        {/* Detail Card (below the canvas — flexbox sibling so canvas resizes) */}
+        {selectedId && showDetail && (
+          <DetailCard
+            node={selectedNode}
+            detail={detail}
+            loading={detailLoading}
+            edges={edges}
+            nodes={nodes}
+            onClose={() => {
+              setShowDetail(false);
+              setDetail(null);
+            }}
+            onNavigate={handleNavigate}
+          />
+        )}
       </div>
 
       {/* RIGHT PANE: Event Stream */}
