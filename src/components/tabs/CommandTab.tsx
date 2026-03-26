@@ -3,6 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase, type Brief } from "@/lib/supabase";
 import { getStatusColour } from "@/lib/colours";
+import GitHubIssues from "@/components/GitHubIssues";
+
+type RightPanelView = "briefs" | "github";
 
 interface ApprovalItem {
   id: number;
@@ -16,6 +19,7 @@ interface ApprovalItem {
 export default function CommandTab() {
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [recentBriefs, setRecentBriefs] = useState<Brief[]>([]);
+  const [rightView, setRightView] = useState<RightPanelView>("briefs");
 
   const fetchApprovals = useCallback(async () => {
     const { data: pendingBriefs } = await supabase
@@ -151,78 +155,110 @@ export default function CommandTab() {
         </div>
       </div>
 
-      {/* Right: Approval queue + recent briefs */}
+      {/* Right: Toggle between Approval/Briefs and GitHub Issues */}
       <div className="w-96 flex flex-col">
-        {/* Approval queue */}
-        <div className="flex-1 flex flex-col border-b border-border">
-          <div className="shrink-0 px-3 py-1.5 border-b border-border flex items-center justify-between">
-            <span className="text-[10px] font-bold text-accent-yellow tracking-wider">
-              APPROVAL QUEUE
-            </span>
-            <span className="text-[9px] text-text-muted">{approvals.length} pending</span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
-            {approvals.map((item) => (
-              <div
-                key={item.id}
-                className="px-2 py-1.5 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors"
-              >
-                <div className="flex items-center justify-between mb-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="text-[9px] font-bold px-1 py-0.5 rounded"
-                      style={{
-                        color: gateColours[item.type] || "#737373",
-                        backgroundColor: `${gateColours[item.type] || "#737373"}15`,
-                      }}
-                    >
-                      {item.type}
-                    </span>
-                    <span className="text-[10px] text-text-primary truncate max-w-[180px]">
-                      {item.name}
-                    </span>
-                  </div>
-                  <span className="text-[9px] text-text-muted">{timeAgo(item.created_at)}</span>
-                </div>
-                {item.detail && (
-                  <p className="text-[9px] text-text-secondary truncate">{item.detail}</p>
-                )}
-              </div>
-            ))}
-            {approvals.length === 0 && (
-              <div className="text-[10px] text-text-muted text-center py-4">
-                No pending approvals
-              </div>
-            )}
-          </div>
+        {/* View toggle */}
+        <div className="shrink-0 px-3 py-1.5 border-b border-border flex items-center gap-2">
+          <button
+            onClick={() => setRightView("briefs")}
+            className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded transition-colors ${
+              rightView === "briefs"
+                ? "bg-accent-blue/20 text-accent-blue"
+                : "text-text-muted hover:text-text-secondary"
+            }`}
+          >
+            BRIEF QUEUE
+          </button>
+          <button
+            onClick={() => setRightView("github")}
+            className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded transition-colors ${
+              rightView === "github"
+                ? "bg-accent-green/20 text-accent-green"
+                : "text-text-muted hover:text-text-secondary"
+            }`}
+          >
+            GITHUB ISSUES
+          </button>
         </div>
 
-        {/* Recent briefs */}
-        <div className="h-48 flex flex-col">
-          <div className="shrink-0 px-3 py-1.5 border-b border-border">
-            <span className="text-[10px] font-bold text-accent-blue tracking-wider">
-              RECENT BRIEFS
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-1.5 space-y-0">
-            {recentBriefs.map((b) => (
-              <div
-                key={b.id}
-                className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] hover:bg-bg-card-hover rounded"
-              >
-                <span className="text-accent-yellow shrink-0">#{b.id}</span>
-                <span
-                  className="shrink-0 w-14 text-[9px] font-bold"
-                  style={{ color: getStatusColour(b.status) }}
-                >
-                  {b.status}
+        {rightView === "briefs" ? (
+          <>
+            {/* Approval queue */}
+            <div className="flex-1 flex flex-col border-b border-border">
+              <div className="shrink-0 px-3 py-1.5 border-b border-border flex items-center justify-between">
+                <span className="text-[10px] font-bold text-accent-yellow tracking-wider">
+                  APPROVAL QUEUE
                 </span>
-                <span className="text-text-primary truncate flex-1">{b.name}</span>
-                <span className="text-text-muted shrink-0">{timeAgo(b.created_at)}</span>
+                <span className="text-[9px] text-text-muted">{approvals.length} pending</span>
               </div>
-            ))}
+              <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
+                {approvals.map((item) => (
+                  <div
+                    key={item.id}
+                    className="px-2 py-1.5 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="text-[9px] font-bold px-1 py-0.5 rounded"
+                          style={{
+                            color: gateColours[item.type] || "#737373",
+                            backgroundColor: `${gateColours[item.type] || "#737373"}15`,
+                          }}
+                        >
+                          {item.type}
+                        </span>
+                        <span className="text-[10px] text-text-primary truncate max-w-[180px]">
+                          {item.name}
+                        </span>
+                      </div>
+                      <span className="text-[9px] text-text-muted">{timeAgo(item.created_at)}</span>
+                    </div>
+                    {item.detail && (
+                      <p className="text-[9px] text-text-secondary truncate">{item.detail}</p>
+                    )}
+                  </div>
+                ))}
+                {approvals.length === 0 && (
+                  <div className="text-[10px] text-text-muted text-center py-4">
+                    No pending approvals
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Recent briefs */}
+            <div className="h-48 flex flex-col">
+              <div className="shrink-0 px-3 py-1.5 border-b border-border">
+                <span className="text-[10px] font-bold text-accent-blue tracking-wider">
+                  RECENT BRIEFS
+                </span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-1.5 space-y-0">
+                {recentBriefs.map((b) => (
+                  <div
+                    key={b.id}
+                    className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] hover:bg-bg-card-hover rounded"
+                  >
+                    <span className="text-accent-yellow shrink-0">#{b.id}</span>
+                    <span
+                      className="shrink-0 w-14 text-[9px] font-bold"
+                      style={{ color: getStatusColour(b.status) }}
+                    >
+                      {b.status}
+                    </span>
+                    <span className="text-text-primary truncate flex-1">{b.name}</span>
+                    <span className="text-text-muted shrink-0">{timeAgo(b.created_at)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 overflow-hidden">
+            <GitHubIssues />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
