@@ -8,7 +8,7 @@ export interface TabDef {
 
 export const TABS: TabDef[] = [
   { key: "root", label: "Root", shortLabel: "ROOT", path: "/" },
-  { key: "north-star", label: "North Star", shortLabel: "NS", path: "/north-star" },
+  { key: "north-star", label: "FractalOS", shortLabel: "NS", path: "/north-star" },
   { key: "battlefield", label: "Battlefield", shortLabel: "BF", path: "/battlefield" },
   { key: "recon", label: "RECON", shortLabel: "RCN", path: "/recon" },
   { key: "r17", label: "R17", shortLabel: "R17", path: "/r17" },
@@ -33,7 +33,7 @@ export interface Workspace {
 export const WORKSPACES: Workspace[] = [
   {
     slug: "north-star",
-    name: "North Star",
+    name: "FractalOS",
     colour: "accent-green",
     description: "BRIEFs, agents, strategic goals",
     icon: "NS",
