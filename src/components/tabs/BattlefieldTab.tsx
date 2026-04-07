@@ -97,6 +97,24 @@ function statusDotFromRecency(lastUpdated: string | null, status: string): strin
   return "#737373";
 }
 
+function catalogueStatusColour(status: string): string {
+  const s = (status || "").toUpperCase();
+  if (s === "WORKING") return "#00ff41";
+  if (s === "BROKEN") return "#ff0040";
+  if (s === "CONFIGURED" || s === "PARTIAL") return "#ffb800";
+  return "#737373";
+}
+
+function renderMarkdownText(text: string): string {
+  return text
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^\s*[-*]\s+/gm, "• ")
+    .trim();
+}
+
 /* ── Recency-based glow intensity for living memory ───────── */
 
 function recencyIntensity(lastUpdated: string | null): number {
@@ -516,12 +534,13 @@ function DetailCard({
             )}
 
             {/* ── Catalogue page data ── */}
-            {detail?.catalogue_page && (
+            {detail?.catalogue_page ? (
               <div
                 className="rounded p-2 space-y-2"
                 style={{ background: "rgba(0,180,216,0.05)", border: "1px solid rgba(0,180,216,0.2)" }}
               >
-                <div className="flex items-center gap-2">
+                {/* Header: label + category + status + version + brief_id */}
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[9px] text-[#00b4d8] tracking-wider font-bold">FRACTALOS CATALOGUE</span>
                   <span
                     className="text-[9px] px-1.5 py-0.5 rounded"
@@ -529,10 +548,35 @@ function DetailCard({
                   >
                     {detail.catalogue_page.category}
                   </span>
+                  {/* Operational status — color-coded */}
+                  <span
+                    className="text-[9px] font-bold flex items-center gap-0.5"
+                    style={{ color: catalogueStatusColour(detail.catalogue_page.operational_status) }}
+                  >
+                    ●&nbsp;{detail.catalogue_page.operational_status}
+                  </span>
+                  {detail.catalogue_page.version && detail.catalogue_page.version !== "unknown" && (
+                    <span className="text-[9px] text-[#404040]">v{detail.catalogue_page.version}</span>
+                  )}
                   {detail.catalogue_page.brief_id && (
                     <span className="text-[9px] text-[#404040]">BRIEF #{detail.catalogue_page.brief_id}</span>
                   )}
                 </div>
+
+                {/* Metadata table: display_name row */}
+                {detail.catalogue_page.display_name && detail.catalogue_page.display_name !== detail.catalogue_page.name && (
+                  <div className="text-[9px]">
+                    <span className="text-[#737373]">DISPLAY_NAME: </span>
+                    <span className="text-[#d4d4d4]">{detail.catalogue_page.display_name}</span>
+                  </div>
+                )}
+
+                {/* Role description */}
+                {detail.catalogue_page.role_description && (
+                  <div className="text-[10px] text-[#88cc88] leading-relaxed">
+                    {detail.catalogue_page.role_description}
+                  </div>
+                )}
 
                 {/* Completeness bar */}
                 <div className="flex items-center gap-2">
@@ -566,6 +610,16 @@ function DetailCard({
                     <span className="text-[9px] text-[#ff0040]">[{detail.catalogue_page.gap_count} GAPs]</span>
                   )}
                 </div>
+
+                {/* Body preview — markdown stripped to plain text */}
+                {detail.catalogue_page.body_preview && (
+                  <pre
+                    className="text-[9px] text-[#737373] leading-relaxed max-h-24 overflow-y-auto whitespace-pre-wrap rounded p-1.5"
+                    style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    {renderMarkdownText(detail.catalogue_page.body_preview)}
+                  </pre>
+                )}
 
                 {/* Source files */}
                 {detail.catalogue_page.source_files.length > 0 && (
@@ -610,6 +664,33 @@ function DetailCard({
                     )}
                   </div>
                 )}
+              </div>
+            ) : detail && !loading && (
+              /* Fallback: node has no catalogue page — show RAG entity metadata */
+              <div
+                className="rounded p-2 space-y-1.5"
+                style={{ background: "rgba(115,115,115,0.05)", border: "1px solid rgba(115,115,115,0.15)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-[#737373] tracking-wider font-bold">RAG ENTITY</span>
+                  <span className="text-[9px] text-[#404040]">no catalogue page</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[9px]">
+                  <div>
+                    <span className="text-[#737373]">TYPE: </span>
+                    <span className="text-[#d4d4d4]">{detail.entity.type}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#737373]">STATUS: </span>
+                    <span style={{ color: statusDot(detail.entity.status) }}>{detail.entity.status}</span>
+                  </div>
+                  {detail.entity.last_updated && (
+                    <div className="col-span-2">
+                      <span className="text-[#737373]">UPDATED: </span>
+                      <span className="text-[#d4d4d4]">{detail.entity.last_updated}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
