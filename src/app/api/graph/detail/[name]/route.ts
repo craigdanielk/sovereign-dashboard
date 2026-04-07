@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { lookupCataloguePage } from "@/lib/catalogue";
 
 const RAG_URL = "https://rag-mcp-server-152999532788.europe-west1.run.app/mcp";
 
@@ -224,6 +225,8 @@ export async function GET(
     // Extract relationships from rag_traverse using the proper parser
     const relationships = extractTraverseRelationships(traverseResult, name);
 
+    const cataloguePage = lookupCataloguePage(name);
+
     return NextResponse.json({
       entity: {
         name: (entity.name as string) || name,
@@ -235,6 +238,7 @@ export async function GET(
       },
       relationships,
       execution_log: executionLog,
+      catalogue_page: cataloguePage ?? null,
     }, {
       headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=120" },
     });

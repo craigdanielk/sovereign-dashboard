@@ -7,6 +7,7 @@ import EventStream from "@/components/EventStream";
 import ReplayControls, { type ReplayEvent, type ServicePulse } from "@/components/ReplayControls";
 import NavigationTree, { type ViewMode } from "@/components/battlefield/NavigationTree";
 import WorkflowMatrix from "@/components/shared/WorkflowMatrix";
+import type { CatalogueEntry } from "@/lib/catalogue";
 
 /* ── Types ────────────────────────────────────────────────────── */
 
@@ -47,6 +48,7 @@ interface EntityDetail {
     direction: string;
   }>;
   execution_log: ExecutionLogEntry[];
+  catalogue_page: CatalogueEntry | null;
 }
 
 interface HealthStatus {
@@ -513,6 +515,104 @@ function DetailCard({
               </div>
             )}
 
+            {/* ── Catalogue page data ── */}
+            {detail?.catalogue_page && (
+              <div
+                className="rounded p-2 space-y-2"
+                style={{ background: "rgba(0,180,216,0.05)", border: "1px solid rgba(0,180,216,0.2)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-[#00b4d8] tracking-wider font-bold">FRACTALOS CATALOGUE</span>
+                  <span
+                    className="text-[9px] px-1.5 py-0.5 rounded"
+                    style={{ background: "rgba(0,180,216,0.15)", color: "#00b4d8" }}
+                  >
+                    {detail.catalogue_page.category}
+                  </span>
+                  {detail.catalogue_page.brief_id && (
+                    <span className="text-[9px] text-[#404040]">BRIEF #{detail.catalogue_page.brief_id}</span>
+                  )}
+                </div>
+
+                {/* Completeness bar */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-[#737373] shrink-0 w-24">COMPLETENESS</span>
+                  <div className="flex-1 h-1.5 rounded-full bg-[#1a1a1a] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${detail.catalogue_page.completeness_score}%`,
+                        background: detail.catalogue_page.completeness_score >= 80
+                          ? "#00ff41"
+                          : detail.catalogue_page.completeness_score >= 50
+                          ? "#ffb800"
+                          : "#ff0040",
+                      }}
+                    />
+                  </div>
+                  <span
+                    className="text-[9px] font-bold tabular-nums"
+                    style={{
+                      color: detail.catalogue_page.completeness_score >= 80
+                        ? "#00ff41"
+                        : detail.catalogue_page.completeness_score >= 50
+                        ? "#ffb800"
+                        : "#ff0040",
+                    }}
+                  >
+                    {detail.catalogue_page.completeness_score}%
+                  </span>
+                  {detail.catalogue_page.has_gaps && (
+                    <span className="text-[9px] text-[#ff0040]">[{detail.catalogue_page.gap_count} GAPs]</span>
+                  )}
+                </div>
+
+                {/* Source files */}
+                {detail.catalogue_page.source_files.length > 0 && (
+                  <div>
+                    <span className="text-[9px] text-[#737373] tracking-wider">SOURCE_FILES </span>
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {detail.catalogue_page.source_files.map((f) => (
+                        <span
+                          key={f}
+                          className="text-[9px] px-1 py-0.5 rounded"
+                          style={{ background: "rgba(0,255,65,0.08)", color: "#88cc88", fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dependencies */}
+                {(detail.catalogue_page.dependencies_agents.length > 0 ||
+                  detail.catalogue_page.dependencies_services.length > 0 ||
+                  detail.catalogue_page.dependencies_skills.length > 0) && (
+                  <div className="flex flex-wrap gap-3 text-[9px]">
+                    {detail.catalogue_page.dependencies_agents.length > 0 && (
+                      <div>
+                        <span className="text-[#737373]">AGENTS: </span>
+                        <span className="text-[#00ff41]">{detail.catalogue_page.dependencies_agents.join(", ")}</span>
+                      </div>
+                    )}
+                    {detail.catalogue_page.dependencies_services.length > 0 && (
+                      <div>
+                        <span className="text-[#737373]">SERVICES: </span>
+                        <span className="text-[#00b4d8]">{detail.catalogue_page.dependencies_services.join(", ")}</span>
+                      </div>
+                    )}
+                    {detail.catalogue_page.dependencies_skills.length > 0 && (
+                      <div>
+                        <span className="text-[#737373]">SKILLS: </span>
+                        <span className="text-[#e879f9]">{detail.catalogue_page.dependencies_skills.join(", ")}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Last 5 actions from execution_log */}
             {executionLog.length > 0 && (
               <div>
@@ -917,6 +1017,322 @@ function EdgeFilterBar({
   );
 }
 
+/* ── Status colour for catalogue entries ──────────────────────── */
+
+function catStatusColour(status: string): string {
+  const s = (status || "").toUpperCase();
+  if (s === "WORKING") return "#00ff41";
+  if (s === "CONFIGURED") return "#00b4d8";
+  if (s === "PARTIAL") return "#ffb800";
+  if (s === "BROKEN") return "#ff0040";
+  return "#737373";
+}
+
+/* ── Taxonomy Overview Panel ─────────────────────────────────── */
+
+interface TaxonomyOverviewData {
+  total: number;
+  categories: Record<string, number>;
+  status_counts: Record<string, number>;
+  working_pct: number;
+  avg_completeness: number;
+  with_gaps: number;
+  generated_at: string;
+}
+
+interface CategoryStat {
+  category: string;
+  total: number;
+  working: number;
+  configured: number;
+  broken: number;
+  partial: number;
+  avg_completeness: number;
+}
+
+function TaxonomyOverviewPanel({ onSelectCategory }: { onSelectCategory: (cat: string) => void }) {
+  const [overview, setOverview] = useState<TaxonomyOverviewData | null>(null);
+  const [stats, setStats] = useState<CategoryStat[]>([]);
+
+  useEffect(() => {
+    fetch("/api/catalogue")
+      .then((r) => r.json())
+      .then((d) => {
+        setOverview(d.overview);
+        setStats(d.stats || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!overview) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <span className="text-[10px] text-[#737373] animate-pulse" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          Loading taxonomy...
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto p-4 space-y-4" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-bold text-[#00b4d8]">FRACTALOS CATALOGUE</span>
+        <span className="text-[9px] text-[#737373]">generated {overview.generated_at}</span>
+      </div>
+
+      {/* Summary metrics */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { label: "COMPONENTS", value: overview.total, colour: "#d4d4d4" },
+          { label: "WORKING", value: `${overview.working_pct}%`, colour: "#00ff41" },
+          { label: "AVG COMPLETENESS", value: `${overview.avg_completeness}%`, colour: "#ffb800" },
+          { label: "WITH GAPS", value: overview.with_gaps, colour: "#ff0040" },
+        ].map((m) => (
+          <div
+            key={m.label}
+            className="p-2 rounded"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <div className="text-[9px] text-[#737373] tracking-wider">{m.label}</div>
+            <div className="text-lg font-bold mt-0.5" style={{ color: m.colour }}>{m.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Status breakdown */}
+      <div>
+        <div className="text-[9px] text-[#737373] tracking-wider mb-2">STATUS DISTRIBUTION</div>
+        <div className="flex gap-3">
+          {Object.entries(overview.status_counts).map(([status, count]) => (
+            <div key={status} className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ background: catStatusColour(status) }} />
+              <span className="text-[10px]" style={{ color: catStatusColour(status) }}>{status}</span>
+              <span className="text-[10px] text-[#737373]">({count})</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Category grid */}
+      <div>
+        <div className="text-[9px] text-[#737373] tracking-wider mb-2">CATEGORIES ({stats.length})</div>
+        <div className="grid grid-cols-2 gap-2">
+          {stats.map((cat) => (
+            <button
+              key={cat.category}
+              onClick={() => onSelectCategory(cat.category)}
+              className="text-left p-2 rounded transition-colors hover:bg-[#1a2a1a]"
+              style={{ background: "rgba(0,180,216,0.04)", border: "1px solid rgba(0,180,216,0.15)" }}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-bold text-[#00b4d8]">{cat.category.replace(/_/g, " ")}</span>
+                <span className="text-[10px] text-[#737373]">{cat.total}</span>
+              </div>
+              {/* mini status bar */}
+              <div className="flex gap-0.5 h-1 rounded overflow-hidden mb-1">
+                {cat.working > 0 && (
+                  <div style={{ width: `${(cat.working / cat.total) * 100}%`, background: "#00ff41" }} />
+                )}
+                {cat.configured > 0 && (
+                  <div style={{ width: `${(cat.configured / cat.total) * 100}%`, background: "#00b4d8" }} />
+                )}
+                {cat.partial > 0 && (
+                  <div style={{ width: `${(cat.partial / cat.total) * 100}%`, background: "#ffb800" }} />
+                )}
+                {cat.broken > 0 && (
+                  <div style={{ width: `${(cat.broken / cat.total) * 100}%`, background: "#ff0040" }} />
+                )}
+              </div>
+              <div className="flex gap-2 text-[8px] text-[#737373]">
+                <span style={{ color: "#00ff41" }}>{cat.working} ok</span>
+                {cat.broken > 0 && <span style={{ color: "#ff0040" }}>{cat.broken} broken</span>}
+                <span className="ml-auto">{cat.avg_completeness}% done</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Catalogue Browser Panel ─────────────────────────────────── */
+
+interface CatBrowserEntry {
+  name: string;
+  display_name: string;
+  category: string;
+  operational_status: string;
+  completeness_score: number;
+  has_gaps: boolean;
+  gap_count: number;
+  source_files: string[];
+  role_description: string;
+  body_preview: string;
+}
+
+function CatalogueBrowserPanel({ onNodeSelect }: { onNodeSelect: (name: string) => void }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<CatBrowserEntry[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categoryEntries, setCategoryEntries] = useState<CatBrowserEntry[]>([]);
+  const [loadingCategory, setLoadingCategory] = useState(false);
+  const [catalogueView, setCatalogueView] = useState<"overview" | "category" | "search">("overview");
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    if (!q.trim()) {
+      setSearchResults([]);
+      if (catalogueView === "search") setCatalogueView("overview");
+      return;
+    }
+    setCatalogueView("search");
+    setSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/catalogue/search?q=${encodeURIComponent(q)}&limit=50`);
+        const data = await res.json();
+        setSearchResults(data.results || []);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+  }, [catalogueView]);
+
+  const handleSelectCategory = useCallback(async (cat: string) => {
+    setSelectedCategory(cat);
+    setCatalogueView("category");
+    setLoadingCategory(true);
+    try {
+      const res = await fetch(`/api/catalogue?category=${encodeURIComponent(cat)}`);
+      const data = await res.json();
+      setCategoryEntries(data.entries || []);
+    } catch {
+      setCategoryEntries([]);
+    } finally {
+      setLoadingCategory(false);
+    }
+  }, []);
+
+  const renderEntryList = (entries: CatBrowserEntry[]) => (
+    <div className="space-y-1">
+      {entries.map((entry) => (
+        <button
+          key={entry.name}
+          onClick={() => onNodeSelect(entry.display_name)}
+          className="w-full text-left p-2 rounded transition-colors hover:bg-[#1a1a1a]"
+          style={{ border: "1px solid rgba(255,255,255,0.04)" }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: catStatusColour(entry.operational_status) }} />
+            <span className="text-[11px] font-bold text-[#d4d4d4]">{entry.display_name}</span>
+            <span className="text-[9px] text-[#737373]">{entry.category}</span>
+            <span className="ml-auto text-[9px] tabular-nums" style={{
+              color: entry.completeness_score >= 80 ? "#00ff41" : entry.completeness_score >= 50 ? "#ffb800" : "#ff0040"
+            }}>
+              {entry.completeness_score}%
+            </span>
+            {entry.has_gaps && (
+              <span className="text-[8px] text-[#ff0040]">[{entry.gap_count}G]</span>
+            )}
+          </div>
+          {entry.role_description && (
+            <div className="text-[9px] text-[#737373] mt-0.5 truncate pl-4">{entry.role_description}</div>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="h-full flex flex-col" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+      {/* Search bar */}
+      <div className="shrink-0 p-3 border-b border-[#1e1e1e]">
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search 428 catalogue pages..."
+            className="w-full px-3 py-1.5 rounded text-[11px] outline-none"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(0,180,216,0.3)",
+              color: "#d4d4d4",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          />
+          {searching && (
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#00b4d8] animate-pulse">
+              ...
+            </span>
+          )}
+        </div>
+
+        {/* Breadcrumb nav */}
+        <div className="flex items-center gap-1.5 mt-1.5 text-[9px]">
+          <button
+            onClick={() => { setCatalogueView("overview"); setSearchQuery(""); }}
+            className="text-[#00b4d8] hover:text-[#38bdf8] transition-colors"
+          >
+            CATALOGUE
+          </button>
+          {catalogueView === "category" && selectedCategory && (
+            <>
+              <span className="text-[#404040]">/</span>
+              <span className="text-[#d4d4d4]">{selectedCategory.replace(/_/g, " ")}</span>
+              {loadingCategory ? null : (
+                <span className="text-[#737373]">({categoryEntries.length})</span>
+              )}
+            </>
+          )}
+          {catalogueView === "search" && (
+            <>
+              <span className="text-[#404040]">/</span>
+              <span className="text-[#d4d4d4]">search: {searchQuery}</span>
+              <span className="text-[#737373]">({searchResults.length})</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-3">
+        {catalogueView === "overview" && (
+          <TaxonomyOverviewPanel onSelectCategory={handleSelectCategory} />
+        )}
+
+        {catalogueView === "category" && (
+          loadingCategory ? (
+            <div className="flex items-center justify-center h-32">
+              <span className="text-[10px] text-[#737373] animate-pulse">Loading...</span>
+            </div>
+          ) : (
+            renderEntryList(categoryEntries as CatBrowserEntry[])
+          )
+        )}
+
+        {catalogueView === "search" && (
+          searchResults.length === 0 && !searching ? (
+            <div className="flex items-center justify-center h-32">
+              <span className="text-[10px] text-[#737373]">No results for &quot;{searchQuery}&quot;</span>
+            </div>
+          ) : (
+            renderEntryList(searchResults)
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Component ───────────────────────────────────────────── */
 
 export default function BattlefieldTab() {
@@ -957,6 +1373,9 @@ export default function BattlefieldTab() {
 
   // View mode: globe (3D) or matrix (2D workflow visualization)
   const [graphView, setGraphView] = useState<"globe" | "matrix">("globe");
+
+  // Centre pane: graph or catalogue browser
+  const [centreView, setCentreView] = useState<"graph" | "catalogue">("graph");
 
   // Replay state
   const [replayActiveNodes, setReplayActiveNodes] = useState<Set<string>>(new Set());
@@ -1538,18 +1957,30 @@ export default function BattlefieldTab() {
             {(["globe", "matrix"] as const).map((view) => (
               <button
                 key={view}
-                onClick={() => setGraphView(view)}
+                onClick={() => { setGraphView(view); setCentreView("graph"); }}
                 className="px-2 py-0.5 rounded text-[9px] transition-all"
                 style={{
                   fontFamily: "'JetBrains Mono', monospace",
-                  color: graphView === view ? "#0a0a0a" : "#00ff41",
-                  background: graphView === view ? "#00ff41" : "transparent",
+                  color: centreView === "graph" && graphView === view ? "#0a0a0a" : "#00ff41",
+                  background: centreView === "graph" && graphView === view ? "#00ff41" : "transparent",
                   border: "1px solid rgba(0,255,65,0.2)",
                 }}
               >
                 {view === "globe" ? "3D" : "MATRIX"}
               </button>
             ))}
+            <button
+              onClick={() => setCentreView(centreView === "catalogue" ? "graph" : "catalogue")}
+              className="px-2 py-0.5 rounded text-[9px] transition-all ml-0.5"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                color: centreView === "catalogue" ? "#0a0a0a" : "#00b4d8",
+                background: centreView === "catalogue" ? "#00b4d8" : "transparent",
+                border: "1px solid rgba(0,180,216,0.3)",
+              }}
+            >
+              CATALOGUE
+            </button>
           </div>
         </div>
 
@@ -1570,8 +2001,24 @@ export default function BattlefieldTab() {
         {/* Replay Controls */}
         <ReplayControls onEventFire={handleReplayEvent} onReset={handleReplayReset} onServicePulse={handleServicePulse} />
 
+        {/* Catalogue Browser Panel — replaces graph when active */}
+        {centreView === "catalogue" && (
+          <div className="flex-1 overflow-hidden" style={{ background: "#0d0d0d" }}>
+            <CatalogueBrowserPanel
+              onNodeSelect={(name) => {
+                setCentreView("graph");
+                handleNodeClick(name);
+              }}
+            />
+          </div>
+        )}
+
         {/* 3D Globe or Workflow Matrix */}
-        <div ref={canvasContainerRef} className="flex-1 relative" style={{ background: "#0a0a0a" }}>
+        <div
+          ref={canvasContainerRef}
+          className={centreView === "catalogue" ? "hidden" : "flex-1 relative"}
+          style={{ background: "#0a0a0a" }}
+        >
           {/* Service pulse animations overlay */}
           {servicePulses.length > 0 && (
             <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
