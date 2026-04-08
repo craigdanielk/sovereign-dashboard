@@ -59,6 +59,21 @@ const TEMPLATISED_WORKFLOWS = new Set([
   "gitops-project-bootstrap",
   "shopify-data-audit",
   "lore-pattern-promote",
+  "skill-agent-wiring",
+  "shopify-css-scope-enforcement",
+  // Slash-command workflows — sequential, not magentic
+  "executor-loop",
+  "planner-loop",
+  "r17-task-ingestion",
+  "rag-operations",
+  "brief-creation",
+  "demand-intelligence",
+  "deep-research",
+  "content-generation",
+  "shopify-store-setup",
+  "quality-gate",
+  "demo-delivery",
+  "e-commerce-migration",
 ]);
 
 /* ── Collapsible tree section ─────────────────────────────────── */
