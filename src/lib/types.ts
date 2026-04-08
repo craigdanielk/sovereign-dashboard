@@ -14,6 +14,7 @@ export const TABS: TabDef[] = [
   { key: "r17", label: "R17", shortLabel: "R17", path: "/r17" },
   { key: "comms", label: "Comms", shortLabel: "COM", path: "/comms" },
   { key: "artifacts", label: "Artifacts", shortLabel: "ART", path: "/artifacts" },
+  { key: "workspace", label: "Workspace", shortLabel: "WS", path: "/workspace" },
   { key: "command", label: "Command", shortLabel: "CMD", path: "/command" },
   { key: "cost", label: "Cost", shortLabel: "COST", path: "/cost" },
   { key: "review", label: "Review", shortLabel: "REV", path: "/review" },

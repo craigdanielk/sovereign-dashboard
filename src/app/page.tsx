@@ -9,6 +9,7 @@ import ReconTab from "@/components/tabs/ReconTab";
 import R17Tab from "@/components/tabs/R17Tab";
 import CommsTab from "@/components/tabs/CommsTab";
 import ArtifactsTab from "@/components/tabs/ArtifactsTab";
+import WorkspaceTab from "@/components/tabs/WorkspaceTab";
 import CommandTab from "@/components/tabs/CommandTab";
 import CostTab from "@/components/tabs/CostTab";
 import ReviewTab from "@/components/tabs/ReviewTab";
@@ -22,6 +23,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   r17: R17Tab,
   comms: CommsTab,
   artifacts: ArtifactsTab,
+  workspace: WorkspaceTab,
   command: CommandTab,
   cost: CostTab,
   review: ReviewTab,
