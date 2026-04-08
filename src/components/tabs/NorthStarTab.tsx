@@ -1,282 +1,293 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase, type Brief, type ExecutionLog } from "@/lib/supabase";
-import { getStatusColour, getAgentColour } from "@/lib/colours";
+import { supabase, type Brief } from "@/lib/supabase";
+import LinearListRow from "@/components/LinearListRow";
+import LinearGroupHeader from "@/components/LinearGroupHeader";
+import EmptyState from "@/components/EmptyState";
 
-interface AgentStripItem {
-  agent: string;
-  status: "active" | "idle" | "stale";
-  lastSeen: string;
-  briefId: number | null;
+// ── Detail panel ──────────────────────────────────────────────────
+function DetailPanel({ brief, onClose }: { brief: Brief; onClose: () => void }) {
+  function timeStr(ts: string | null): string {
+    if (!ts) return "—";
+    return new Date(ts).toLocaleString("en-GB", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  return (
+    <div
+      className="detail-panel h-full flex flex-col border-l overflow-hidden"
+      style={{
+        width: 480,
+        minWidth: 480,
+        background: "#161616",
+        borderColor: "#2A2A2A",
+      }}
+    >
+      {/* Panel header */}
+      <div
+        className="flex items-center justify-between border-b flex-shrink-0"
+        style={{ height: 48, padding: "0 16px", borderColor: "#2A2A2A" }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 500, color: "#E5E5E5" }}>BRIEF</span>
+        <button
+          onClick={onClose}
+          style={{ color: "#6B6B6B", padding: 4 }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Panel content */}
+      <div className="flex-1 overflow-y-auto" style={{ padding: "16px" }}>
+        {/* Title */}
+        <h2
+          className="font-mono"
+          style={{ fontSize: 13, color: "#E5E5E5", marginBottom: 16, lineHeight: 1.5, wordBreak: "break-word" }}
+        >
+          {brief.name}
+        </h2>
+
+        {/* Metadata grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "8px 12px", fontSize: 12 }}>
+          <span style={{ color: "#6B6B6B" }}>Status</span>
+          <span style={{ color: "#E5E5E5" }}>{brief.status}</span>
+
+          <span style={{ color: "#6B6B6B" }}>Priority</span>
+          <span style={{ color: "#E5E5E5" }}>{brief.priority || "—"}</span>
+
+          {brief.claimed_by && (
+            <>
+              <span style={{ color: "#6B6B6B" }}>Claimed by</span>
+              <span style={{ color: "#E5E5E5" }}>{brief.claimed_by}</span>
+            </>
+          )}
+
+          {brief.wsjf_score != null && (
+            <>
+              <span style={{ color: "#6B6B6B" }}>WSJF</span>
+              <span style={{ color: "#E5E5E5" }}>{Number(brief.wsjf_score).toFixed(1)}</span>
+            </>
+          )}
+
+          {brief.quality_grade && (
+            <>
+              <span style={{ color: "#6B6B6B" }}>Quality</span>
+              <span style={{
+                color: brief.quality_grade === "GREEN" ? "#10B981"
+                  : brief.quality_grade === "YELLOW" ? "#F59E0B"
+                  : "#EF4444",
+              }}>
+                {brief.quality_grade}
+              </span>
+            </>
+          )}
+
+          <span style={{ color: "#6B6B6B" }}>Created</span>
+          <span style={{ color: "#E5E5E5" }}>{timeStr(brief.created_at)}</span>
+
+          {brief.completed_at && (
+            <>
+              <span style={{ color: "#6B6B6B" }}>Completed</span>
+              <span style={{ color: "#E5E5E5" }}>{timeStr(brief.completed_at)}</span>
+            </>
+          )}
+        </div>
+
+        {/* Payload */}
+        {brief.payload && (
+          <div style={{ marginTop: 20 }}>
+            <span style={{ fontSize: 11, color: "#6B6B6B", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Payload
+            </span>
+            <pre
+              className="font-mono"
+              style={{
+                marginTop: 8,
+                padding: 12,
+                background: "#111111",
+                borderRadius: 6,
+                fontSize: 11,
+                color: "#A0A0A0",
+                overflow: "auto",
+                maxHeight: 400,
+                border: "1px solid #2A2A2A",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            >
+              {JSON.stringify(brief.payload, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
+// ── Group header ──────────────────────────────────────────────────
+const STATUS_ORDER = ["QUEUED", "CLAIMED", "IN_PROGRESS", "FAILED", "COMPLETED", "SUPERSEDED", "DRAFT", "PENDING"];
+
+const STATUS_LABELS: Record<string, string> = {
+  QUEUED: "Queued",
+  CLAIMED: "Claimed",
+  IN_PROGRESS: "In Progress",
+  FAILED: "Failed",
+  COMPLETED: "Completed",
+  SUPERSEDED: "Superseded",
+  DRAFT: "Draft",
+  PENDING: "Pending",
+};
+
+const DEFAULT_EXPANDED = new Set(["QUEUED", "CLAIMED", "IN_PROGRESS", "FAILED"]);
+
+// ── Main component ────────────────────────────────────────────────
 export default function NorthStarTab() {
   const [briefs, setBriefs] = useState<Brief[]>([]);
-  const [agents, setAgents] = useState<AgentStripItem[]>([]);
-  const [logs, setLogs] = useState<ExecutionLog[]>([]);
-  const [briefTab, setBriefTab] = useState<"QUEUED" | "CLAIMED" | "COMPLETED" | "FAILED">("QUEUED");
-  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(DEFAULT_EXPANDED);
+  const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
 
   const fetchBriefs = useCallback(async () => {
     const { data } = await supabase
       .from("briefs")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(200);
-    if (data) {
-      setBriefs(data);
-      const c: Record<string, number> = {};
-      data.forEach((b: Brief) => {
-        c[b.status] = (c[b.status] || 0) + 1;
-      });
-      setCounts(c);
-    }
-  }, []);
-
-  const fetchAgents = useCallback(async () => {
-    const { data: recentLogs } = await supabase
-      .from("execution_log")
-      .select("agent, brief_id, created_at")
-      .gte("created_at", new Date(Date.now() - 24 * 3600000).toISOString())
-      .order("created_at", { ascending: false })
-      .limit(500);
-
-    if (!recentLogs) return;
-
-    const agentMap = new Map<string, AgentStripItem>();
-    const now = Date.now();
-
-    for (const log of recentLogs) {
-      if (!agentMap.has(log.agent)) {
-        const age = now - new Date(log.created_at).getTime();
-        agentMap.set(log.agent, {
-          agent: log.agent,
-          status: age < 5 * 60000 ? "active" : age < 30 * 60000 ? "idle" : "stale",
-          lastSeen: log.created_at,
-          briefId: log.brief_id,
-        });
-      }
-    }
-
-    const sorted = Array.from(agentMap.values()).sort((a, b) => {
-      const order = { active: 0, idle: 1, stale: 2 };
-      return order[a.status] - order[b.status];
-    });
-
-    setAgents(sorted);
-  }, []);
-
-  const fetchLogs = useCallback(async () => {
-    const { data } = await supabase
-      .from("execution_log")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    if (data) setLogs(data);
+      .limit(300);
+    if (data) setBriefs(data);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
     fetchBriefs();
-    fetchAgents();
-    fetchLogs();
 
     const channel = supabase
-      .channel("northstar-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "briefs" }, () => {
-        fetchBriefs();
-        fetchAgents();
-      })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "execution_log" }, () => {
-        fetchLogs();
-        fetchAgents();
-      })
+      .channel("northstar-tab")
+      .on("postgres_changes", { event: "*", schema: "public", table: "briefs" }, fetchBriefs)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchBriefs, fetchAgents, fetchLogs]);
+  }, [fetchBriefs]);
 
-  const filtered = briefs.filter((b) => b.status === briefTab);
-  const tabs: Array<"QUEUED" | "CLAIMED" | "COMPLETED" | "FAILED"> = ["QUEUED", "CLAIMED", "COMPLETED", "FAILED"];
+  // Group briefs by status
+  const grouped = briefs.reduce<Record<string, Brief[]>>((acc, brief) => {
+    const s = brief.status;
+    if (!acc[s]) acc[s] = [];
+    acc[s].push(brief);
+    return acc;
+  }, {});
 
-  const demoBriefs = briefs.filter((b) => b.name?.toLowerCase().includes("demo"));
-  const demoCompleted = demoBriefs.filter((b) => b.status === "COMPLETED").length;
-  const demoTotal = Math.max(demoBriefs.length, 5);
+  const orderedStatuses = [
+    ...STATUS_ORDER.filter((s) => grouped[s]?.length),
+    ...Object.keys(grouped).filter((s) => !STATUS_ORDER.includes(s)),
+  ];
 
-  function timeAgo(ts: string | null): string {
-    if (!ts) return "";
-    const diff = Date.now() - new Date(ts).getTime();
-    const m = Math.floor(diff / 60000);
-    if (m < 60) return `${m}m`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h`;
-    return `${Math.floor(h / 24)}d`;
+  function toggleGroup(status: string) {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
+      return next;
+    });
   }
 
+  const totalActive = (grouped["QUEUED"]?.length || 0) + (grouped["CLAIMED"]?.length || 0) + (grouped["IN_PROGRESS"]?.length || 0);
+
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* Agent Army Strip */}
-      <div className="shrink-0 px-3 py-1.5 border-b border-border flex items-center gap-1 overflow-x-auto">
-        <span className="text-[9px] text-text-muted font-bold tracking-wider shrink-0 mr-2">
-          AGENTS
-        </span>
-        {agents.map((a) => (
-          <div
-            key={a.agent}
-            className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded bg-bg-card border border-border"
+    <div className="h-full flex overflow-hidden">
+      {/* ── List panel ───────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {/* Section header */}
+        <div
+          className="flex items-center justify-between flex-shrink-0 border-b"
+          style={{ height: 48, padding: "0 16px", borderColor: "#2A2A2A" }}
+        >
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: 15, fontWeight: 600, color: "#E5E5E5" }}>North Star</span>
+            {totalActive > 0 && (
+              <span
+                style={{
+                  fontSize: 11,
+                  background: "#7C3AED22",
+                  color: "#7C3AED",
+                  borderRadius: 4,
+                  padding: "1px 6px",
+                  fontWeight: 500,
+                }}
+              >
+                {totalActive} active
+              </span>
+            )}
+          </div>
+          <button
+            style={{
+              fontSize: 12,
+              color: "#E5E5E5",
+              background: "#7C3AED",
+              borderRadius: 6,
+              padding: "5px 12px",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
           >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                a.status === "active"
-                  ? "bg-accent-green animate-[pulse-dot_1.5s_ease-in-out_infinite]"
-                  : a.status === "idle"
-                  ? "bg-accent-yellow"
-                  : "bg-text-muted"
-              }`}
-            />
-            <span
-              className="text-[10px] font-bold"
-              style={{ color: getAgentColour(a.agent) }}
-            >
-              {a.agent.toUpperCase()}
-            </span>
-            {a.briefId && (
-              <span className="text-[9px] text-accent-yellow">#{a.briefId}</span>
-            )}
-          </div>
-        ))}
-        {agents.length === 0 && (
-          <span className="text-[10px] text-text-muted">No agent activity</span>
-        )}
-      </div>
-
-      {/* Main content: 2 columns */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Left: BRIEF Queue */}
-        <div className="flex-1 flex flex-col border-r border-border min-w-0">
-          <div className="shrink-0 px-3 py-1.5 border-b border-border">
-            <div className="flex items-center gap-3 mb-1">
-              <span className="text-[10px] font-bold text-accent-blue tracking-wider">
-                BRIEF QUEUE
-              </span>
-              <span className="text-[9px] text-text-muted ml-auto">
-                DEMO GATE{" "}
-                <span className="text-accent-green font-bold">{demoCompleted}</span>
-                <span className="text-text-muted">/{demoTotal}</span>
-              </span>
-            </div>
-            <div className="flex gap-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setBriefTab(tab)}
-                  className={`text-[9px] px-1.5 py-0.5 rounded transition-colors ${
-                    briefTab === tab
-                      ? "bg-bg-card-hover text-accent-green"
-                      : "text-text-muted hover:text-text-secondary"
-                  }`}
-                >
-                  {tab}{" "}
-                  <span className="tabular-nums">{counts[tab] || 0}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
-            {filtered.map((brief) => (
-              <div
-                key={brief.id}
-                className="px-2 py-1.5 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors"
-              >
-                <div className="flex items-center justify-between mb-0.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-accent-yellow text-[10px] font-bold shrink-0">
-                      #{brief.id}
-                    </span>
-                    <span
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{
-                        backgroundColor:
-                          brief.quality_grade === "GREEN" ? "#00ff41" :
-                          brief.quality_grade === "YELLOW" ? "#ffb800" :
-                          brief.quality_grade === "RED" ? "#ff1744" : "#404040",
-                      }}
-                      title={brief.quality_grade ? `Quality: ${brief.quality_grade}` : "No grade"}
-                    />
-                    <span className="text-[10px] text-text-primary truncate">
-                      {brief.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span
-                      className="text-[9px] font-bold"
-                      style={{ color: getStatusColour(brief.status) }}
-                    >
-                      {brief.status}
-                    </span>
-                    <span className="text-[9px] text-text-muted">
-                      {brief.priority}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-[9px] text-text-muted">
-                  {brief.claimed_by && (
-                    <span>
-                      <span className="text-accent-purple">{brief.claimed_by}</span>
-                    </span>
-                  )}
-                  {brief.wsjf_score != null && (
-                    <span>WSJF:{Number(brief.wsjf_score).toFixed(1)}</span>
-                  )}
-                  <span className="ml-auto">{timeAgo(brief.created_at)}</span>
-                </div>
-              </div>
-            ))}
-            {filtered.length === 0 && (
-              <div className="text-[10px] text-text-muted text-center py-4">
-                No {briefTab} briefs
-              </div>
-            )}
-          </div>
+            New BRIEF
+          </button>
         </div>
 
-        {/* Right: Execution Log Live Tail */}
-        <div className="w-[400px] flex flex-col min-w-0">
-          <div className="shrink-0 px-3 py-1.5 border-b border-border flex items-center justify-between">
-            <span className="text-[10px] font-bold text-accent-cyan tracking-wider">
-              EXECUTION LOG
-            </span>
-            <span className="text-[9px] text-text-muted">{logs.length} entries</span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-1.5 space-y-0">
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className="flex items-start gap-1 px-1 py-0.5 text-[10px] leading-tight hover:bg-bg-card-hover rounded"
-              >
-                <span className="text-text-muted shrink-0 w-8 text-right tabular-nums">
-                  {timeAgo(log.created_at)}
-                </span>
-                <span
-                  className="shrink-0 w-14 truncate font-bold"
-                  style={{ color: getAgentColour(log.agent) }}
-                >
-                  {log.agent.toUpperCase()}
-                </span>
-                <span className="text-text-secondary truncate flex-1">
-                  {log.operation}
-                </span>
-                {log.brief_id && (
-                  <span className="text-accent-yellow shrink-0">#{log.brief_id}</span>
-                )}
-              </div>
-            ))}
-          </div>
+        {/* Brief list */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <EmptyState message="Loading briefs…" />
+          ) : orderedStatuses.length === 0 ? (
+            <EmptyState message="No briefs yet" />
+          ) : (
+            orderedStatuses.map((status) => {
+              const items = grouped[status] || [];
+              const expanded = expandedGroups.has(status);
+              return (
+                <div key={status}>
+                  <LinearGroupHeader
+                    label={STATUS_LABELS[status] ?? status}
+                    count={items.length}
+                    expanded={expanded}
+                    onToggle={() => toggleGroup(status)}
+                  />
+                  {expanded && items.map((brief) => {
+                    const labels = brief.payload?.labels as Record<string, unknown> | undefined;
+                    const tenantBadge = typeof labels?.client_slug === "string" ? labels.client_slug : undefined;
+                    return (
+                      <LinearListRow
+                        key={brief.id}
+                        id={brief.id}
+                        title={brief.name}
+                        status={brief.status}
+                        priority={brief.priority ?? undefined}
+                        badge={tenantBadge}
+                        timestamp={brief.created_at}
+                        onClick={() => setSelectedBrief(brief)}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
+
+      {/* ── Detail panel ─────────────────────────────────────────── */}
+      {selectedBrief && (
+        <DetailPanel
+          brief={selectedBrief}
+          onClose={() => setSelectedBrief(null)}
+        />
+      )}
     </div>
   );
 }
