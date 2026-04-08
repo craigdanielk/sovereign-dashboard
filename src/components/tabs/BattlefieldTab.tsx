@@ -62,47 +62,47 @@ interface HealthStatus {
 function nodeColour(entityType: string): string {
   switch (entityType) {
     case "agent":
-      return "#00ff41";
+      return "#10B981";
     case "service":
-      return "#00b4d8";
+      return "#6366F1";
     case "tool":
-      return "#ffd60a";
+      return "#F59E0B";
     case "workflow":
-      return "#a855f7";
+      return "#7C3AED";
     case "content":
     case "skill":
-      return "#e879f9";
+      return "#A78BFA";
     case "gap":
-      return "#ff0040";
+      return "#EF4444";
     default:
-      return "#737373";
+      return "#6B6B6B";
   }
 }
 
 function statusDot(status: string): string {
   const s = (status || "").toLowerCase();
-  if (s === "operational" || s === "active" || s === "ready") return "#00ff41";
-  if (s === "beta" || s === "partial" || s === "degraded") return "#ffb800";
-  if (s.includes("locked") || s.includes("disabled")) return "#ff0040";
-  return "#ff0040";
+  if (s === "operational" || s === "active" || s === "ready") return "#10B981";
+  if (s === "beta" || s === "partial" || s === "degraded") return "#F59E0B";
+  if (s.includes("locked") || s.includes("disabled")) return "#EF4444";
+  return "#EF4444";
 }
 
 function statusDotFromRecency(lastUpdated: string | null, status: string): string {
   if (!lastUpdated) return statusDot(status);
   const age = Date.now() - new Date(lastUpdated).getTime();
   const hours = age / (1000 * 60 * 60);
-  if (hours < 1) return "#00ff41";
-  if (hours < 24) return "#39ff14";
-  if (hours < 168) return "#ffb800";
-  return "#737373";
+  if (hours < 1) return "#10B981";
+  if (hours < 24) return "#10B981";
+  if (hours < 168) return "#F59E0B";
+  return "#6B6B6B";
 }
 
 function catalogueStatusColour(status: string): string {
   const s = (status || "").toUpperCase();
-  if (s === "WORKING") return "#00ff41";
-  if (s === "BROKEN") return "#ff0040";
-  if (s === "CONFIGURED" || s === "PARTIAL") return "#ffb800";
-  return "#737373";
+  if (s === "WORKING") return "#10B981";
+  if (s === "BROKEN") return "#EF4444";
+  if (s === "CONFIGURED" || s === "PARTIAL") return "#F59E0B";
+  return "#6B6B6B";
 }
 
 function renderMarkdownText(text: string): string {
@@ -163,29 +163,26 @@ const ForceGraph3D = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
+      <div className="absolute inset-0 flex items-center justify-center bg-bg-primary">
         <div className="flex flex-col items-center gap-3">
           {/* Shimmer skeleton */}
-          <div className="w-48 h-2 rounded bg-[#1a1a1a] overflow-hidden">
+          <div className="w-48 h-2 rounded bg-bg-hover overflow-hidden">
             <div
               className="h-full w-1/3 rounded"
               style={{
-                background: "linear-gradient(90deg, transparent, rgba(0,255,65,0.3), transparent)",
+                background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.3), transparent)",
                 animation: "shimmer 1.5s infinite",
               }}
             />
           </div>
-          <span
-            className="text-[10px] text-[#00ff41] animate-pulse"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            Initializing 3D globe...
+          <span className="text-[10px] text-text-secondary animate-pulse">
+            Initializing 3D graph...
           </span>
           <div className="flex gap-1 mt-2">
             {[0, 1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="w-8 h-1 rounded bg-[#1a1a1a]"
+                className="w-8 h-1 rounded bg-bg-hover"
                 style={{
                   animation: `shimmer 1.5s infinite ${i * 0.2}s`,
                 }}
@@ -227,14 +224,14 @@ function RegistrySection({
           </span>
           <span
             className="text-[9px] font-bold tracking-wider"
-            style={{ color: colour, fontFamily: "'JetBrains Mono', monospace" }}
+            style={{ color: colour }}
           >
             {title}
           </span>
         </div>
         <span
           className="text-[9px]"
-          style={{ color: withAlpha(colour, 0.5), fontFamily: "'JetBrains Mono', monospace" }}
+          style={{ color: withAlpha(colour, 0.5) }}
         >
           {items.length}
         </span>
@@ -246,9 +243,8 @@ function RegistrySection({
               key={item.id}
               onClick={() => onSelect(item.id)}
               className={`w-full text-left flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] transition-colors ${
-                selectedId === item.id ? "bg-[#1a2a1a]" : "hover:bg-[#1a1a1a]"
+                selectedId === item.id ? "bg-bg-selected" : "hover:bg-bg-hover"
               }`}
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
               <span
                 className="shrink-0 w-1.5 h-1.5 rounded-full"
@@ -405,13 +401,12 @@ function DetailCard({
       style={{
         height: isWorkflow ? "420px" : "340px",
         maxHeight: "50vh",
-        background: "rgba(10,10,10,0.97)",
-        borderTop: "1px solid rgba(0,255,65,0.3)",
-        fontFamily: "'JetBrains Mono', monospace",
+        background: "#161616",
+        borderTop: "1px solid #2A2A2A",
       }}
     >
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-[#00ff41]/20">
+      <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-[#2A2A2A]">
         {node && (
           <>
             <span
@@ -443,29 +438,29 @@ function DetailCard({
             onClick={() => setViewMode("operations")}
             className="text-[9px] px-2 py-0.5 rounded transition-colors"
             style={{
-              background: viewMode === "operations" ? "rgba(0,255,65,0.15)" : "transparent",
-              color: viewMode === "operations" ? "#00ff41" : "#737373",
-              border: `1px solid ${viewMode === "operations" ? "rgba(0,255,65,0.3)" : "rgba(115,115,115,0.2)"}`,
+              background: viewMode === "operations" ? "rgba(124,58,237,0.15)" : "transparent",
+              color: viewMode === "operations" ? "#7C3AED" : "#6B6B6B",
+              border: `1px solid ${viewMode === "operations" ? "rgba(124,58,237,0.4)" : "rgba(42,42,42,0.8)"}`,
             }}
           >
-            OPERATIONS
+            Operations
           </button>
           <button
             onClick={() => setViewMode("technical")}
             className="text-[9px] px-2 py-0.5 rounded transition-colors"
             style={{
-              background: viewMode === "technical" ? "rgba(0,255,65,0.15)" : "transparent",
-              color: viewMode === "technical" ? "#00ff41" : "#737373",
-              border: `1px solid ${viewMode === "technical" ? "rgba(0,255,65,0.3)" : "rgba(115,115,115,0.2)"}`,
+              background: viewMode === "technical" ? "rgba(124,58,237,0.15)" : "transparent",
+              color: viewMode === "technical" ? "#7C3AED" : "#6B6B6B",
+              border: `1px solid ${viewMode === "technical" ? "rgba(124,58,237,0.4)" : "rgba(42,42,42,0.8)"}`,
             }}
           >
-            TECHNICAL
+            Technical
           </button>
         </div>
 
         <button
           onClick={onClose}
-          className="text-[#737373] hover:text-[#00ff41] text-sm transition-colors"
+          className="text-[#6B6B6B] hover:text-[#E5E5E5] text-sm transition-colors"
         >
           [X]
         </button>
@@ -486,7 +481,7 @@ function DetailCard({
           <>
             {/* One-sentence description */}
             {(node?.description || detail?.entity?.description) && (
-              <div className="text-[11px] text-[#88cc88] leading-relaxed">
+              <div className="text-[11px] text-text-secondary leading-relaxed">
                 {(detail?.entity?.description || node?.description || "").split(/[.!?]/)[0]}.
               </div>
             )}
@@ -496,7 +491,7 @@ function DetailCard({
               {detail && (
                 <>
                   <span className="text-[#737373]">
-                    RELATIONS: <span className="text-[#00ff41]">{relationships.length}</span>
+                    RELATIONS: <span className="text-[#7C3AED]">{relationships.length}</span>
                   </span>
                   <span className="text-[#737373]">
                     WORKFLOWS: <span className="text-[#a855f7]">{relatedWorkflows.length}</span>
@@ -537,14 +532,14 @@ function DetailCard({
             {detail?.catalogue_page ? (
               <div
                 className="rounded p-2 space-y-2"
-                style={{ background: "rgba(0,180,216,0.05)", border: "1px solid rgba(0,180,216,0.2)" }}
+                style={{ background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.2)" }}
               >
                 {/* Header: label + category + status + version + brief_id */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[9px] text-[#00b4d8] tracking-wider font-bold">FRACTALOS CATALOGUE</span>
+                  <span className="text-[9px] text-[#6366F1] tracking-wider font-bold">FRACTALOS CATALOGUE</span>
                   <span
                     className="text-[9px] px-1.5 py-0.5 rounded"
-                    style={{ background: "rgba(0,180,216,0.15)", color: "#00b4d8" }}
+                    style={{ background: "rgba(99,102,241,0.15)", color: "#6366F1" }}
                   >
                     {detail.catalogue_page.category}
                   </span>
@@ -573,7 +568,7 @@ function DetailCard({
 
                 {/* Role description */}
                 {detail.catalogue_page.role_description && (
-                  <div className="text-[10px] text-[#88cc88] leading-relaxed">
+                  <div className="text-[10px] text-text-secondary leading-relaxed">
                     {detail.catalogue_page.role_description}
                   </div>
                 )}
@@ -587,10 +582,10 @@ function DetailCard({
                       style={{
                         width: `${detail.catalogue_page.completeness_score}%`,
                         background: detail.catalogue_page.completeness_score >= 80
-                          ? "#00ff41"
+                          ? "#10B981"
                           : detail.catalogue_page.completeness_score >= 50
-                          ? "#ffb800"
-                          : "#ff0040",
+                          ? "#F59E0B"
+                          : "#EF4444",
                       }}
                     />
                   </div>
@@ -598,16 +593,16 @@ function DetailCard({
                     className="text-[9px] font-bold tabular-nums"
                     style={{
                       color: detail.catalogue_page.completeness_score >= 80
-                        ? "#00ff41"
+                        ? "#10B981"
                         : detail.catalogue_page.completeness_score >= 50
-                        ? "#ffb800"
-                        : "#ff0040",
+                        ? "#F59E0B"
+                        : "#EF4444",
                     }}
                   >
                     {detail.catalogue_page.completeness_score}%
                   </span>
                   {detail.catalogue_page.has_gaps && (
-                    <span className="text-[9px] text-[#ff0040]">[{detail.catalogue_page.gap_count} GAPs]</span>
+                    <span className="text-[9px] text-[#EF4444]">[{detail.catalogue_page.gap_count} GAPs]</span>
                   )}
                 </div>
 
@@ -615,7 +610,7 @@ function DetailCard({
                 {detail.catalogue_page.body_preview && (
                   <pre
                     className="text-[9px] text-[#737373] leading-relaxed max-h-24 overflow-y-auto whitespace-pre-wrap rounded p-1.5"
-                    style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", fontFamily: "'JetBrains Mono', monospace" }}
+                    style={{ background: "#1A1A1A", border: "1px solid #2A2A2A" }}
                   >
                     {renderMarkdownText(detail.catalogue_page.body_preview)}
                   </pre>
@@ -630,7 +625,7 @@ function DetailCard({
                         <span
                           key={f}
                           className="text-[9px] px-1 py-0.5 rounded"
-                          style={{ background: "rgba(0,255,65,0.08)", color: "#88cc88", fontFamily: "'JetBrains Mono', monospace" }}
+                          style={{ background: "rgba(124,58,237,0.08)", color: "#A0A0A0" }}
                         >
                           {f}
                         </span>
@@ -647,13 +642,13 @@ function DetailCard({
                     {detail.catalogue_page.dependencies_agents.length > 0 && (
                       <div>
                         <span className="text-[#737373]">AGENTS: </span>
-                        <span className="text-[#00ff41]">{detail.catalogue_page.dependencies_agents.join(", ")}</span>
+                        <span className="text-[#10B981]">{detail.catalogue_page.dependencies_agents.join(", ")}</span>
                       </div>
                     )}
                     {detail.catalogue_page.dependencies_services.length > 0 && (
                       <div>
                         <span className="text-[#737373]">SERVICES: </span>
-                        <span className="text-[#00b4d8]">{detail.catalogue_page.dependencies_services.join(", ")}</span>
+                        <span className="text-[#6366F1]">{detail.catalogue_page.dependencies_services.join(", ")}</span>
                       </div>
                     )}
                     {detail.catalogue_page.dependencies_skills.length > 0 && (
@@ -709,7 +704,7 @@ function DetailCard({
                       <span className="text-[#404040] tabular-nums shrink-0 w-12">
                         {new Date(log.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                       </span>
-                      <span className="text-[#00ff41] truncate flex-1">{log.operation}</span>
+                      <span className="text-text-primary truncate flex-1">{log.operation}</span>
                       {log.tool_or_service && (
                         <span className="text-[#737373] truncate max-w-[100px]">{log.tool_or_service}</span>
                       )}
@@ -728,7 +723,7 @@ function DetailCard({
                     <span
                       key={p}
                       className="text-[9px] px-1.5 py-0.5 rounded"
-                      style={{ background: "rgba(0,255,65,0.1)", color: "#00ff41" }}
+                      style={{ background: "rgba(124,58,237,0.1)", color: "#7C3AED" }}
                     >
                       {p}
                     </span>
@@ -751,11 +746,11 @@ function DetailCard({
                         onClick={() => onNavigate(r.target)}
                         className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px]"
                       >
-                        <span className="text-[#00ff41] shrink-0">
+                        <span className="text-[#7C3AED] shrink-0">
                           {r.direction === "outgoing" ? "\u2192" : "\u2190"}
                         </span>
-                        <span className="text-[#404040] shrink-0">{r.type}</span>
-                        <span className="text-[#00b4d8] truncate flex-1">{r.target}</span>
+                        <span className="text-[#6B6B6B] shrink-0">{r.type}</span>
+                        <span className="text-[#6366F1] truncate flex-1">{r.target}</span>
                       </button>
                     ))}
                   </div>
@@ -772,7 +767,7 @@ function DetailCard({
                       <button
                         key={w}
                         onClick={() => onNavigate(w)}
-                        className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px] text-[#a855f7]"
+                        className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#1A1A1A] transition-colors text-[10px] text-[#7C3AED]"
                       >
                         {w}
                       </button>
@@ -789,7 +784,7 @@ function DetailCard({
           <>
             {/* Full description */}
             {(node?.description || detail?.entity?.description) && (
-              <div className="text-[11px] text-[#88cc88] leading-relaxed">
+              <div className="text-[11px] text-text-secondary leading-relaxed">
                 {detail?.entity?.description || node?.description}
               </div>
             )}
@@ -826,7 +821,7 @@ function DetailCard({
                 RAW ENTITY JSON
               </summary>
               <pre
-                className="mt-1 text-[9px] text-[#737373] bg-[#0d0d0d] border border-[#1e1e1e] rounded p-2 overflow-x-auto max-h-32 overflow-y-auto"
+                className="mt-1 text-[9px] text-[#737373] bg-[#1A1A1A] border border-[#2A2A2A] rounded p-2 overflow-x-auto max-h-32 overflow-y-auto"
               >
                 {JSON.stringify(detail?.entity || node, null, 2)}
               </pre>
@@ -845,12 +840,12 @@ function DetailCard({
                       onClick={() => onNavigate(r.target)}
                       className="w-full text-left flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[#1a1a1a] transition-colors text-[10px]"
                     >
-                      <span className="text-[#00ff41] shrink-0">
+                      <span className="text-[#7C3AED] shrink-0">
                         {r.direction === "outgoing" ? "\u2192" : "\u2190"}
                       </span>
-                      <span className="text-[#404040] shrink-0">{r.type}</span>
-                      <span className="text-[#00b4d8] truncate">{r.target}</span>
-                      <span className="text-[#333] shrink-0">{r.direction}</span>
+                      <span className="text-[#6B6B6B] shrink-0">{r.type}</span>
+                      <span className="text-[#6366F1] truncate">{r.target}</span>
+                      <span className="text-[#6B6B6B] shrink-0">{r.direction}</span>
                     </button>
                   ))}
                 </div>
@@ -918,9 +913,8 @@ function MetricBadge({
           className="absolute top-full left-0 mt-1 px-2 py-1 rounded text-[9px] whitespace-nowrap z-50"
           style={{
             background: "rgba(20,20,20,0.95)",
-            border: "1px solid rgba(0,255,65,0.2)",
-            color: "#737373",
-            fontFamily: "'JetBrains Mono', monospace",
+            border: "1px solid #2A2A2A",
+            color: "#6B6B6B",
           }}
         >
           {tooltip}
@@ -963,17 +957,17 @@ const EDGE_CATEGORIES: Record<EdgeCategory, { label: string; types: Set<string>;
   structural: {
     label: "Structural",
     types: new Set(["depends_on", "part_of", "maintained_by", "orchestrates", "orchestrated_by", "manages", "managed_by"]),
-    colour: "#00ff41",
+    colour: "#10B981",
   },
   integration: {
     label: "Integration",
     types: new Set(["integrates_with", "deployed_on", "related_to"]),
-    colour: "#00b4d8",
+    colour: "#6366F1",
   },
   execution: {
     label: "Execution",
     types: new Set(["used_by", "uses", "maintains", "triggers"]),
-    colour: "#a855f7",
+    colour: "#7C3AED",
   },
 };
 
@@ -1004,17 +998,16 @@ function NodeFilterBar({
   counts: Record<string, number>;
 }) {
   const items: { key: keyof NodeFilterState; label: string; colour: string }[] = [
-    { key: "agent", label: "Agents", colour: "#00ff41" },
-    { key: "service", label: "Services", colour: "#00b4d8" },
-    { key: "workflow", label: "Workflows", colour: "#a855f7" },
-    { key: "skill", label: "Skills", colour: "#e879f9" },
-    { key: "brief", label: "Briefs", colour: "#ffb800" },
+    { key: "agent", label: "Agents", colour: "#10B981" },
+    { key: "service", label: "Services", colour: "#6366F1" },
+    { key: "workflow", label: "Workflows", colour: "#7C3AED" },
+    { key: "skill", label: "Skills", colour: "#A78BFA" },
+    { key: "brief", label: "Briefs", colour: "#F59E0B" },
   ];
 
   return (
     <div
-      className="flex items-center gap-2 px-3 py-1 border-b border-[#1e1e1e]"
-      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+      className="flex items-center gap-2 px-3 py-1 border-b border-[#2A2A2A]"
     >
       <span className="text-[9px] text-[#737373] tracking-wider mr-1">NODES</span>
       {items.map((item) => (
@@ -1068,15 +1061,14 @@ function EdgeFilterBar({
   counts: Record<string, number>;
 }) {
   const items: { key: keyof EdgeFilterState; label: string; colour: string; desc: string }[] = [
-    { key: "structural", label: "Structural", colour: "#00ff41", desc: "depends_on, part_of, maintained_by" },
-    { key: "integration", label: "Integration", colour: "#00b4d8", desc: "integrates_with, deployed_on" },
-    { key: "execution", label: "Execution", colour: "#a855f7", desc: "used_by, maintains, triggers" },
+    { key: "structural", label: "Structural", colour: "#10B981", desc: "depends_on, part_of, maintained_by" },
+    { key: "integration", label: "Integration", colour: "#6366F1", desc: "integrates_with, deployed_on" },
+    { key: "execution", label: "Execution", colour: "#7C3AED", desc: "used_by, maintains, triggers" },
   ];
 
   return (
     <div
-      className="flex items-center gap-2 px-3 py-1 border-b border-[#1e1e1e]"
-      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+      className="flex items-center gap-2 px-3 py-1 border-b border-[#2A2A2A]"
     >
       <span className="text-[9px] text-[#737373] tracking-wider mr-1">EDGES</span>
       {items.map((item) => (
@@ -1088,7 +1080,7 @@ function EdgeFilterBar({
           style={{
             background: filters[item.key] ? `${item.colour}20` : "transparent",
             color: filters[item.key] ? item.colour : "#404040",
-            border: `1px solid ${filters[item.key] ? `${item.colour}50` : "#1e1e1e"}`,
+            border: `1px solid ${filters[item.key] ? `${item.colour}50` : "#2A2A2A"}`,
           }}
         >
           {item.label} ({counts[item.key] || 0})
@@ -1102,11 +1094,11 @@ function EdgeFilterBar({
 
 function catStatusColour(status: string): string {
   const s = (status || "").toUpperCase();
-  if (s === "WORKING") return "#00ff41";
-  if (s === "CONFIGURED") return "#00b4d8";
-  if (s === "PARTIAL") return "#ffb800";
-  if (s === "BROKEN") return "#ff0040";
-  return "#737373";
+  if (s === "WORKING") return "#10B981";
+  if (s === "CONFIGURED") return "#6366F1";
+  if (s === "PARTIAL") return "#F59E0B";
+  if (s === "BROKEN") return "#EF4444";
+  return "#6B6B6B";
 }
 
 /* ── Taxonomy Overview Panel ─────────────────────────────────── */
@@ -1148,7 +1140,7 @@ function TaxonomyOverviewPanel({ onSelectCategory }: { onSelectCategory: (cat: s
   if (!overview) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className="text-[10px] text-[#737373] animate-pulse" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        <span className="text-[10px] text-text-secondary animate-pulse">
           Loading taxonomy...
         </span>
       </div>
@@ -1156,10 +1148,10 @@ function TaxonomyOverviewPanel({ onSelectCategory }: { onSelectCategory: (cat: s
   }
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+    <div className="h-full overflow-y-auto p-4 space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <span className="text-sm font-bold text-[#00b4d8]">FRACTALOS CATALOGUE</span>
+        <span className="text-sm font-bold text-[#6366F1]">FRACTALOS CATALOGUE</span>
         <span className="text-[9px] text-[#737373]">generated {overview.generated_at}</span>
       </div>
 
@@ -1167,9 +1159,9 @@ function TaxonomyOverviewPanel({ onSelectCategory }: { onSelectCategory: (cat: s
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: "COMPONENTS", value: overview.total, colour: "#d4d4d4" },
-          { label: "WORKING", value: `${overview.working_pct}%`, colour: "#00ff41" },
-          { label: "AVG COMPLETENESS", value: `${overview.avg_completeness}%`, colour: "#ffb800" },
-          { label: "WITH GAPS", value: overview.with_gaps, colour: "#ff0040" },
+          { label: "WORKING", value: `${overview.working_pct}%`, colour: "#10B981" },
+          { label: "AVG COMPLETENESS", value: `${overview.avg_completeness}%`, colour: "#F59E0B" },
+          { label: "WITH GAPS", value: overview.with_gaps, colour: "#EF4444" },
         ].map((m) => (
           <div
             key={m.label}
@@ -1204,31 +1196,31 @@ function TaxonomyOverviewPanel({ onSelectCategory }: { onSelectCategory: (cat: s
             <button
               key={cat.category}
               onClick={() => onSelectCategory(cat.category)}
-              className="text-left p-2 rounded transition-colors hover:bg-[#1a2a1a]"
-              style={{ background: "rgba(0,180,216,0.04)", border: "1px solid rgba(0,180,216,0.15)" }}
+              className="text-left p-2 rounded transition-colors hover:bg-bg-hover"
+              style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.15)" }}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-bold text-[#00b4d8]">{cat.category.replace(/_/g, " ")}</span>
+                <span className="text-[10px] font-bold text-[#6366F1]">{cat.category.replace(/_/g, " ")}</span>
                 <span className="text-[10px] text-[#737373]">{cat.total}</span>
               </div>
               {/* mini status bar */}
               <div className="flex gap-0.5 h-1 rounded overflow-hidden mb-1">
                 {cat.working > 0 && (
-                  <div style={{ width: `${(cat.working / cat.total) * 100}%`, background: "#00ff41" }} />
+                  <div style={{ width: `${(cat.working / cat.total) * 100}%`, background: "#10B981" }} />
                 )}
                 {cat.configured > 0 && (
-                  <div style={{ width: `${(cat.configured / cat.total) * 100}%`, background: "#00b4d8" }} />
+                  <div style={{ width: `${(cat.configured / cat.total) * 100}%`, background: "#6366F1" }} />
                 )}
                 {cat.partial > 0 && (
-                  <div style={{ width: `${(cat.partial / cat.total) * 100}%`, background: "#ffb800" }} />
+                  <div style={{ width: `${(cat.partial / cat.total) * 100}%`, background: "#F59E0B" }} />
                 )}
                 {cat.broken > 0 && (
-                  <div style={{ width: `${(cat.broken / cat.total) * 100}%`, background: "#ff0040" }} />
+                  <div style={{ width: `${(cat.broken / cat.total) * 100}%`, background: "#EF4444" }} />
                 )}
               </div>
               <div className="flex gap-2 text-[8px] text-[#737373]">
-                <span style={{ color: "#00ff41" }}>{cat.working} ok</span>
-                {cat.broken > 0 && <span style={{ color: "#ff0040" }}>{cat.broken} broken</span>}
+                <span style={{ color: "#10B981" }}>{cat.working} ok</span>
+                {cat.broken > 0 && <span style={{ color: "#EF4444" }}>{cat.broken} broken</span>}
                 <span className="ml-auto">{cat.avg_completeness}% done</span>
               </div>
             </button>
@@ -1316,12 +1308,12 @@ function CatalogueBrowserPanel({ onNodeSelect }: { onNodeSelect: (name: string) 
             <span className="text-[11px] font-bold text-[#d4d4d4]">{entry.display_name}</span>
             <span className="text-[9px] text-[#737373]">{entry.category}</span>
             <span className="ml-auto text-[9px] tabular-nums" style={{
-              color: entry.completeness_score >= 80 ? "#00ff41" : entry.completeness_score >= 50 ? "#ffb800" : "#ff0040"
+              color: entry.completeness_score >= 80 ? "#10B981" : entry.completeness_score >= 50 ? "#F59E0B" : "#EF4444"
             }}>
               {entry.completeness_score}%
             </span>
             {entry.has_gaps && (
-              <span className="text-[8px] text-[#ff0040]">[{entry.gap_count}G]</span>
+              <span className="text-[8px] text-[#EF4444]">[{entry.gap_count}G]</span>
             )}
           </div>
           {entry.role_description && (
@@ -1333,25 +1325,24 @@ function CatalogueBrowserPanel({ onNodeSelect }: { onNodeSelect: (name: string) 
   );
 
   return (
-    <div className="h-full flex flex-col" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+    <div className="h-full flex flex-col">
       {/* Search bar */}
-      <div className="shrink-0 p-3 border-b border-[#1e1e1e]">
+      <div className="shrink-0 p-3 border-b border-[#2A2A2A]">
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search 428 catalogue pages..."
+            placeholder="Search catalogue pages..."
             className="w-full px-3 py-1.5 rounded text-[11px] outline-none"
             style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(0,180,216,0.3)",
-              color: "#d4d4d4",
-              fontFamily: "'JetBrains Mono', monospace",
+              background: "#1A1A1A",
+              border: "1px solid #2A2A2A",
+              color: "#E5E5E5",
             }}
           />
           {searching && (
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#00b4d8] animate-pulse">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#6366F1] animate-pulse">
               ...
             </span>
           )}
@@ -1361,7 +1352,7 @@ function CatalogueBrowserPanel({ onNodeSelect }: { onNodeSelect: (name: string) 
         <div className="flex items-center gap-1.5 mt-1.5 text-[9px]">
           <button
             onClick={() => { setCatalogueView("overview"); setSearchQuery(""); }}
-            className="text-[#00b4d8] hover:text-[#38bdf8] transition-colors"
+            className="text-[#6366F1] hover:text-[#818CF8] transition-colors"
           >
             CATALOGUE
           </button>
@@ -1823,8 +1814,8 @@ export default function BattlefieldTab() {
       const val = isDrilldownFocal ? Math.max(8, ec * 2) : Math.max(2, ec * 1.5);
       return {
         ...n,
-        colour: n.entity_type === "gap" ? "#ff0040" :
-                n.status?.toLowerCase().includes("locked") ? "#404040" :
+        colour: n.entity_type === "gap" ? "#EF4444" :
+                n.status?.toLowerCase().includes("locked") ? "#6B6B6B" :
                 nodeColour(n.entity_type),
         val,
         intensity,
@@ -1884,9 +1875,9 @@ export default function BattlefieldTab() {
 
   const selectedNode = nodes.find((n) => n.id === selectedId) || null;
 
-  const healthDotColour = !health ? "#737373" :
-    (health.rag === "ok" && health.supabase === "ok") ? "#00ff41" :
-    (health.rag === "ok" || health.supabase === "ok") ? "#ffb800" : "#ff0040";
+  const healthDotColour = !health ? "#6B6B6B" :
+    (health.rag === "ok" && health.supabase === "ok") ? "#10B981" :
+    (health.rag === "ok" || health.supabase === "ok") ? "#F59E0B" : "#EF4444";
 
   const isRagDown = health?.rag === "down" && !loading && nodes.length === 0;
 
@@ -1907,23 +1898,23 @@ export default function BattlefieldTab() {
         {/* Drilldown breadcrumb bar */}
         {viewMode !== "WAR_ROOM" && drilldownEntityId && (
           <div
-            className="shrink-0 flex items-center gap-2 px-3 py-1 border-b border-[#00ff41]/20"
-            style={{ fontFamily: "'JetBrains Mono', monospace", background: "rgba(0,255,65,0.03)" }}
+            className="shrink-0 flex items-center gap-2 px-3 py-1 border-b border-[#2A2A2A]"
+            style={{ background: "#161616" }}
           >
             <button
               onClick={handleBackToWarRoom}
-              className="text-[10px] text-[#00ff41] hover:text-[#39ff14] transition-colors flex items-center gap-1"
+              className="text-[10px] text-[#7C3AED] hover:text-[#A78BFA] transition-colors flex items-center gap-1"
             >
               <span>&larr;</span>
-              <span>War Room</span>
+              <span>Battlefield</span>
             </button>
-            <span className="text-[9px] text-[#404040]">/</span>
+            <span className="text-[9px] text-[#6B6B6B]">/</span>
             <span
               className="text-[10px] font-bold"
               style={{
-                color: viewMode === "AGENT_VIEW" ? "#00ff41" :
-                       viewMode === "WORKFLOW_VIEW" ? "#a855f7" :
-                       viewMode === "SERVICE_VIEW" ? "#00b4d8" : "#d4d4d4",
+                color: viewMode === "AGENT_VIEW" ? "#10B981" :
+                       viewMode === "WORKFLOW_VIEW" ? "#7C3AED" :
+                       viewMode === "SERVICE_VIEW" ? "#6366F1" : "#E5E5E5",
               }}
             >
               {drilldownEntityId}
@@ -1938,8 +1929,7 @@ export default function BattlefieldTab() {
 
         {/* Metrics bar */}
         <div
-          className="shrink-0 px-3 py-1.5 border-b border-border flex items-center gap-5"
-          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          className="shrink-0 px-3 py-1.5 border-b border-[#2A2A2A] flex items-center gap-5"
         >
           {/* Health dot */}
           <div className="flex items-center gap-1.5 relative group">
@@ -1955,10 +1945,9 @@ export default function BattlefieldTab() {
             <div
               className="absolute top-full left-0 mt-1 px-2 py-1 rounded text-[9px] whitespace-nowrap z-50 hidden group-hover:block"
               style={{
-                background: "rgba(20,20,20,0.95)",
-                border: "1px solid rgba(0,255,65,0.2)",
-                color: "#737373",
-                fontFamily: "'JetBrains Mono', monospace",
+                background: "#1A1A1A",
+                border: "1px solid #2A2A2A",
+                color: "#6B6B6B",
               }}
             >
               RAG: {health?.rag || "unknown"} | Supabase: {health?.supabase || "unknown"}
@@ -1973,44 +1962,44 @@ export default function BattlefieldTab() {
           <MetricBadge
             label="AGENTS"
             value={agentCount}
-            colour="#00ff41"
+            colour="#10B981"
             tooltip={`memory_search_entities(agent) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
           />
           <MetricBadge
             label="SERVICES"
             value={serviceCount}
-            colour="#00b4d8"
+            colour="#6366F1"
             tooltip={`memory_search_entities(service) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
           />
           <MetricBadge
             label="SKILLS"
             value={skillCount}
-            colour="#e879f9"
+            colour="#A78BFA"
             tooltip={`memory_search_entities(skill) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
           />
           <MetricBadge
             label="WORKFLOWS"
             value={workflowCount}
-            colour="#a855f7"
+            colour="#7C3AED"
             tooltip={`memory_search_entities(workflow) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
           />
           <MetricBadge
             label="EDGES"
             value={edgeCount}
-            colour="#ffd60a"
+            colour="#F59E0B"
             tooltip={`rag_traverse(SOVEREIGN+RAG+Supabase) | ${fetchTimestamp ? new Date(fetchTimestamp).toLocaleTimeString("en-GB") : "..."}`}
           />
 
           {/* Legend */}
           <div className="ml-auto flex items-center gap-3">
             {[
-              { label: "Agent", colour: "#00ff41" },
-              { label: "Service", colour: "#00b4d8" },
-              { label: "Tool", colour: "#ffd60a" },
-              { label: "Skill", colour: "#e879f9" },
-              { label: "Workflow", colour: "#a855f7" },
-              { label: "Content", colour: "#e879f9" },
-              { label: "Gap", colour: "#ff0040" },
+              { label: "Agent", colour: "#10B981" },
+              { label: "Service", colour: "#6366F1" },
+              { label: "Tool", colour: "#F59E0B" },
+              { label: "Skill", colour: "#A78BFA" },
+              { label: "Workflow", colour: "#7C3AED" },
+              { label: "Content", colour: "#A78BFA" },
+              { label: "Gap", colour: "#EF4444" },
             ].map((l) => (
               <div key={l.label} className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full" style={{ background: l.colour }} />
@@ -2025,9 +2014,8 @@ export default function BattlefieldTab() {
             disabled={reloading}
             className="ml-2 px-2 py-0.5 rounded text-[9px] transition-all hover:bg-[#1a1a1a]"
             style={{
-              color: reloading ? "#404040" : "#00ff41",
-              border: "1px solid rgba(0,255,65,0.2)",
-              fontFamily: "'JetBrains Mono', monospace",
+              color: reloading ? "#6B6B6B" : "#7C3AED",
+              border: "1px solid rgba(124,58,237,0.3)",
             }}
           >
             {reloading ? "..." : "RELOAD"}
@@ -2041,10 +2029,9 @@ export default function BattlefieldTab() {
                 onClick={() => { setGraphView(view); setCentreView("graph"); }}
                 className="px-2 py-0.5 rounded text-[9px] transition-all"
                 style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color: centreView === "graph" && graphView === view ? "#0a0a0a" : "#00ff41",
-                  background: centreView === "graph" && graphView === view ? "#00ff41" : "transparent",
-                  border: "1px solid rgba(0,255,65,0.2)",
+                  color: centreView === "graph" && graphView === view ? "#E5E5E5" : "#7C3AED",
+                  background: centreView === "graph" && graphView === view ? "rgba(124,58,237,0.2)" : "transparent",
+                  border: "1px solid rgba(124,58,237,0.3)",
                 }}
               >
                 {view === "globe" ? "3D" : "MATRIX"}
@@ -2054,10 +2041,9 @@ export default function BattlefieldTab() {
               onClick={() => setCentreView(centreView === "catalogue" ? "graph" : "catalogue")}
               className="px-2 py-0.5 rounded text-[9px] transition-all ml-0.5"
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                color: centreView === "catalogue" ? "#0a0a0a" : "#00b4d8",
-                background: centreView === "catalogue" ? "#00b4d8" : "transparent",
-                border: "1px solid rgba(0,180,216,0.3)",
+                color: centreView === "catalogue" ? "#E5E5E5" : "#6366F1",
+                background: centreView === "catalogue" ? "rgba(99,102,241,0.2)" : "transparent",
+                border: "1px solid rgba(99,102,241,0.3)",
               }}
             >
               CATALOGUE
@@ -2084,7 +2070,7 @@ export default function BattlefieldTab() {
 
         {/* Catalogue Browser Panel — replaces graph when active */}
         {centreView === "catalogue" && (
-          <div className="flex-1 overflow-hidden" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-hidden" style={{ background: "#111111" }}>
             <CatalogueBrowserPanel
               onNodeSelect={(name) => {
                 setCentreView("graph");
@@ -2098,7 +2084,7 @@ export default function BattlefieldTab() {
         <div
           ref={canvasContainerRef}
           className={centreView === "catalogue" ? "hidden" : "flex-1 relative"}
-          style={{ background: "#0a0a0a" }}
+          style={{ background: "#111111" }}
         >
           {/* Service pulse animations overlay */}
           {servicePulses.length > 0 && (
@@ -2112,21 +2098,20 @@ export default function BattlefieldTab() {
                     key={pulse.timestamp}
                     className="absolute flex items-center gap-1 px-2 py-0.5 rounded-full whitespace-nowrap"
                     style={{
-                      fontFamily: "'JetBrains Mono', monospace",
                       fontSize: "8px",
                       left: `${30 + progress * 40}%`,
                       top: `${20 + (pulse.timestamp % 60)}%`,
                       opacity,
-                      background: "rgba(0,255,65,0.15)",
-                      border: "1px solid rgba(0,255,65,0.3)",
-                      color: "#00ff41",
+                      background: "rgba(124,58,237,0.15)",
+                      border: "1px solid rgba(124,58,237,0.3)",
+                      color: "#7C3AED",
                       transform: `translateX(${progress * 100}px)`,
                       transition: "transform 0.1s linear",
                     }}
                   >
-                    <span style={{ color: "#00ff41" }}>{pulse.from}</span>
-                    <span style={{ color: "#737373" }}>&rarr;</span>
-                    <span style={{ color: "#00b4d8" }}>{pulse.to}</span>
+                    <span style={{ color: "#10B981" }}>{pulse.from}</span>
+                    <span style={{ color: "#6B6B6B" }}>&rarr;</span>
+                    <span style={{ color: "#6366F1" }}>{pulse.to}</span>
                   </div>
                 );
               })}
@@ -2150,30 +2135,19 @@ export default function BattlefieldTab() {
             </div>
           )}
 
-          {/* CRT scanline overlay */}
-          {graphView === "globe" && (
-            <div
-              className="absolute inset-0 z-10 pointer-events-none"
-              style={{
-                backgroundImage: "repeating-linear-gradient(0deg, rgba(0,255,65,0.03) 0px, transparent 1px, transparent 2px)",
-                backgroundSize: "100% 2px",
-              }}
-            />
-          )}
-
           {graphView === "globe" && !loading && nodes.length > 0 && (
             <ForceGraph3D
               ref={graphRef}
               graphData={graphData}
               width={canvasSize.width}
               height={canvasSize.height}
-              backgroundColor="#0a0a0a"
+              backgroundColor="#111111"
               showNavInfo={false}
               nodeId="id"
               nodeColor={(node: object) => {
                 const n = node as GraphNodeObj;
-                // Replay highlight — pulsing bright green
-                if (replayActiveNodes.has(n.id) || replayActiveNodes.has(n.name)) return "#00ff41";
+                // Replay highlight — pulsing accent violet
+                if (replayActiveNodes.has(n.id) || replayActiveNodes.has(n.name)) return "#7C3AED";
                 if (highlightNodes.size === 0) return n.colour || "#737373";
                 return highlightNodes.has(n.id) ? (n.colour || "#737373") : withAlpha(n.colour || "#737373", 0.15);
               }}
@@ -2202,7 +2176,7 @@ export default function BattlefieldTab() {
               d3VelocityDecay={0.3}
               warmupTicks={100}
               cooldownTicks={300}
-              linkColor={() => "rgba(0,255,65,0.15)"}
+              linkColor={() => "rgba(124,58,237,0.25)"}
               linkWidth={1}
               linkDirectionalArrowLength={3}
               linkDirectionalArrowRelPos={1}
@@ -2235,15 +2209,12 @@ export default function BattlefieldTab() {
                   <div
                     className="h-full w-1/3 rounded"
                     style={{
-                      background: "linear-gradient(90deg, transparent, rgba(0,255,65,0.3), transparent)",
+                      background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.3), transparent)",
                       animation: "shimmer 1.5s infinite",
                     }}
                   />
                 </div>
-                <span
-                  className="text-[10px] text-[#00ff41] animate-pulse"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
+                <span className="text-[10px] text-text-secondary animate-pulse">
                   Fetching graph from RAG...
                 </span>
                 {/* Skeleton nodes */}
@@ -2266,11 +2237,10 @@ export default function BattlefieldTab() {
           {reloading && !loading && (
             <div className="absolute top-2 right-2 z-30">
               <span
-                className="text-[10px] text-[#00ff41] animate-pulse px-2 py-1 rounded"
+                className="text-[10px] text-text-secondary animate-pulse px-2 py-1 rounded"
                 style={{
-                  background: "rgba(0,0,0,0.8)",
-                  border: "1px solid rgba(0,255,65,0.3)",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  background: "#161616",
+                  border: "1px solid #2A2A2A",
                 }}
               >
                 Reloading...
@@ -2284,44 +2254,34 @@ export default function BattlefieldTab() {
               <div
                 className="flex flex-col items-center gap-3 p-6 rounded-lg"
                 style={{
-                  background: "rgba(255,0,0,0.05)",
-                  border: "1px solid rgba(255,0,64,0.3)",
+                  background: "rgba(239,68,68,0.05)",
+                  border: "1px solid rgba(239,68,68,0.3)",
                 }}
               >
                 <div
                   className="w-4 h-4 rounded-full"
                   style={{
-                    background: "#ff0040",
-                    boxShadow: "0 0 20px rgba(255,0,64,0.5)",
+                    background: "#EF4444",
+                    boxShadow: "0 0 12px rgba(239,68,68,0.4)",
                     animation: "pulse-dot 1s ease-in-out infinite",
                   }}
                 />
-                <span
-                  className="text-sm font-bold text-[#ff0040]"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
-                  SYSTEM OFFLINE
+                <span className="text-sm font-bold text-[#EF4444]">
+                  System Offline
                 </span>
-                <span
-                  className="text-[10px] text-[#ff1744]"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
+                <span className="text-[10px] text-[#EF4444]">
                   RAG endpoint unreachable
                 </span>
                 {error && (
-                  <span
-                    className="text-[9px] text-[#737373] max-w-[300px] text-center"
-                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                  >
+                  <span className="text-[9px] text-[#6B6B6B] max-w-[300px] text-center">
                     {error}
                   </span>
                 )}
                 <button
                   onClick={handleReload}
-                  className="mt-2 px-3 py-1 rounded text-[10px] text-[#ff0040] border border-[#ff0040]/30 hover:bg-[#ff0040]/10 transition-colors"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  className="mt-2 px-3 py-1 rounded text-[10px] text-[#EF4444] border border-[#EF4444]/30 hover:bg-[#EF4444]/10 transition-colors"
                 >
-                  RETRY
+                  Retry
                 </button>
               </div>
             </div>
@@ -2331,11 +2291,10 @@ export default function BattlefieldTab() {
           {error && !loading && nodes.length > 0 && (
             <div className="absolute top-2 left-2 z-20">
               <span
-                className="text-[9px] text-[#ffb800] px-2 py-1 rounded"
+                className="text-[9px] text-[#F59E0B] px-2 py-1 rounded"
                 style={{
-                  background: "rgba(0,0,0,0.8)",
-                  border: "1px solid rgba(255,184,0,0.3)",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  background: "#161616",
+                  border: "1px solid rgba(245,158,11,0.3)",
                 }}
               >
                 Partial data — {error}
@@ -2366,8 +2325,8 @@ export default function BattlefieldTab() {
       <div
         className="w-[280px] shrink-0 flex flex-col h-full overflow-hidden"
         style={{
-          background: "#0d0d0d",
-          borderLeft: "1px solid rgba(0,255,65,0.2)",
+          background: "#161616",
+          borderLeft: "1px solid #2A2A2A",
         }}
       >
         <EventStream filterSource={viewMode !== "WAR_ROOM" ? drilldownEntityId : null} />

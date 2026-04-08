@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import LinearListRow from "@/components/LinearListRow";
+import EmptyState from "@/components/EmptyState";
 
-// Matches the actual artifacts table schema
 interface ArtifactRow {
   id: string;
   brief_name: string | null;
@@ -21,46 +22,38 @@ interface ArtifactRow {
 }
 
 const TYPE_COLOURS: Record<string, string> = {
-  file: "#39ff14",
-  report: "#b388ff",
-  repo: "#00b0ff",
-  url: "#00e5ff",
-  demo: "#ffb800",
-  deploy: "#00ff41",
-  code: "#39ff14",
-  document: "#ffb800",
-  outreach: "#ff6d00",
+  file:     "#6366F1",
+  report:   "#7C3AED",
+  repo:     "#6366F1",
+  url:      "#6366F1",
+  demo:     "#F59E0B",
+  deploy:   "#10B981",
+  code:     "#6366F1",
+  document: "#F59E0B",
+  outreach: "#F59E0B",
 };
 
 const STATUS_COLOURS: Record<string, string> = {
-  verified: "#00ff41",
-  built: "#ffb800",
-  deployed: "#00b0ff",
-  failed: "#ff1744",
-  live: "#00ff41",
+  verified: "#10B981",
+  built:    "#F59E0B",
+  deployed: "#6366F1",
+  failed:   "#EF4444",
+  live:     "#10B981",
+  DELIVERED:"#10B981",
 };
 
-const FILTER_TYPES = ["ALL", "file", "report", "repo", "url"] as const;
-
-function timeAgo(ts: string): string {
-  const diff = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
-}
+const FILTER_TYPES = ["ALL", "file", "report", "repo", "url", "deploy"] as const;
 
 export default function ArtifactsTab() {
   const [artifacts, setArtifacts] = useState<ArtifactRow[]>([]);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [selectedArtifact, setSelectedArtifact] = useState<ArtifactRow | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchArtifacts = useCallback(async () => {
     let query = supabase
       .from("artifacts")
-      .select(
-        "id, brief_name, agent, artifact_type, title, location, commit, test_url, status, verified_by_human, verified_at, notes, created_at"
-      )
+      .select("id, brief_name, agent, artifact_type, title, location, commit, test_url, status, verified_by_human, verified_at, notes, created_at")
       .order("created_at", { ascending: false })
       .limit(200);
 
@@ -70,6 +63,7 @@ export default function ArtifactsTab() {
 
     const { data } = await query;
     if (data) setArtifacts(data as ArtifactRow[]);
+    setLoading(false);
   }, [typeFilter]);
 
   useEffect(() => {
@@ -77,9 +71,7 @@ export default function ArtifactsTab() {
 
     const channel = supabase
       .channel("artifacts-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "artifacts" }, () =>
-        fetchArtifacts()
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "artifacts" }, fetchArtifacts)
       .subscribe();
 
     return () => {
@@ -87,168 +79,154 @@ export default function ArtifactsTab() {
     };
   }, [fetchArtifacts]);
 
-  // Dynamic type counts from all data (unfiltered)
   const typeCounts: Record<string, number> = {};
   artifacts.forEach((a) => {
     const t = a.artifact_type || "unknown";
     typeCounts[t] = (typeCounts[t] || 0) + 1;
   });
 
-  // Status counts
-  const statusCounts: Record<string, number> = {};
-  artifacts.forEach((a) => {
-    const s = a.status || "unknown";
-    statusCounts[s] = (statusCounts[s] || 0) + 1;
-  });
-
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* Filter bar */}
-      <div className="shrink-0 px-3 py-1.5 border-b border-border flex items-center gap-3">
-        <span className="text-[10px] font-bold text-accent-orange tracking-wider">
-          ARTIFACTS
-        </span>
-        <span className="text-[9px] text-text-muted">{artifacts.length} total</span>
+    <div className="h-full flex overflow-hidden">
+      {/* List panel */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {/* Section header */}
+        <div
+          className="flex items-center justify-between flex-shrink-0 border-b"
+          style={{ height: 48, padding: "0 16px", borderColor: "#2A2A2A" }}
+        >
+          <span style={{ fontSize: 15, fontWeight: 600, color: "#E5E5E5" }}>Artifacts</span>
+          <span style={{ fontSize: 12, color: "#6B6B6B" }}>{artifacts.length} total</span>
+        </div>
 
-        <span className="text-text-muted text-[10px]">|</span>
-
-        {/* Filter pills */}
-        <div className="flex gap-1">
+        {/* Filter strip */}
+        <div
+          className="flex items-center gap-2 flex-shrink-0 border-b overflow-x-auto"
+          style={{ padding: "8px 16px", borderColor: "#2A2A2A" }}
+        >
           {FILTER_TYPES.map((t) => {
             const isAll = t === "ALL";
             const active = isAll ? !typeFilter : typeFilter === t;
-            const count = isAll
-              ? artifacts.length
-              : typeCounts[t] || 0;
+            const count = isAll ? artifacts.length : typeCounts[t] || 0;
             return (
               <button
                 key={t}
                 onClick={() => setTypeFilter(isAll ? null : typeFilter === t ? null : t)}
-                className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors uppercase ${
-                  active
-                    ? "border-current"
-                    : "border-border text-text-muted hover:text-text-secondary"
-                }`}
                 style={{
-                  color: active
-                    ? isAll
-                      ? "#00ff41"
-                      : TYPE_COLOURS[t] || "#d4d4d4"
-                    : undefined,
+                  fontSize: 11,
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                  border: `1px solid ${active ? "#7C3AED" : "#2A2A2A"}`,
+                  color: active ? "#7C3AED" : "#6B6B6B",
+                  background: active ? "#7C3AED15" : "transparent",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
                 }}
               >
-                {t} {!isAll && `(${count})`}
+                {t}{!isAll && ` (${count})`}
               </button>
             );
           })}
         </div>
 
-        {/* Status summary chips */}
-        <div className="ml-auto flex items-center gap-2">
-          {Object.entries(statusCounts)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 4)
-            .map(([status, count]) => (
-              <span
-                key={status}
-                className="text-[9px] font-bold"
-                style={{ color: STATUS_COLOURS[status] || "#737373" }}
-              >
-                {status.toUpperCase()}: {count}
-              </span>
-            ))}
+        {/* Artifact list */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <EmptyState message="Loading artifacts…" />
+          ) : artifacts.length === 0 ? (
+            <EmptyState message="No artifacts registered" />
+          ) : (
+            artifacts.map((artifact) => {
+              const typeCol = TYPE_COLOURS[artifact.artifact_type || ""] || "#6B6B6B";
+              const statusStr = artifact.status?.toUpperCase() ?? "";
+              const statusCol = STATUS_COLOURS[artifact.status || ""] || STATUS_COLOURS[statusStr] || "#6B6B6B";
+              const link = artifact.test_url || artifact.location;
+              return (
+                <LinearListRow
+                  key={artifact.id}
+                  title={artifact.title || "(untitled)"}
+                  status={artifact.status?.toUpperCase() ?? undefined}
+                  badge={artifact.artifact_type || undefined}
+                  badgeColor={typeCol}
+                  secondaryText={link || undefined}
+                  timestamp={artifact.created_at}
+                  onClick={() => setSelectedArtifact(artifact)}
+                />
+              );
+            })
+          )}
         </div>
       </div>
 
-      {/* Artifact list */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
-        {artifacts.map((artifact) => {
-          const typeCol = TYPE_COLOURS[artifact.artifact_type || ""] || "#737373";
-          const statusCol = STATUS_COLOURS[artifact.status || ""] || "#737373";
-          const link = artifact.test_url || artifact.location;
-
-          return (
-            <div
-              key={artifact.id}
-              className="px-3 py-2 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors"
-            >
-              <div className="flex items-center justify-between mb-0.5">
-                <div className="flex items-center gap-2 min-w-0">
-                  {/* Type badge */}
-                  <span
-                    className="text-[9px] uppercase font-bold shrink-0 px-1.5 py-0.5 rounded"
-                    style={{
-                      color: typeCol,
-                      backgroundColor: `${typeCol}15`,
-                    }}
-                  >
-                    {artifact.artifact_type || "?"}
-                  </span>
-                  {/* Title */}
-                  <span className="text-[10px] text-text-primary truncate">
-                    {artifact.title || "(untitled)"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {/* Brief name */}
-                  {artifact.brief_name && (
-                    <span className="text-[9px] text-accent-yellow truncate max-w-[140px]">
-                      {artifact.brief_name}
-                    </span>
-                  )}
-                  {/* Agent */}
-                  {artifact.agent && (
-                    <span className="text-[9px] text-accent-purple font-bold uppercase">
-                      {artifact.agent}
-                    </span>
-                  )}
-                  {/* Status badge */}
-                  {artifact.status && (
-                    <span
-                      className="text-[9px] font-bold px-1.5 py-0.5 rounded"
-                      style={{
-                        color: statusCol,
-                        backgroundColor: `${statusCol}15`,
-                      }}
-                    >
-                      {artifact.status.toUpperCase()}
-                    </span>
-                  )}
-                  {/* Verified badge */}
-                  {artifact.verified_by_human && (
-                    <span className="text-[9px] text-accent-green font-bold">HUMAN OK</span>
-                  )}
-                  <span className="text-[9px] text-text-muted">{timeAgo(artifact.created_at)}</span>
-                </div>
-              </div>
-
-              {/* Links row */}
-              <div className="flex items-center gap-2 text-[9px] text-text-muted">
-                {link && (
+      {/* Detail panel */}
+      {selectedArtifact && (
+        <div
+          className="detail-panel h-full flex flex-col border-l"
+          style={{ width: 420, minWidth: 420, background: "#161616", borderColor: "#2A2A2A" }}
+        >
+          <div
+            className="flex items-center justify-between border-b flex-shrink-0"
+            style={{ height: 48, padding: "0 16px", borderColor: "#2A2A2A" }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#E5E5E5" }}>Artifact</span>
+            <button onClick={() => setSelectedArtifact(null)} style={{ color: "#6B6B6B", padding: 4 }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto" style={{ padding: 16 }}>
+            <h3 style={{ fontSize: 13, color: "#E5E5E5", marginBottom: 16 }}>
+              {selectedArtifact.title || "(untitled)"}
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "90px 1fr", gap: "8px 12px", fontSize: 12 }}>
+              <span style={{ color: "#6B6B6B" }}>Type</span>
+              <span style={{ color: "#E5E5E5" }}>{selectedArtifact.artifact_type || "—"}</span>
+              <span style={{ color: "#6B6B6B" }}>Status</span>
+              <span style={{ color: "#E5E5E5" }}>{selectedArtifact.status || "—"}</span>
+              <span style={{ color: "#6B6B6B" }}>Agent</span>
+              <span style={{ color: "#E5E5E5" }}>{selectedArtifact.agent || "—"}</span>
+              <span style={{ color: "#6B6B6B" }}>Brief</span>
+              <span className="font-mono" style={{ color: "#E5E5E5", fontSize: 11, wordBreak: "break-all" }}>
+                {selectedArtifact.brief_name || "—"}
+              </span>
+              {selectedArtifact.location && (
+                <>
+                  <span style={{ color: "#6B6B6B" }}>URL</span>
                   <a
-                    href={link}
+                    href={selectedArtifact.location}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-accent-cyan hover:text-accent-green transition-colors truncate max-w-[400px]"
+                    style={{ color: "#7C3AED", fontSize: 11, wordBreak: "break-all" }}
                   >
-                    {link}
+                    {selectedArtifact.location}
                   </a>
-                )}
-                {artifact.commit && (
-                  <span className="text-text-secondary shrink-0">
-                    commit: {artifact.commit.slice(0, 8)}
+                </>
+              )}
+              {selectedArtifact.commit && (
+                <>
+                  <span style={{ color: "#6B6B6B" }}>Commit</span>
+                  <span className="font-mono" style={{ color: "#E5E5E5", fontSize: 11 }}>
+                    {selectedArtifact.commit.slice(0, 8)}
                   </span>
-                )}
-              </div>
+                </>
+              )}
+              {selectedArtifact.verified_by_human && (
+                <>
+                  <span style={{ color: "#6B6B6B" }}>Verified</span>
+                  <span style={{ color: "#10B981" }}>Human verified</span>
+                </>
+              )}
+              {selectedArtifact.notes && (
+                <>
+                  <span style={{ color: "#6B6B6B" }}>Notes</span>
+                  <span style={{ color: "#A0A0A0", fontSize: 12 }}>{selectedArtifact.notes}</span>
+                </>
+              )}
             </div>
-          );
-        })}
-        {artifacts.length === 0 && (
-          <div className="text-[10px] text-text-muted text-center py-8">
-            No artifacts registered
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
