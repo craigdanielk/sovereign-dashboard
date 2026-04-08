@@ -1,19 +1,40 @@
-// MIROFISH war-room terminal colour values
+// Linear-style design system colour values
 // Maps to theme tokens in globals.css
 
 export const COLOUR_VALUES: Record<string, string> = {
-  "accent-green": "#00ff41",
-  "accent-green-dim": "#00cc33",
-  "accent-lime": "#39ff14",
-  "accent-yellow": "#ffb800",
-  "accent-red": "#ff1744",
-  "accent-blue": "#00b0ff",
-  "accent-purple": "#b388ff",
-  "accent-cyan": "#00e5ff",
-  "accent-orange": "#ff6d00",
-  "text-primary": "#d4d4d4",
-  "text-secondary": "#737373",
-  "text-muted": "#404040",
+  // Accent
+  "accent": "#7C3AED",
+  "accent-hover": "#6D28D9",
+
+  // Status (muted, not neon)
+  "accent-green": "#10B981",
+  "accent-green-dim": "#059669",
+  "accent-lime": "#10B981",
+  "accent-yellow": "#F59E0B",
+  "accent-red": "#EF4444",
+  "accent-blue": "#6366F1",
+  "accent-purple": "#7C3AED",
+  "accent-cyan": "#6366F1",
+  "accent-orange": "#F59E0B",
+
+  // Text
+  "text-primary": "#E5E5E5",
+  "text-secondary": "#A0A0A0",
+  "text-muted": "#6B6B6B",
+  "text-tertiary": "#6B6B6B",
+
+  // Status semantic
+  "status-todo": "#6B6B6B",
+  "status-progress": "#F59E0B",
+  "status-done": "#10B981",
+  "status-cancelled": "#EF4444",
+  "status-blocked": "#EF4444",
+
+  // Priority
+  "priority-urgent": "#EF4444",
+  "priority-high": "#F59E0B",
+  "priority-medium": "#6366F1",
+  "priority-low": "#6B6B6B",
 };
 
 export function getStatusColour(status: string): string {
@@ -28,16 +49,19 @@ export function getStatusColour(status: string): string {
     DONE: COLOUR_VALUES["accent-green"],
     BLOCKED: COLOUR_VALUES["accent-red"],
     DRAFT: COLOUR_VALUES["text-muted"],
+    GO: COLOUR_VALUES["accent-green"],
+    GAP: COLOUR_VALUES["accent-yellow"],
+    SKIP: COLOUR_VALUES["accent-red"],
   };
   return map[status] || COLOUR_VALUES["text-muted"];
 }
 
 export function getPriorityColour(priority: string): string {
   const map: Record<string, string> = {
-    P0: COLOUR_VALUES["accent-red"],
-    P1: COLOUR_VALUES["accent-yellow"],
-    P2: COLOUR_VALUES["accent-blue"],
-    P3: COLOUR_VALUES["text-muted"],
+    P0: COLOUR_VALUES["priority-urgent"],
+    P1: COLOUR_VALUES["priority-high"],
+    P2: COLOUR_VALUES["priority-medium"],
+    P3: COLOUR_VALUES["priority-low"],
   };
   return map[priority] || COLOUR_VALUES["text-muted"];
 }
@@ -55,7 +79,7 @@ export function getPlatformColour(platform: string): string {
 }
 
 export function getWorkspaceColour(colourToken: string): string {
-  return COLOUR_VALUES[colourToken] || COLOUR_VALUES["accent-green"];
+  return COLOUR_VALUES[colourToken] || COLOUR_VALUES["accent"];
 }
 
 export function withAlpha(hex: string, alpha: number): string {
@@ -69,10 +93,10 @@ export function withAlpha(hex: string, alpha: number): string {
 export function getAgentColour(agent: string): string {
   const a = agent.toUpperCase();
   if (a === "SOVEREIGN" || a === "SOVEREIGN-R17") return COLOUR_VALUES["accent-green"];
-  if (a === "FORGE" || a === "DELIVER") return COLOUR_VALUES["accent-cyan"];
+  if (a === "FORGE" || a === "DELIVER") return COLOUR_VALUES["accent-blue"];
   if (a === "RECON" || a === "PRISM") return COLOUR_VALUES["accent-blue"];
   if (a === "SCRIBE" || a === "LORE") return COLOUR_VALUES["accent-purple"];
-  if (a === "KIRA" || a === "COMPASS") return COLOUR_VALUES["accent-orange"];
+  if (a === "KIRA" || a === "COMPASS") return COLOUR_VALUES["accent-yellow"];
   if (a === "VERIFY" || a === "PULSE") return COLOUR_VALUES["accent-yellow"];
-  return COLOUR_VALUES["accent-lime"];
+  return COLOUR_VALUES["accent"];
 }

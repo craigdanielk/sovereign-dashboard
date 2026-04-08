@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ClientShell from "@/components/shell/ClientShell";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains",
@@ -10,8 +16,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SOVEREIGN -- War Room",
-  description: "MIROFISH war-room terminal for multi-agent orchestration",
+  title: "Sovereign",
+  description: "North Star command surface — multi-agent orchestration dashboard",
 };
 
 export default function RootLayout({
@@ -21,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${jetbrainsMono.variable} antialiased`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <ClientShell>{children}</ClientShell>
       </body>
     </html>

@@ -72,15 +72,10 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
-    key: "command",
+    key: "workspace",
     label: "Workspace",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" fill="none"/>
-        <line x1="2" y1="6" x2="14" y2="6" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1"/>
-        <rect x="5" y="8.5" width="6" height="3" rx="0.5" fill="currentColor" opacity="0.4"/>
-      </svg>
-    ),
+    // prettier-ignore
+    icon: (<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="9" rx="1.5" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" fill="none"/><path d="M5 4V3C5 2.45 5.45 2 6 2H10C10.55 2 11 2.45 11 3V4" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" strokeOpacity="0.4" strokeWidth="1"/><circle cx="8" cy="8" r="1" fill="currentColor" opacity="0.6"/></svg>),
   },
   {
     key: "comms",
@@ -102,12 +97,6 @@ const NAV_ITEMS: NavItem[] = [
         <line x1="5" y1="11.5" x2="9" y2="11.5" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1"/>
       </svg>
     ),
-  },
-  {
-    key: "workspace",
-    label: "Workspace",
-    // prettier-ignore
-    icon: (<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="9" rx="1.5" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" fill="none"/><path d="M5 4V3C5 2.45 5.45 2 6 2H10C10.55 2 11 2.45 11 3V4" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" strokeOpacity="0.4" strokeWidth="1"/><circle cx="8" cy="8" r="1" fill="currentColor" opacity="0.6"/></svg>),
   },
 ];
 
@@ -337,7 +326,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <span style={{ color: "#E5E5E5", fontWeight: 500 }}>{breadcrumb}</span>
           </div>
 
-          {/* Right: health dot + queue */}
+          {/* Right: health dot + version */}
           <div className="flex items-center gap-3" style={{ fontSize: 12, color: "#6B6B6B" }}>
             {queueDepth > 0 && (
               <span>
@@ -359,6 +348,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {health === "ok" ? "Healthy" : health === "warn" ? "Warning" : "Error"}
               </span>
             </div>
+            <span style={{ fontSize: 11, color: "#6B6B6B" }}>v0.2</span>
           </div>
         </header>
 

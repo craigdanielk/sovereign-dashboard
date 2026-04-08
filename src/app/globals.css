@@ -1,24 +1,99 @@
 @import "tailwindcss";
 
+/* ── Design token layer (plain CSS custom properties) ──────────────
+   These are the canonical names used across all components.
+   Tailwind @theme aliases below map to the same values. */
+:root {
+  /* Surfaces */
+  --bg-primary: #111111;
+  --bg-sidebar: #161616;
+  --bg-hover: #1A1A1A;
+  --bg-selected: #1E1E1E;
+
+  /* Text */
+  --text-primary: #E5E5E5;
+  --text-secondary: #A0A0A0;
+  --text-tertiary: #6B6B6B;
+
+  /* Borders */
+  --border-default: #2A2A2A;
+  --border-component: #333333;
+
+  /* Accent */
+  --accent: #7C3AED;
+  --accent-hover: #6D28D9;
+
+  /* Status */
+  --status-todo: #6B6B6B;
+  --status-progress: #F59E0B;
+  --status-done: #10B981;
+  --status-cancelled: #EF4444;
+
+  /* Priority */
+  --priority-urgent: #EF4444;
+  --priority-high: #F59E0B;
+  --priority-medium: #6366F1;
+  --priority-low: #6B6B6B;
+
+  /* Typography */
+  --font-body: Inter, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Radius */
+  --radius-component: 6px;
+  --radius-badge: 4px;
+}
+
 @theme inline {
-  --color-bg-primary: #0a0a0a;
-  --color-bg-secondary: #0f0f0f;
-  --color-bg-card: #141414;
-  --color-bg-card-hover: #1a1a1a;
-  --color-border: #1e1e1e;
-  --color-border-bright: #2a2a2a;
-  --color-text-primary: #d4d4d4;
-  --color-text-secondary: #737373;
-  --color-text-muted: #404040;
-  --color-accent-green: #00ff41;
-  --color-accent-green-dim: #00cc33;
-  --color-accent-lime: #39ff14;
-  --color-accent-yellow: #ffb800;
-  --color-accent-red: #ff1744;
-  --color-accent-blue: #00b0ff;
-  --color-accent-purple: #b388ff;
-  --color-accent-cyan: #00e5ff;
-  --color-accent-orange: #ff6d00;
+  /* ── Background surfaces ───────────────────────────────────── */
+  --color-bg-primary: #111111;
+  --color-bg-sidebar: #161616;
+  --color-bg-hover: #1A1A1A;
+  --color-bg-selected: #1E1E1E;
+
+  /* ── Legacy aliases (keep so old Tailwind classes don't break) */
+  --color-bg-secondary: #161616;
+  --color-bg-card: #161616;
+  --color-bg-card-hover: #1A1A1A;
+
+  /* ── Borders ───────────────────────────────────────────────── */
+  --color-border: #2A2A2A;
+  --color-border-bright: #333333;
+  --color-border-component: #333333;
+
+  /* ── Text ──────────────────────────────────────────────────── */
+  --color-text-primary: #E5E5E5;
+  --color-text-secondary: #A0A0A0;
+  --color-text-muted: #6B6B6B;
+  --color-text-tertiary: #6B6B6B;
+
+  /* ── Accent (Linear violet) ────────────────────────────────── */
+  --color-accent: #7C3AED;
+  --color-accent-hover: #6D28D9;
+
+  /* ── Status (muted, not neon) ──────────────────────────────── */
+  --color-status-todo: #6B6B6B;
+  --color-status-progress: #F59E0B;
+  --color-status-done: #10B981;
+  --color-status-cancelled: #EF4444;
+  --color-status-blocked: #EF4444;
+
+  /* ── Priority ──────────────────────────────────────────────── */
+  --color-priority-urgent: #EF4444;
+  --color-priority-high: #F59E0B;
+  --color-priority-medium: #6366F1;
+  --color-priority-low: #6B6B6B;
+
+  /* ── Legacy colour tokens (kept so existing inline styles still resolve) */
+  --color-accent-green: #10B981;
+  --color-accent-green-dim: #059669;
+  --color-accent-lime: #10B981;
+  --color-accent-yellow: #F59E0B;
+  --color-accent-red: #EF4444;
+  --color-accent-blue: #6366F1;
+  --color-accent-purple: #7C3AED;
+  --color-accent-cyan: #6366F1;
+  --color-accent-orange: #F59E0B;
 }
 
 html, body {
@@ -28,11 +103,16 @@ html, body {
 }
 
 body {
-  background: #0a0a0a;
-  color: var(--color-text-primary);
-  font-family: var(--font-jetbrains), 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
-  font-size: 12px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-inter), var(--font-body);
+  font-size: 13px;
   line-height: 1.5;
+}
+
+/* Monospace only for IDs, code, brief name strings */
+.font-mono {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, monospace;
 }
 
 * {
@@ -47,11 +127,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e1e1e;
+  background: #2A2A2A;
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a2a2a;
+  background: #333333;
 }
 
 @keyframes pulse-dot {
@@ -64,14 +144,9 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes shimmer {
@@ -79,25 +154,61 @@ body {
   100% { transform: translateX(400%); }
 }
 
-.glow-green {
-  text-shadow: 0 0 6px rgba(0, 255, 65, 0.4);
+/* ── Sidebar nav item active state ─────────────────────────────── */
+.nav-item-active {
+  border-left: 3px solid #7C3AED;
+  background: #1E1E1E;
+  color: #E5E5E5;
 }
 
-.glow-green-bright {
-  text-shadow: 0 0 10px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.2);
+.nav-item-inactive {
+  border-left: 3px solid transparent;
+  color: #A0A0A0;
 }
 
-.tab-active {
-  border-bottom: 2px solid #00ff41;
-  color: #00ff41;
+.nav-item-inactive:hover {
+  background: #1A1A1A;
+  color: #E5E5E5;
 }
 
-.tab-inactive {
-  border-bottom: 2px solid transparent;
-  color: #737373;
+/* ── Detail panel slide-in ─────────────────────────────────────── */
+.detail-panel {
+  animation: slide-in-right 0.2s ease-out;
 }
 
-.tab-inactive:hover {
-  color: #d4d4d4;
-  border-bottom-color: #2a2a2a;
+/* ── Linear list row ───────────────────────────────────────────── */
+.list-row {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  border-bottom: 1px solid #2A2A2A;
+  cursor: pointer;
+  transition: background 0.1s;
 }
+
+.list-row:hover {
+  background: #1A1A1A;
+}
+
+/* ── Group header ──────────────────────────────────────────────── */
+.group-header {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 6px;
+  background: #161616;
+  border-bottom: 1px solid #2A2A2A;
+  cursor: pointer;
+  font-size: 11px;
+  color: #A0A0A0;
+  font-weight: 500;
+}
+
+/* ── Removed war-room utilities (kept as no-ops so old refs don't crash) */
+.glow-green { }
+.glow-green-bright { }
+.tab-active { }
+.tab-inactive { }
