@@ -38,7 +38,6 @@ interface TenantSwitcherItem {
   id: string;
   slug: string;
   name: string;
-  color: string;
 }
 
 interface BriefDraft {
@@ -382,7 +381,7 @@ export default function WorkspaceTab() {
         const res = await fetch("/api/workspace/tenants");
         if (!res.ok) return;
         const json = await res.json();
-        const items: TenantSwitcherItem[] = json.tenants ?? [];
+        const items: TenantSwitcherItem[] = json.workspaces ?? [];
         setTenants(items);
         if (items.length > 0) setSelectedId(items[0].id);
       } finally {
