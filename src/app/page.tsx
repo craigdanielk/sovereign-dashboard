@@ -14,6 +14,7 @@ import CommandTab from "@/components/tabs/CommandTab";
 import CostTab from "@/components/tabs/CostTab";
 import ReviewTab from "@/components/tabs/ReviewTab";
 import CatalogueTab from "@/components/tabs/CatalogueTab";
+import GenesisTab from "@/components/tabs/GenesisTab";
 
 // Map tab keys to components — all rendered in one page, zero routing latency
 const TAB_COMPONENTS: Record<string, React.ComponentType> = {
@@ -29,6 +30,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   cost: CostTab,
   review: ReviewTab,
   catalogue: CatalogueTab,
+  genesis: GenesisTab,
 };
 
 export default function WarRoom() {
