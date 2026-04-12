@@ -593,7 +593,7 @@ export default function GenesisTab() {
                       </div>
                     </div>
                   ))}
-                  {(!selectedBrief.payload?.node_6_execution_plan?.steps || selectedBrief.payload.node_6_execution_plan.steps.length === 0) && (
+                  {(selectedBrief.payload?.node_6_execution_plan?.steps?.length === 0 || !selectedBrief.payload?.node_6_execution_plan?.steps) && (
                     <div style={{ fontSize: 10, color: "#444444", fontStyle: "italic" }}>Awaiting sequence generation...</div>
                   )}
                 </div>
