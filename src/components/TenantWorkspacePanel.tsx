@@ -20,6 +20,9 @@ interface Task {
   source: string | null;
   client_slug: string;
   created_at: string;
+  wsjf_score: number | null;
+  tags: string[] | null;
+  brief_id: string | null;
 }
 
 interface CommRow {
@@ -52,6 +55,23 @@ const KANBAN_COLS: { key: string; label: string }[] = [
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+const TAG_COLOURS = [
+  "#7c3aed", // violet
+  "#0891b2", // cyan
+  "#059669", // emerald
+  "#d97706", // amber
+  "#dc2626", // red
+  "#db2777", // pink
+];
+
+function tagColour(tag: string): string {
+  let hash = 0;
+  for (let i = 0; i < tag.length; i++) {
+    hash = (hash * 31 + tag.charCodeAt(i)) >>> 0;
+  }
+  return TAG_COLOURS[hash % TAG_COLOURS.length];
+}
+
 function timeAgo(ts: string | null): string {
   if (!ts) return "--";
   const diff = Date.now() - new Date(ts).getTime();
@@ -75,19 +95,35 @@ function today(): string {
 function TaskKanbanCard({
   task,
   onConvert,
+  onClick,
 }: {
   task: Task;
   onConvert: (t: Task) => void;
+  onClick: (t: Task) => void;
 }) {
-  const statusCol  = getStatusColour(task.status);
+  const statusCol   = getStatusColour(task.status);
   const priorityCol = getPriorityColour(task.priority);
+  const tags        = task.tags ?? [];
 
   return (
     <div
-      className="px-2 py-1.5 rounded border border-border bg-bg-card hover:bg-bg-card-hover transition-colors"
+      className="relative px-2 py-1.5 rounded border border-border bg-bg-card hover:bg-bg-card-hover transition-colors cursor-pointer"
       style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}
+      onClick={() => onClick(task)}
     >
-      <div className="flex items-start justify-between gap-1 mb-0.5">
+      {/* WSJF badge — top-right */}
+      {task.wsjf_score !== null && task.wsjf_score !== undefined && (
+        <span
+          className="absolute top-1 right-1 text-[7px] font-bold px-1 py-px rounded"
+          style={{ backgroundColor: withAlpha("#00ff41", 0.15), color: "#00ff41" }}
+        >
+          {Number.isInteger(task.wsjf_score)
+            ? task.wsjf_score
+            : task.wsjf_score.toFixed(1)}
+        </span>
+      )}
+
+      <div className="flex items-start justify-between gap-1 mb-0.5 pr-6">
         <span
           className="text-[9px] font-bold shrink-0 mt-0.5"
           style={{ color: priorityCol }}
@@ -122,7 +158,7 @@ function TaskKanbanCard({
         <div className="flex items-center gap-1">
           <span className="text-[8px] text-text-muted">{timeAgo(task.created_at)}</span>
           <button
-            onClick={() => onConvert(task)}
+            onClick={(e) => { e.stopPropagation(); onConvert(task); }}
             className="text-[8px] px-1.5 py-px rounded border transition-colors"
             style={{
               color: "#00ff41",
@@ -140,6 +176,24 @@ function TaskKanbanCard({
           </button>
         </div>
       </div>
+
+      {/* Tags chips */}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-0.5 mt-1">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="text-[7px] px-1 py-px rounded"
+              style={{
+                color: tagColour(tag),
+                backgroundColor: withAlpha(tagColour(tag), 0.15),
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -255,23 +309,25 @@ function BriefModal({
 // ── Main Component ────────────────────────────────────────────────────────────
 
 interface TenantWorkspacePanelProps {
-  tenantId: string;
+  tenantId: string | null;
 }
 
 export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelProps) {
-  const [payload, setPayload]       = useState<WorkspacePayload | null>(null);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
-  const [draft, setDraft]           = useState<BriefDraft | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast]           = useState<string | null>(null);
+  const [payload, setPayload]           = useState<WorkspacePayload | null>(null);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
+  const [draft, setDraft]               = useState<BriefDraft | null>(null);
+  const [submitting, setSubmitting]     = useState(false);
+  const [toast, setToast]               = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const effectiveTenantId = tenantId === null || tenantId === "all" ? "all" : tenantId;
 
   const load = useCallback(async () => {
-    if (!tenantId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/workspace?tenant_id=${encodeURIComponent(tenantId)}`);
+      const res = await fetch(`/api/workspace?tenant_id=${encodeURIComponent(effectiveTenantId)}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || `HTTP ${res.status}`);
@@ -283,7 +339,7 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
     } finally {
       setLoading(false);
     }
-  }, [tenantId]);
+  }, [effectiveTenantId]);
 
   useEffect(() => {
     load();
@@ -307,7 +363,7 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           task_id:     d.task.id,
-          tenant_id:   tenantId,
+          tenant_id:   effectiveTenantId,
           title:       d.name,
           description: d.description,
           priority:    d.priority,
@@ -361,7 +417,14 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
 
   const { tenant, tasks, comms } = payload;
   const tasksByCol = KANBAN_COLS.reduce<Record<string, Task[]>>((acc, col) => {
-    acc[col.key] = tasks.filter((t) => t.status === col.key);
+    acc[col.key] = tasks
+      .filter((t) => t.status === col.key)
+      .sort((a, b) => {
+        if (a.wsjf_score !== null && b.wsjf_score !== null) return b.wsjf_score - a.wsjf_score;
+        if (a.wsjf_score !== null) return -1;
+        if (b.wsjf_score !== null) return 1;
+        return 0;
+      });
     return acc;
   }, {});
 
@@ -431,6 +494,7 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
                       key={task.id}
                       task={task}
                       onConvert={openConvertModal}
+                      onClick={setSelectedTask}
                     />
                   ))}
                   {colTasks.length === 0 && (

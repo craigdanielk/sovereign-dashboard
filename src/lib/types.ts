@@ -18,6 +18,7 @@ export const TABS: TabDef[] = [
   { key: "command", label: "Command", shortLabel: "CMD", path: "/command" },
   { key: "cost", label: "Cost", shortLabel: "COST", path: "/cost" },
   { key: "review", label: "Review", shortLabel: "REV", path: "/review" },
+  { key: "catalogue", label: "Catalogue", shortLabel: "CAT", path: "/catalogue" },
 ];
 
 // ── Workspace types (Root tab cards) ────────────────────────────
@@ -206,3 +207,35 @@ export const PLATFORM_COLOURS: Record<string, string> = {
   linkedin: "accent-blue",
   github: "text-primary",
 };
+
+// ── Catalogue types (FractalOS system catalogue) ───────────────
+export interface CatalogueCategory {
+  id: string;
+  label: string;
+  description: string;
+  instance_count: number;
+  template_fields: string[];
+  industry_standard_primary?: string;
+  industry_standard_secondary?: string;
+}
+
+export interface CatalogueComponent {
+  name: string;
+  category: string;
+  operational_status: string;
+  completeness_score: number;
+  source_files: string[];
+  template_fields: Record<string, string>;
+  body: string;
+  gap_count: number;
+  has_gaps: boolean;
+}
+
+export interface CatalogueIndex {
+  generated_at: string;
+  total_components: number;
+  categories: CatalogueCategory[];
+  components: CatalogueComponent[];
+  data_stores_summary?: Record<string, unknown>;
+  credential_references_summary?: Record<string, unknown>;
+}

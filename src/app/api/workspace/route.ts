@@ -1,68 +1,92 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error("Supabase env vars not configured");
-  return createClient(url, key);
+interface Tenant {
+  id: string;
+  slug: string;
+  name: string;
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const workspaceId = searchParams.get("workspace_id");
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
+  const tenantId = searchParams.get("tenant_id");
 
-  if (!workspaceId) {
-    return NextResponse.json({ error: "workspace_id is required" }, { status: 400 });
+  if (!tenantId) {
+    return NextResponse.json(
+      { error: "tenant_id query param is required" },
+      { status: 400 }
+    );
   }
 
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    return NextResponse.json(
+      { error: "Supabase not configured" },
+      { status: 503 }
+    );
+  }
+
+  const headers = {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+  };
+
   try {
-    const supabase = getSupabase();
+    // 1. Resolve tenant row from tenant_id
+    const tenantRes = await fetch(
+      `${url}/rest/v1/tenants?id=eq.${encodeURIComponent(tenantId)}&select=id,slug,name&limit=1`,
+      { headers, signal: AbortSignal.timeout(5000) }
+    );
 
-    // Resolve workspace slug and display name from workspace_id
-    const { data: workspace, error: workspaceError } = await supabase
-      .from("workspaces")
-      .select("id, slug, name, color")
-      .eq("id", workspaceId)
-      .single();
-
-    if (workspaceError || !workspace) {
-      return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+    if (!tenantRes.ok) {
+      return NextResponse.json(
+        { error: "Failed to query tenants table" },
+        { status: 502 }
+      );
     }
 
-    const clientSlug = workspace.slug;
+    const tenants: Tenant[] = await tenantRes.json();
 
-    // Fetch tasks for this tenant
-    const { data: tasks, error: tasksError } = await supabase
-      .from("tasks")
-      .select("id, title, description, status, priority, source, created_at, updated_at")
-      .eq("client_slug", clientSlug)
-      .order("created_at", { ascending: false });
-
-    if (tasksError) {
-      return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
+    if (!tenants || tenants.length === 0) {
+      return NextResponse.json(
+        { error: `No tenant found for id: ${tenantId}` },
+        { status: 404 }
+      );
     }
 
-    // Fetch comms from v_inbox for this tenant
-    const { data: comms, error: commsError } = await supabase
-      .from("v_inbox")
-      .select("id, platform, subject, body_preview, contact_name, sent_at, status, direction")
-      .eq("client_slug", clientSlug)
-      .order("sent_at", { ascending: false })
-      .limit(20);
+    const tenant = tenants[0];
+    const clientSlug = tenant.slug;
 
-    if (commsError) {
-      return NextResponse.json({ error: "Failed to fetch comms" }, { status: 500 });
-    }
+    // 2. Fetch tasks and comms in parallel
+    const [tasksRes, commsRes] = await Promise.all([
+      fetch(
+        `${url}/rest/v1/tasks?client_slug=eq.${encodeURIComponent(clientSlug)}&order=created_at.desc`,
+        { headers, signal: AbortSignal.timeout(5000) }
+      ).catch(() => null),
+      fetch(
+        `${url}/rest/v1/v_inbox?client_slug=eq.${encodeURIComponent(clientSlug)}&limit=20`,
+        { headers, signal: AbortSignal.timeout(5000) }
+      ).catch(() => null),
+    ]);
+
+    const tasks = tasksRes?.ok ? await tasksRes.json() : [];
+    const comms = commsRes?.ok ? await commsRes.json() : [];
 
     return NextResponse.json({
-      workspace: { id: workspace.id, slug: workspace.slug, name: workspace.name, color: workspace.color },
-      tasks: tasks ?? [],
-      comms: comms ?? [],
+      tenant: {
+        id: tenant.id,
+        slug: tenant.slug,
+        name: tenant.name,
+      },
+      tasks: Array.isArray(tasks) ? tasks : [],
+      comms: Array.isArray(comms) ? comms : [],
     });
   } catch (err) {
+    console.error("[workspace/route] error:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

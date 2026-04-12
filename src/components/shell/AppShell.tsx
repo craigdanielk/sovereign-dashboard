@@ -3,101 +3,50 @@
 import { useEffect, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import TenantSwitcher from "./TenantSwitcher";
 
-// ── Nav items (8 sections) ────────────────────────────────────────
+// ── Nav Items categorised for Optimal System Use ──────────────────
 interface NavItem {
   key: string;
   label: string;
   icon: React.ReactNode;
 }
 
-const NAV_ITEMS: NavItem[] = [
+interface NavCategory {
+  label: string;
+  items: NavItem[];
+}
+
+const CATEGORIES: NavCategory[] = [
   {
-    key: "root",
-    label: "Overview",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor" opacity="0.8"/>
-        <rect x="9" y="2" width="5" height="5" rx="1" fill="currentColor" opacity="0.8"/>
-        <rect x="2" y="9" width="5" height="5" rx="1" fill="currentColor" opacity="0.8"/>
-        <rect x="9" y="9" width="5" height="5" rx="1" fill="currentColor" opacity="0.8"/>
-      </svg>
-    ),
+    label: "Intelligence",
+    items: [
+      { key: "root", label: "Overview", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
+      { key: "genesis", label: "Genesis Portal", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
+      { key: "recon", label: "Deep Recon", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> },
+    ]
   },
   {
-    key: "north-star",
-    label: "North Star",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M8 2L9.2 6.5H14L10.4 9.1L11.6 13.6L8 11L4.4 13.6L5.6 9.1L2 6.5H6.8L8 2Z" fill="currentColor" opacity="0.8"/>
-      </svg>
-    ),
+    label: "Operations",
+    items: [
+      { key: "north-star", label: "North Star", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
+      { key: "battlefield", label: "Battlefield", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+      { key: "workspace", label: "Workspace", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> },
+    ]
   },
   {
-    key: "battlefield",
-    label: "Battlefield",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="2.5" fill="currentColor" opacity="0.8"/>
-        <circle cx="3" cy="4" r="1.5" fill="currentColor" opacity="0.5"/>
-        <circle cx="13" cy="4" r="1.5" fill="currentColor" opacity="0.5"/>
-        <circle cx="3" cy="12" r="1.5" fill="currentColor" opacity="0.5"/>
-        <circle cx="13" cy="12" r="1.5" fill="currentColor" opacity="0.5"/>
-        <line x1="3" y1="4" x2="8" y2="8" stroke="currentColor" strokeOpacity="0.3" strokeWidth="0.75"/>
-        <line x1="13" y1="4" x2="8" y2="8" stroke="currentColor" strokeOpacity="0.3" strokeWidth="0.75"/>
-        <line x1="3" y1="12" x2="8" y2="8" stroke="currentColor" strokeOpacity="0.3" strokeWidth="0.75"/>
-        <line x1="13" y1="12" x2="8" y2="8" stroke="currentColor" strokeOpacity="0.3" strokeWidth="0.75"/>
-      </svg>
-    ),
+    label: "Logistics",
+    items: [
+      { key: "comms", label: "Comms Inbox", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+      { key: "artifacts", label: "Artifact Vault", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+    ]
   },
   {
-    key: "recon",
-    label: "Recon",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="7" cy="7" r="4" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" fill="none"/>
-        <line x1="10" y1="10" x2="13.5" y2="13.5" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
-    key: "r17",
-    label: "R17",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" fill="none"/>
-        <line x1="5" y1="7" x2="11" y2="7" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1"/>
-        <line x1="5" y1="9.5" x2="9" y2="9.5" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1"/>
-      </svg>
-    ),
-  },
-  {
-    key: "workspace",
-    label: "Workspace",
-    // prettier-ignore
-    icon: (<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="9" rx="1.5" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" fill="none"/><path d="M5 4V3C5 2.45 5.45 2 6 2H10C10.55 2 11 2.45 11 3V4" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" strokeOpacity="0.4" strokeWidth="1"/><circle cx="8" cy="8" r="1" fill="currentColor" opacity="0.6"/></svg>),
-  },
-  {
-    key: "comms",
-    label: "Comms",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M2 3C2 2.45 2.45 2 3 2H13C13.55 2 14 2.45 14 3V10C14 10.55 13.55 11 13 11H5L2 14V3Z" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" fill="none"/>
-      </svg>
-    ),
-  },
-  {
-    key: "artifacts",
-    label: "Artifacts",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M4 2H10L14 6V14C14 14.55 13.55 15 13 15H3C2.45 15 2 14.55 2 14V3C2 2.45 2.45 2 3 2H4Z" stroke="currentColor" strokeOpacity="0.8" strokeWidth="1.5" fill="none"/>
-        <path d="M10 2V6H14" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1"/>
-        <line x1="5" y1="9" x2="11" y2="9" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1"/>
-        <line x1="5" y1="11.5" x2="9" y2="11.5" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1"/>
-      </svg>
-    ),
-  },
+    label: "Sovereign",
+    items: [
+      { key: "r17", label: "R17 Master", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+    ]
+  }
 ];
 
 // ── Health indicator ──────────────────────────────────────────────
@@ -109,24 +58,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [health, setHealth] = useState<HealthStatus>("ok");
   const [queueDepth, setQueueDepth] = useState(0);
+  const [activeTenant, setActiveTenant] = useState("NORTH-STAR");
 
   // Sync with global tab state
   useEffect(() => {
     function onTabChange(e: Event) {
       setActiveTabLocal((e as CustomEvent).detail);
     }
-    window.addEventListener("tab-change", onTabChange);
-    return () => window.removeEventListener("tab-change", onTabChange);
-  }, []);
+    const savedTenant = (typeof window !== "undefined" ? localStorage.getItem("ns_active_tenant") : null) || "NORTH-STAR";
+    setActiveTenant(savedTenant);
 
-  // Responsive: collapse sidebar on narrow viewport
-  useEffect(() => {
-    function onResize() {
-      setCollapsed(window.innerWidth < 768);
+    function onTenantChange(e: Event) {
+      setActiveTenant((e as CustomEvent).detail);
     }
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+
+    window.addEventListener("tab-change", onTabChange);
+    window.addEventListener("tenant-change", onTenantChange);
+    return () => {
+      window.removeEventListener("tab-change", onTabChange);
+      window.removeEventListener("tenant-change", onTenantChange);
+    };
   }, []);
 
   // Health + queue data
@@ -163,203 +114,149 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isChromeless = pathname === "/ops" || pathname === "/login";
   if (isChromeless) return <>{children}</>;
 
-  const currentNav = NAV_ITEMS.find((n) => n.key === activeTab);
+  const currentNav = CATEGORIES.flatMap(c => c.items).find((n) => n.key === activeTab);
   const breadcrumb = currentNav ? currentNav.label : "Overview";
 
   const healthColour = health === "ok" ? "#10B981" : health === "warn" ? "#F59E0B" : "#EF4444";
-  const sidebarWidth = collapsed ? 48 : 220;
+  const sidebarWidth = collapsed ? 52 : 240;
 
   return (
     <div className="h-screen flex overflow-hidden" style={{ background: "#111111" }}>
       {/* ── Left Sidebar ─────────────────────────────────────────── */}
       <aside
-        className="flex flex-col flex-shrink-0 h-screen border-r overflow-hidden transition-all duration-200"
+        className="flex flex-col flex-shrink-0 h-screen border-r overflow-hidden transition-all duration-300 ease-in-out"
         style={{
           width: sidebarWidth,
-          background: "#161616",
-          borderColor: "#2A2A2A",
+          background: "#121212",
+          borderColor: "#222222",
         }}
       >
         {/* Logo / brand */}
         <div
-          className="flex items-center h-12 border-b px-3 flex-shrink-0"
-          style={{ borderColor: "#2A2A2A" }}
+          className="flex items-center h-14 border-b px-4 flex-shrink-0"
+          style={{ borderColor: "#222222" }}
         >
           <div
-            className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
-            style={{ background: "#7C3AED" }}
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] shadow-lg shadow-[#7C3AED22]"
           >
-            <span style={{ color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1 }}>S</span>
+            <span style={{ color: "#fff", fontSize: 13, fontWeight: 800, lineHeight: 1 }}>S</span>
           </div>
           {!collapsed && (
-            <span
-              className="ml-2.5 font-semibold truncate"
-              style={{ fontSize: 13, color: "#E5E5E5", letterSpacing: "-0.01em" }}
-            >
-              Sovereign
-            </span>
-          )}
-          {!collapsed && (
-            <button
-              onClick={() => setCollapsed(true)}
-              className="ml-auto"
-              style={{ color: "#6B6B6B", padding: "2px" }}
-              title="Collapse sidebar"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M9 3L5 7L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </button>
-          )}
-          {collapsed && (
-            <button
-              onClick={() => setCollapsed(false)}
-              style={{ color: "#6B6B6B", padding: "2px", marginLeft: "auto" }}
-              title="Expand sidebar"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </button>
+            <div className="ml-3 flex flex-col overflow-hidden">
+               <span className="font-bold text-[13px] text-[#E5E5E5] tracking-tight truncate">SOVEREIGN OS</span>
+               <span className="text-[10px] text-[#444444] font-bold tracking-widest uppercase truncate">Mission Control</span>
+            </div>
           )}
         </div>
 
-        {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto py-1.5" style={{ overflowX: "hidden" }}>
-          {NAV_ITEMS.map((item) => {
-            const active = activeTab === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => switchTab(item.key)}
-                className={`w-full flex items-center gap-2.5 transition-colors ${
-                  active ? "nav-item-active" : "nav-item-inactive"
-                }`}
-                style={{
-                  height: 36,
-                  paddingLeft: collapsed ? 14 : 12,
-                  paddingRight: 12,
-                  fontSize: 13,
-                  fontWeight: active ? 500 : 400,
-                  color: active ? "#E5E5E5" : "#A0A0A0",
-                  textAlign: "left",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                }}
-                title={collapsed ? item.label : undefined}
-              >
-                <span className="flex-shrink-0" style={{ color: active ? "#E5E5E5" : "#6B6B6B" }}>
-                  {item.icon}
-                </span>
-                {!collapsed && <span className="truncate">{item.label}</span>}
-                {!collapsed && item.key === "north-star" && queueDepth > 0 && (
-                  <span
-                    className="ml-auto flex-shrink-0"
-                    style={{
-                      fontSize: 10,
-                      background: "#7C3AED22",
-                      color: "#7C3AED",
-                      borderRadius: 4,
-                      padding: "1px 5px",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {queueDepth}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        {/* Categories + Nav items */}
+        <nav className="flex-1 overflow-y-auto pt-6 pb-4 custom-scrollbar" style={{ overflowX: "hidden" }}>
+          {CATEGORIES.map((cat, idx) => (
+            <div key={cat.label} className={idx > 0 ? "mt-6" : ""}>
+               {!collapsed && (
+                 <div className="px-5 mb-2 text-[10px] font-bold text-[#333333] tracking-[0.2em] uppercase">
+                   {cat.label}
+                 </div>
+               )}
+               {cat.items.map((item) => {
+                 const active = activeTab === item.key;
+                 // Hide R17 if not in master context
+                 if (item.key === "r17" && activeTenant !== "NORTH-STAR") return null;
+                 
+                 return (
+                   <button
+                     key={item.key}
+                     onClick={() => switchTab(item.key)}
+                     className={`w-full flex items-center gap-3 transition-all duration-200 group relative ${
+                       active ? "bg-[#7C3AED10]" : "hover:bg-[#1A1A1A]"
+                     }`}
+                     style={{
+                       height: 40,
+                       paddingLeft: collapsed ? 18 : 20,
+                       paddingRight: 12,
+                       fontSize: 13,
+                       fontWeight: active ? 600 : 500,
+                       color: active ? "#7C3AED" : "#777777",
+                       textAlign: "left",
+                     }}
+                   >
+                     {active && (
+                        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#7C3AED]" />
+                     )}
+                     <span className={`flex-shrink-0 transition-colors ${active ? "text-[#7C3AED]" : "text-[#333333] group-hover:text-[#666666]"}`}>
+                       {item.icon}
+                     </span>
+                     {!collapsed && <span className="truncate">{item.label}</span>}
+                   </button>
+                 );
+               })}
+            </div>
+          ))}
         </nav>
 
-        {/* Sidebar footer */}
-        <div
-          className="flex-shrink-0 border-t py-2 px-3"
-          style={{ borderColor: "#2A2A2A" }}
-        >
+        {/* Sidebar footer: Command Palette Proxy */}
+        <div className="flex-shrink-0 border-t py-4 px-4 bg-[#0E0E0E]" style={{ borderColor: "#222222" }}>
           <button
-            onClick={() => {
-              window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-            }}
-            className="w-full flex items-center gap-2 transition-colors"
-            style={{
-              height: 30,
-              fontSize: 11,
-              color: "#6B6B6B",
-              borderRadius: 4,
-              padding: "0 4px",
-            }}
-            title="Open command palette (Cmd+K)"
+            onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+            className="w-full flex items-center gap-3 px-3 py-2 bg-[#1A1A1A] hover:bg-[#222222] border border-[#2A2A2A] rounded-lg transition-all"
+            style={{ fontSize: 11, color: "#555555" }}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-              <rect x="1" y="4" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-              <rect x="8" y="1" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-              <rect x="8" y="9" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-              <line x1="6" y1="6" x2="8" y2="3" stroke="currentColor" strokeWidth="1.2"/>
-              <line x1="6" y1="6" x2="8" y2="11" stroke="currentColor" strokeWidth="1.2"/>
-            </svg>
-            {!collapsed && (
-              <span>
-                Cmd+K
-              </span>
-            )}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            {!collapsed && <span className="font-bold tracking-widest uppercase">Command K</span>}
           </button>
+          
+          <div className="mt-4 flex items-center justify-between px-1">
+             <button onClick={() => setCollapsed(!collapsed)} className="p-1 hover:bg-[#1A1A1A] rounded transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="2.5"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+             </button>
+             {!collapsed && (
+                <div className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                   <span className="text-[10px] text-[#333333] font-bold tracking-widest">LIVE</span>
+                </div>
+             )}
+          </div>
         </div>
       </aside>
 
-      {/* ── Right: Top bar + Content ──────────────────────────────── */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Top bar */}
+      {/* ── Right Content ────────────────────────────────────────── */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-[#111111]">
+        {/* Header Bar */}
         <header
-          className="flex-shrink-0 flex items-center justify-between border-b"
-          style={{
-            height: 48,
-            padding: "0 16px",
-            background: "#111111",
-            borderColor: "#2A2A2A",
-          }}
+          className="flex-shrink-0 flex items-center justify-between border-b px-6"
+          style={{ height: 56, background: "#111111", borderColor: "#222222" }}
         >
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2" style={{ fontSize: 13 }}>
-            <span style={{ color: "#6B6B6B" }}>Sovereign</span>
-            <span style={{ color: "#2A2A2A" }}>/</span>
-            <span style={{ color: "#E5E5E5", fontWeight: 500 }}>{breadcrumb}</span>
-          </div>
-
-          {/* Right: health dot + version */}
-          <div className="flex items-center gap-3" style={{ fontSize: 12, color: "#6B6B6B" }}>
-            {queueDepth > 0 && (
-              <span>
-                <span style={{ color: "#A0A0A0" }}>{queueDepth}</span>
-                <span className="ml-1">queued</span>
-              </span>
-            )}
-            <div className="flex items-center gap-1.5">
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: healthColour,
-                  display: "inline-block",
-                }}
-              />
-              <span style={{ fontSize: 11 }}>
-                {health === "ok" ? "Healthy" : health === "warn" ? "Warning" : "Error"}
-              </span>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase">
+              <span className="text-[#444444]">Mission</span>
+              <span className="text-[#222222]">/</span>
+              <span className="text-[#7C3AED]">{activeTenant}</span>
+              <span className="text-[#222222]">/</span>
+              <span className="text-[#E5E5E5]">{breadcrumb}</span>
             </div>
-            <span style={{ fontSize: 11, color: "#6B6B6B" }}>v0.2</span>
+          </div>
+          <div className="flex items-center gap-4">
+             <TenantSwitcher />
+             <div className="h-4 w-[1px] bg-[#222222]" />
+             <div className="flex items-center gap-2 text-[10px] font-bold text-[#444444] tracking-widest uppercase">
+                {queueDepth > 0 && <span className="text-[#7C3AED]">{queueDepth} PENDING</span>}
+                <div className={`w-1.5 h-1.5 rounded-full`} style={{ background: healthColour, boxShadow: `0 0 8px ${healthColour}44` }} />
+                <span>VER v0.3</span>
+             </div>
           </div>
         </header>
 
-        {/* Main content */}
-        <main
-          className="flex-1 overflow-hidden min-h-0"
-          style={{ background: "#111111" }}
-        >
+        <main className="flex-1 overflow-hidden min-h-0">
           {children}
         </main>
       </div>
+
+      <style jsx global>{`
+        .nav-item-active { background: #7C3AED10; color: #7C3AED; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1A1A1A; border-radius: 10px; }
+      `}</style>
     </div>
   );
 }

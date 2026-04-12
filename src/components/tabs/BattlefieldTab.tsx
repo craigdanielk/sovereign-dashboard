@@ -459,6 +459,27 @@ function DetailCard({
         </div>
 
         <button
+          onClick={() => {
+            if (node) {
+              const w = window as unknown as Record<string, unknown>;
+              (w.__catalogueTarget as string | undefined) !== undefined || true;
+              w.__catalogueTarget = node.name;
+              if (typeof w.__setActiveTab === "function") {
+                (w.__setActiveTab as (t: string) => void)("catalogue");
+              }
+            }
+          }}
+          className="text-[9px] px-2 py-0.5 rounded transition-colors"
+          style={{
+            background: "rgba(0,180,216,0.15)",
+            color: "#00b4d8",
+            border: "1px solid rgba(0,180,216,0.3)",
+          }}
+          title="View in Catalogue"
+        >
+          CATALOGUE
+        </button>
+        <button
           onClick={onClose}
           className="text-[#6B6B6B] hover:text-[#E5E5E5] text-sm transition-colors"
         >
