@@ -19,8 +19,10 @@ interface Link {
   target: string;
 }
 
-export default function MissionGraph({ selectedBrief }: { selectedBrief: any }) {
-  const graphRef = useRef<any>();
+import { supabase, type Brief } from "@/lib/supabase";
+
+export default function MissionGraph({ selectedBrief }: { selectedBrief: Brief | null }) {
+  const graphRef = useRef<any>(null);
 
   const data = useMemo(() => {
     const nodes: Node[] = [

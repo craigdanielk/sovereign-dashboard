@@ -577,7 +577,7 @@ export default function GenesisTab() {
               
               {selectedBrief ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {((selectedBrief.payload as any)?.node_6_execution_plan?.steps || []).map((step: any, i: number) => (
+                  {(selectedBrief.payload?.node_6_execution_plan?.steps || []).map((step, i) => (
                     <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                       <div style={{ 
                         width: 20, height: 20, borderRadius: "50%", background: "#161616", border: "1px solid #7C3AED", 
@@ -682,7 +682,7 @@ export default function GenesisTab() {
                 ))}
               </div>
 
-              <div style={{ flex: 1, overflowY: "auto", padding: "32px", className: "custom-scrollbar" }}>
+              <div style={{ flex: 1, overflowY: "auto", padding: "32px" }} className="custom-scrollbar">
                 {activeTab === "INTEL" && (
                   <div style={{ maxWidth: 800 }}>
                     <h2 style={{ fontSize: 24, fontWeight: 700, color: "#FFFFFF", marginBottom: 8 }}>{selectedBrief.name}</h2>
@@ -702,7 +702,7 @@ export default function GenesisTab() {
                     <div style={{ background: "#0D0D0D", padding: 24, borderRadius: 16, border: "1px solid #222222", marginBottom: 32 }}>
                       <div style={{ fontSize: 9, color: "#444444", fontWeight: 700, letterSpacing: "0.15em", marginBottom: 20 }}>ACCEPTANCE CRITERIA</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        {( (selectedBrief.payload as any)?.node_3_deliverables?.acceptance_criteria || ["Scanning deliverables..."]).map((ac: string, i: number) => (
+                        {(selectedBrief.payload?.node_3_deliverables?.acceptance_criteria || ["Scanning deliverables..."]).map((ac, i) => (
                           <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", fontSize: 13, color: "#BBBBBB" }}>
                             <div style={{ width: 14, height: 14, borderRadius: 4, border: "1px solid #333333", background: "#0A0A0A" }} />
                             {ac}
@@ -743,6 +743,53 @@ export default function GenesisTab() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* ── Live Telemetry Strip ───────────────────────────── */}
+              <div style={{
+                margin: "0 32px 32px",
+                padding: 24,
+                background: "#0D0D0D",
+                border: "1px solid #7C3AED44",
+                borderRadius: 20,
+                boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                     <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
+                     <span style={{ fontSize: 10, fontWeight: 700, color: "#10B981", letterSpacing: "0.15em" }}>EXECUTION PULSE</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#444444", fontWeight: 700 }}>#{selectedBrief.id}</div>
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                  {liveLogs.length > 0 ? liveLogs.map((log) => (
+                    <div key={log.id} style={{ display: "flex", justifyContent: "space-between", gap: 16, fontSize: 11, fontFamily: "monospace" }}>
+                      <span style={{ color: "#7C3AED", fontWeight: 700 }}>{log.agent}</span>
+                      <span style={{ flex: 1, color: "#888888", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{log.operation}</span>
+                      <span style={{ color: "#444444" }}>{new Date(log.created_at).toLocaleTimeString([], { hour12: false })}</span>
+                    </div>
+                  )) : (
+                    <div style={{ padding: "20px 0", textAlign: "center", color: "#222222", fontSize: 10, letterSpacing: "0.1em" }}>{selectedBrief.status === 'QUEUED' ? 'AWAITING DISPATCH...' : 'STREAMING PULSE...'}</div>
+                  )}
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                  <div style={{ background: "#161616", padding: 12, borderRadius: 12, border: "1px solid #222222" }}>
+                    <div style={{ fontSize: 8, color: "#444444", marginBottom: 4, fontWeight: 700 }}>PROGRESS</div>
+                    <div style={{ height: 4, background: "#0A0A0A", borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ height: "100%", background: "#10B981", width: `${(liveLogs.length / (selectedBrief.payload?.node_6_execution_plan?.steps?.length || 1)) * 100}%` }} />
+                    </div>
+                  </div>
+                  <div style={{ background: "#161616", padding: 12, borderRadius: 12, border: "1px solid #222222" }}>
+                    <div style={{ fontSize: 8, color: "#444444", marginBottom: 4, fontWeight: 700 }}>COST BURN</div>
+                    <div style={{ fontSize: 13, color: "#E5E5E5", fontWeight: 600 }}>$0.00<span style={{ fontSize: 10, color: "#444444", marginLeft: 2 }}>USD</span></div>
+                  </div>
+                  <div style={{ background: "#161616", padding: 12, borderRadius: 12, border: "1px solid #222222" }}>
+                    <div style={{ fontSize: 8, color: "#444444", marginBottom: 4, fontWeight: 700 }}>STATUS</div>
+                    <div style={{ fontSize: 11, color: "#10B981", fontWeight: 700, letterSpacing: "0.05em" }}>{selectedBrief.status}</div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -823,54 +870,6 @@ export default function GenesisTab() {
               );
             })}
 
-            {/* ── Live Telemetry Strip ───────────────────────────── */}
-            {selectedBrief && (
-              <div style={{
-                marginTop: 24,
-                padding: 24,
-                background: "#0D0D0D",
-                border: "1px solid #7C3AED44",
-                borderRadius: 20,
-                boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                     <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
-                     <span style={{ fontSize: 10, fontWeight: 700, color: "#10B981", letterSpacing: "0.15em" }}>EXECUTION PULSE</span>
-                  </div>
-                  <div style={{ fontSize: 10, color: "#444444", fontWeight: 700 }}>#{selectedBrief.id}</div>
-                </div>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-                  {liveLogs.length > 0 ? liveLogs.map((log) => (
-                    <div key={log.id} style={{ display: "flex", justifyContent: "space-between", gap: 16, fontSize: 11, fontFamily: "monospace" }}>
-                      <span style={{ color: "#7C3AED", fontWeight: 700 }}>{log.agent}</span>
-                      <span style={{ flex: 1, color: "#888888", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{log.operation}</span>
-                      <span style={{ color: "#444444" }}>{new Date(log.created_at).toLocaleTimeString([], { hour12: false })}</span>
-                    </div>
-                  )) : (
-                    <div style={{ padding: "20px 0", textAlign: "center", color: "#222222", fontSize: 10, letterSpacing: "0.1em" }}>{selectedBrief.status === 'QUEUED' ? 'AWAITING DISPATCH...' : 'STREAMING PULSE...'}</div>
-                  )}
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-                  <div style={{ background: "#161616", padding: 12, borderRadius: 12, border: "1px solid #222222" }}>
-                    <div style={{ fontSize: 8, color: "#444444", marginBottom: 4, fontWeight: 700 }}>PROGRESS</div>
-                    <div style={{ height: 4, background: "#0A0A0A", borderRadius: 2, overflow: "hidden" }}>
-                      <div style={{ height: "100%", background: "#10B981", width: `${(liveLogs.length / ((selectedBrief.payload as any)?.node_6_execution_plan?.steps?.length || 1)) * 100}%` }} />
-                    </div>
-                  </div>
-                  <div style={{ background: "#161616", padding: 12, borderRadius: 12, border: "1px solid #222222" }}>
-                    <div style={{ fontSize: 8, color: "#444444", marginBottom: 4, fontWeight: 700 }}>COST BURN</div>
-                    <div style={{ fontSize: 13, color: "#E5E5E5", fontWeight: 600 }}>$0.00<span style={{ fontSize: 10, color: "#444444", marginLeft: 2 }}>USD</span></div>
-                  </div>
-                  <div style={{ background: "#161616", padding: 12, borderRadius: 12, border: "1px solid #222222" }}>
-                    <div style={{ fontSize: 8, color: "#444444", marginBottom: 4, fontWeight: 700 }}>STATUS</div>
-                    <div style={{ fontSize: 11, color: "#10B981", fontWeight: 700, letterSpacing: "0.05em" }}>{selectedBrief.status}</div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {sending && (
               <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 40 }}>

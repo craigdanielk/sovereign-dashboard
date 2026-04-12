@@ -66,6 +66,50 @@ export interface ExecutionLog {
   metadata: Record<string, unknown> | null;
 }
 
+export interface BriefPayload {
+  node_1_trigger?: {
+    event: string;
+    context: string;
+    decision: string;
+  };
+  node_2_context?: {
+    constraints: string[];
+    stakeholders: string[];
+    current_state: {
+      complete: string[];
+      not_built: string[];
+      in_progress: string[];
+    };
+  };
+  node_3_deliverables?: {
+    definition_of_done: string[];
+    acceptance_criteria: string[];
+    out_of_scope: string[];
+  };
+  node_4_system_map?: {
+    core_systems: string[];
+    data_sources: string[];
+    access_required: string[];
+    required_agents: string[];
+    required_capabilities: string[];
+  };
+  node_5_gap_analysis?: {
+    critical_gaps: string[];
+    non_blocking_gaps: string[];
+  };
+  node_6_execution_plan?: {
+    steps: Array<{
+      step: number;
+      action: string;
+      agent: string;
+    }>;
+    routing: string;
+    complexity: string;
+    estimated_hours: number | null;
+  };
+  [key: string]: any;
+}
+
 export interface Brief {
   id: number;
   name: string;
@@ -79,7 +123,7 @@ export interface Brief {
   claimed_by: string | null;
   failure_reason: string | null;
   summary: string | null;
-  payload: Record<string, unknown> | null;
+  payload: BriefPayload | null;
   wsjf_score: number | null;
   quality_grade: string | null;
 }
