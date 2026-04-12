@@ -656,7 +656,7 @@ export default function GenesisTab() {
           <MissionGraph selectedBrief={selectedBrief} />
 
           {selectedBrief ? (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", zIndex: 1, background: "rgba(17,17,17,0.8)", backdropFilter: "blur(20px)" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", zIndex: 1, background: "rgba(17,17,17,0.8)", backdropFilter: "blur(20px)", position: "relative" }}>
               {/* Tab Switcher */}
               <div style={{ height: 44, display: "flex", borderBottom: "1px solid #222222", padding: "0 24px" }}>
                 {(["INTEL", "MATRIX", "LOGS", "DIRECTIVES"] as const).map((tab) => (

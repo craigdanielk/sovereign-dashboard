@@ -66,7 +66,7 @@ export default function MissionGraph({ selectedBrief }: { selectedBrief: Brief |
         ref={graphRef}
         graphData={data}
         nodeAutoColorBy="color"
-        backgroundColor="#111111"
+        backgroundColor="rgba(0,0,0,0)"
         showNavInfo={false}
         linkOpacity={0.2}
         linkDirectionalParticles={2}
