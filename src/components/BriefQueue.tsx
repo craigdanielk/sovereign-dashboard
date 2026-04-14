@@ -58,10 +58,19 @@ export default function BriefQueue({
   useEffect(() => {
     const c: Record<string, number> = {};
     const currentTenant = activeTenant.toUpperCase();
+    const NORTH_STAR_ID = "00000000-0000-0000-0000-000000000001";
     
     briefs.forEach((b: Brief) => {
-      const bTenant = (b.tenant_id || (b as any).tenant_slug || "").toUpperCase();
-      if (bTenant === currentTenant) {
+      const bTenant = (b.tenant_id || "").toUpperCase();
+      let tenantMatch = false;
+
+      if (currentTenant === "NORTH-STAR") {
+        tenantMatch = bTenant === NORTH_STAR_ID || bTenant === "NORTH-STAR" || bTenant === "";
+      } else {
+        tenantMatch = bTenant === currentTenant;
+      }
+
+      if (tenantMatch) {
         c[b.status] = (c[b.status] || 0) + 1;
       }
     });

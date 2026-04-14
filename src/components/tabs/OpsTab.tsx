@@ -46,14 +46,21 @@ export default function OpsTab() {
 
         {/* COLUMN 3: TELEMETRY & HEALTH (3/12) */}
         <div className="col-span-3 flex flex-col min-h-0 overflow-hidden bg-bg-card/10">
-          <div className="flex-[4] border-b border-border overflow-hidden">
+          {/* Top: Live Logs */}
+          <div className="flex-[3] border-b border-border overflow-hidden min-h-0">
             <LiveLogs />
           </div>
-          <div className="flex-[1] overflow-hidden">
+
+          {/* Middle: System Health (Fixed height) */}
+          <div className="shrink-0 bg-bg-primary/40 border-b border-border">
             <SystemHealth />
           </div>
-          <div className="shrink-0 p-2 border-t border-border bg-bg-primary/20">
-             <Retrospectives />
+
+          {/* Bottom: Retrospectives (Scrollable) */}
+          <div className="flex-[3] overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 overflow-hidden">
+              <Retrospectives />
+            </div>
           </div>
         </div>
 
