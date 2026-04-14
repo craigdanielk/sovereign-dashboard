@@ -104,7 +104,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [fetchStats]);
 
-  function switchTab(key: string) {
+  const isLogin = pathname === "/login";
+  if (isLogin) return <>{children}</>;
+
+  // Ensure 'ops' tab highlights correctly when on /ops
+  useEffect(() => {
+    if (pathname === "/ops") {
+      setActiveTabLocal("ops");
+    }
+  }, [pathname]);
+
+  const switchTab = (key: string) => {
     const setter = (window as unknown as Record<string, unknown>).__setActiveTab as
       | ((tab: string) => void)
       | undefined;
