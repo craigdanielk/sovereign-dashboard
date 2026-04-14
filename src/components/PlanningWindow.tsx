@@ -40,35 +40,64 @@ export default function PlanningWindow({ selectedBrief }: { selectedBrief: Brief
     if (!text || sending) return;
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
+    const assistantId = (Date.now() + 1).toString();
+
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setSending(true);
 
+    // Add empty assistant message immediately — tokens will be appended into it
+    setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+
     try {
-      // In a real scenario, this would hit /api/genesis or similar
-      // For now, we simulate the planning response
+      const apiMessages = [...messages, userMsg]
+        .filter(m => m.role !== "system")
+        .map(m => ({ role: m.role, content: m.content }));
+
       const response = await fetch("/api/genesis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
+          messages: apiMessages,
           tenant_id: localStorage.getItem("ns_active_tenant") || "NORTH-STAR",
           context_brief_id: selectedBrief?.id ?? null
         })
       });
 
-      const data = await response.json();
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.text || "Directives internalized. Proceeding with mission optimization."
-      };
-      setMessages(prev => [...prev, assistantMsg]);
-    } catch (err) {
-      setMessages(prev => [
-        ...prev, 
-        { id: Date.now().toString(), role: "system", content: "LINK FAILURE: Unable to reach Genesis neural core." }
-      ]);
+      if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          try {
+            const event = JSON.parse(data);
+            if (event.token) {
+              setMessages(prev => prev.map(m =>
+                m.id === assistantId ? { ...m, content: m.content + event.token } : m
+              ));
+            }
+            if (event.error) throw new Error(event.error);
+          } catch { /* skip malformed */ }
+        }
+      }
+    } catch {
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId
+          ? { ...m, content: "Connection error — could not reach planning API." }
+          : m
+      ));
     } finally {
       setSending(false);
     }
@@ -119,8 +148,8 @@ export default function PlanningWindow({ selectedBrief }: { selectedBrief: Brief
             </div>
           </div>
         ))}
-        {sending && (
-          <div className="flex justify-start">
+        {sending && messages[messages.length - 1]?.content === "" && (
+          <div className="flex justify-start -mt-2">
              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-card border border-border">
                 <div className="flex gap-1">
                   <div className="w-1 h-1 bg-accent-purple rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />

@@ -1,8 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-
-// Genesis Intelligence API — Chat-to-Brief authoring
-// Backed by Anthropic claude-sonnet-4-6 via direct API key
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,9 +29,9 @@ interface Message {
 }
 
 export async function POST(req: NextRequest) {
-  let body: { 
-    messages: Message[]; 
-    draft_brief?: boolean; 
+  let body: {
+    messages: Message[];
+    draft_brief?: boolean;
     tenant_id?: string;
     context_brief_id?: number | null;
     _draft_override?: Record<string, unknown>;
@@ -42,20 +39,20 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400 });
   }
 
   const { messages } = body;
   if (!messages?.length) {
-    return NextResponse.json({ error: "messages required" }, { status: 400 });
+    return new Response(JSON.stringify({ error: "messages required" }), { status: 400 });
   }
 
   const apiKey = process.env.ANTHROPIC_DIRECT_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "ANTHROPIC_DIRECT_API_KEY not configured" }, { status: 503 });
+    return new Response(JSON.stringify({ error: "ANTHROPIC_DIRECT_API_KEY not configured" }), { status: 503 });
   }
 
-  // ── Context Injection ───────────────────────────────────────────
+  // Context injection for selected brief
   let contextPrompt = "";
   if (body.context_brief_id) {
     try {
@@ -65,90 +62,120 @@ export async function POST(req: NextRequest) {
         .select("id,name,status,payload")
         .eq("id", body.context_brief_id)
         .single();
-      
       if (brief) {
-        contextPrompt = `\n\n### ACTIVE MISSION CONTEXT (URGENT):
-The user is currently focusing on Mission #${brief.id}: ${brief.name}.
-Status: ${brief.status}
-Current Payload: ${JSON.stringify(brief.payload)}
-
-Your instructions:
-1. Prioritise directives related to this specific mission.
-2. If the user provides feedback, focus on AUGMENTING this brief (output a new <BRIEF_DRAFT> if needed).
-3. Provide status-aware commentary (e.g., if COMPLETED, explain high-level results; if FAILED, provide a gap-analysis root cause).`;
+        contextPrompt = `\n\nActive brief context — Mission #${brief.id}: ${brief.name} (${brief.status})\nPayload: ${JSON.stringify(brief.payload)}`;
       }
-    } catch { /* Non-fatal */ }
+    } catch { /* non-fatal */ }
   }
 
-  try {
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT + contextPrompt,
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
-      }),
-    });
+  const anthropicResp = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4096,
+      stream: true,
+      system: SYSTEM_PROMPT + contextPrompt,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    }),
+  });
 
-    if (!resp.ok) {
-      const err = await resp.text();
-      return NextResponse.json({ error: `Anthropic API error: ${err}` }, { status: 502 });
-    }
+  if (!anthropicResp.ok) {
+    const err = await anthropicResp.text();
+    return new Response(JSON.stringify({ error: `Anthropic API error: ${err}` }), { status: 502 });
+  }
 
-    const data = await resp.json();
-    const text: string = data.content?.[0]?.text ?? "";
+  // Stream Anthropic SSE → client SSE
+  const encoder = new TextEncoder();
+  let fullText = "";
 
-    // Extract brief draft — Check for manual override first (from the 'Queue' button)
-    let briefDraft: Record<string, unknown> | null = body._draft_override || null;
-    
-    if (!briefDraft) {
-      const draftMatch = text.match(/<BRIEF_DRAFT>([\s\S]*?)<\/BRIEF_DRAFT>/);
-      if (draftMatch) {
-        try {
-          briefDraft = JSON.parse(draftMatch[1].trim());
-        } catch { /* Non-fatal */ }
-      }
-    }
+  const stream = new ReadableStream({
+    async start(controller) {
+      const reader = anthropicResp.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-    // Queue the brief if valid
-    let queuedBriefId: number | null = null;
-    if (briefDraft && body.draft_brief) {
       try {
-        const supabase = getSupabase();
-        const { data: brief } = await supabase
-          .from("briefs")
-          .insert({
-            name: (briefDraft.name as string) ?? `BRIEF::genesis::draft::${Date.now()}`,
-            status: "QUEUED",
-            priority: (briefDraft.priority as string) ?? "P2",
-            supervision_mode: (briefDraft.supervision_mode as string) ?? "HITL",
-            triggered_by: "genesis-agent",
-            tenant_slug: body.tenant_id ?? "north-star",
-            payload: briefDraft.payload ?? briefDraft,
-          })
-          .select("id")
-          .single();
-        if (brief) queuedBriefId = brief.id;
-      } catch { /* Non-fatal */ }
-    }
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-    const cleanText = text.replace(/<BRIEF_DRAFT>[\s\S]*?<\/BRIEF_DRAFT>/, "").trim();
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
 
-    return NextResponse.json({
-      text: cleanText,
-      brief_draft: briefDraft,
-      queued_brief_id: queuedBriefId,
-    });
-  } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 }
-    );
-  }
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") continue;
+
+            try {
+              const event = JSON.parse(data);
+              if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+                const token = event.delta.text;
+                fullText += token;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
+              }
+            } catch { /* skip malformed events */ }
+          }
+        }
+
+        // After stream ends: extract and optionally queue BRIEF draft
+        let briefDraft: Record<string, unknown> | null = body._draft_override || null;
+        if (!briefDraft) {
+          const match = fullText.match(/<BRIEF_DRAFT>([\s\S]*?)<\/BRIEF_DRAFT>/);
+          if (match) {
+            try { briefDraft = JSON.parse(match[1].trim()); } catch { /* non-fatal */ }
+          }
+        }
+
+        let queuedBriefId: number | null = null;
+        if (briefDraft && body.draft_brief) {
+          try {
+            const supabase = getSupabase();
+            const { data: brief } = await supabase
+              .from("briefs")
+              .insert({
+                name: (briefDraft.name as string) ?? `BRIEF::genesis::draft::${Date.now()}`,
+                status: "QUEUED",
+                priority: (briefDraft.priority as string) ?? "P2",
+                supervision_mode: (briefDraft.supervision_mode as string) ?? "HITL",
+                triggered_by: "genesis-agent",
+                tenant_slug: body.tenant_id ?? "north-star",
+                payload: briefDraft.payload ?? briefDraft,
+              })
+              .select("id")
+              .single();
+            if (brief) queuedBriefId = brief.id;
+          } catch { /* non-fatal */ }
+        }
+
+        // Send final event with metadata
+        const cleanText = fullText.replace(/<BRIEF_DRAFT>[\s\S]*?<\/BRIEF_DRAFT>/, "").trim();
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ done: true, brief_draft: briefDraft, queued_brief_id: queuedBriefId, full_text: cleanText })}\n\n`
+          )
+        );
+      } catch (err) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ error: String(err) })}\n\n`)
+        );
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    },
+  });
 }
