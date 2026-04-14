@@ -51,7 +51,7 @@ export default function LiveLogs() {
 
   const handleInsert = useCallback((payload: { new: ExecutionLog }) => {
     if (!pausedRef.current) {
-      setLogs((prev) => [...prev.slice(-199), payload.new as ExecutionLog]);
+      setLogs((prev) => [payload.new as ExecutionLog, ...prev.slice(0, 199)]);
     }
   }, []);
 
@@ -62,7 +62,7 @@ export default function LiveLogs() {
       .order("created_at", { ascending: false })
       .limit(100)
       .then(({ data }) => {
-        if (data) setLogs(data.reverse());
+        if (data) setLogs(data);
       });
 
     const channel = supabase
@@ -82,9 +82,7 @@ export default function LiveLogs() {
   }, [handleInsert]);
 
   useEffect(() => {
-    if (!paused && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    // Top-first logs don't need auto-scroll to bottom
   }, [logs, paused]);
 
   const filtered = filter
