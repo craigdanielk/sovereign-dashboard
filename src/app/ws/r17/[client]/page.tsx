@@ -42,6 +42,7 @@ export default function R17ClientBoard() {
           payload: null,
           wsjf_score: (b.wsjf_score as number) || null,
           quality_grade: (b.quality_grade as string) || null,
+          tenant_id: clientSlug || null, // Added tenant_id
         }))
       );
     } else {

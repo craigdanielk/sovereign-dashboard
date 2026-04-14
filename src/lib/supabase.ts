@@ -126,6 +126,7 @@ export interface Brief {
   payload: BriefPayload | null;
   wsjf_score: number | null;
   quality_grade: string | null;
+  tenant_id: string | null; // Added tenant_id
 }
 
 export interface SessionRetrospective {
