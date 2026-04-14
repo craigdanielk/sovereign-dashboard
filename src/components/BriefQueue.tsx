@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase, type Brief } from "@/lib/supabase";
+import BriefDetailPanel from "./BriefDetailPanel";
 
 const STATUS_BG: Record<string, string> = {
   QUEUED: "bg-accent-blue",
@@ -35,6 +36,7 @@ export default function BriefQueue() {
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState("QUEUED");
+  const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
 
   const fetchBriefs = useCallback(async () => {
     const { data } = await supabase
@@ -101,7 +103,8 @@ export default function BriefQueue() {
         {filtered.map((brief) => (
           <div
             key={brief.id}
-            className="px-3 py-2 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors"
+            onClick={() => setSelectedBrief(brief)}
+            className="px-3 py-2 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
@@ -153,6 +156,11 @@ export default function BriefQueue() {
           <div className="text-center text-text-muted py-4 text-xs">No {activeTab} briefs</div>
         )}
       </div>
+
+      <BriefDetailPanel
+        brief={selectedBrief}
+        onClose={() => setSelectedBrief(null)}
+      />
     </div>
   );
 }
