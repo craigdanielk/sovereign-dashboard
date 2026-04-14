@@ -59,6 +59,7 @@ export default function PlanningWindow({ selectedBrief }: { selectedBrief: Brief
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: apiMessages,
+          draft_brief: true,
           tenant_id: localStorage.getItem("ns_active_tenant") || "NORTH-STAR",
           context_brief_id: selectedBrief?.id ?? null
         })

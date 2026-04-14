@@ -8,20 +8,39 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-const SYSTEM_PROMPT = `You are an operations assistant for the Sovereign Dashboard — Craig's AI agent orchestration system.
+const SYSTEM_PROMPT = `You are the Planning Window assistant inside the Sovereign Dashboard — Craig's AI agent orchestration system.
 
-You help with:
-- Drafting and queuing BRIEFs (wrap JSON in <BRIEF_DRAFT> tags if the user wants to queue one)
-- Answering questions about agents, workflows, and system state
-- Diagnosing failed BRIEFs or stale claims
-- Planning next actions
+## What you can do
+- Answer questions about the system, agents, workflows, and briefs
+- Draft and DIRECTLY QUEUE BRIEFs to Supabase — this backend already has live Supabase write access
+- Diagnose failed or stalled BRIEFs
+- Plan next actions
 
-Be concise and direct. Do not dump system identity information unprompted. Just answer the question or help with the task.
+## How to queue a BRIEF
+When the user asks you to create or queue a BRIEF, output a JSON object wrapped in <BRIEF_DRAFT> tags. The backend will automatically detect it and insert it into the Supabase briefs table — NO extra steps needed. Example:
 
-System context:
-- Agents: SOVEREIGN, PRISM, RECON, LORE, SAGE, ATLAS, VERIFY, DELIVER, SCRIBE, COMPASS, ARAGON (operational); KIRA, PULSE, EXECUTOR, FORGE (dormant stubs)
-- Workflows: build-validation, gap-resolution, website-build, lore-pattern-promote
-- Infrastructure: Supabase (briefs table), n8n (localhost:5678), Docker active`;
+<BRIEF_DRAFT>
+{
+  "name": "BRIEF::your-task-name::YYYY-MM-DD",
+  "priority": "P1",
+  "supervision_mode": "HITL",
+  "node_1_trigger": { "summary": "..." },
+  "node_3_deliverables": ["..."],
+  "node_6_execution_plan": { "steps": [{ "id": "s1", "task": "..." }] }
+}
+</BRIEF_DRAFT>
+
+Do NOT say you can't push to Supabase or that you need a connector. You already have it. Just output the <BRIEF_DRAFT> block.
+
+## Agents
+Operational: SOVEREIGN, PRISM, RECON, LORE, SAGE, ATLAS, VERIFY, DELIVER, SCRIBE, COMPASS, ARAGON
+Dormant stubs: KIRA, PULSE, EXECUTOR, FORGE
+
+## Workflows
+build-validation, gap-resolution, website-build, lore-pattern-promote
+
+## Style
+Concise and direct. Don't dump system info unprompted. Live queue stats are injected below when available.`;
 
 interface Message {
   role: "user" | "assistant";
@@ -52,21 +71,49 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: "ANTHROPIC_DIRECT_API_KEY not configured" }), { status: 503 });
   }
 
-  // Context injection for selected brief
+  // Live context injection
   let contextPrompt = "";
-  if (body.context_brief_id) {
-    try {
-      const supabase = getSupabase();
+  try {
+    const supabase = getSupabase();
+
+    // Queue stats
+    const { data: queueStats } = await supabase
+      .from("briefs")
+      .select("status")
+      .in("status", ["QUEUED", "CLAIMED", "FAILED"]);
+
+    if (queueStats?.length) {
+      const counts = queueStats.reduce((acc: Record<string, number>, r) => {
+        acc[r.status] = (acc[r.status] || 0) + 1;
+        return acc;
+      }, {});
+      contextPrompt += `\n\n## Live Queue State\nQUEUED: ${counts.QUEUED || 0} | CLAIMED: ${counts.CLAIMED || 0} | FAILED: ${counts.FAILED || 0}`;
+    }
+
+    // Recent briefs
+    const { data: recent } = await supabase
+      .from("briefs")
+      .select("id,name,status,priority,created_at")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (recent?.length) {
+      const rows = recent.map(b => `  #${b.id} [${b.status}] ${b.name}`).join("\n");
+      contextPrompt += `\n\nRecent briefs:\n${rows}`;
+    }
+
+    // Selected brief detail
+    if (body.context_brief_id) {
       const { data: brief } = await supabase
         .from("briefs")
         .select("id,name,status,payload")
         .eq("id", body.context_brief_id)
         .single();
       if (brief) {
-        contextPrompt = `\n\nActive brief context — Mission #${brief.id}: ${brief.name} (${brief.status})\nPayload: ${JSON.stringify(brief.payload)}`;
+        contextPrompt += `\n\nSelected brief — #${brief.id}: ${brief.name} (${brief.status})\nPayload: ${JSON.stringify(brief.payload)}`;
       }
-    } catch { /* non-fatal */ }
-  }
+    }
+  } catch { /* non-fatal — proceed without live context */ }
 
   const anthropicResp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
