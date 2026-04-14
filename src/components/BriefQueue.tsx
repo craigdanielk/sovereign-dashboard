@@ -36,6 +36,7 @@ export default function BriefQueue() {
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState("QUEUED");
+  const [activeTenant, setActiveTenant] = useState<string>("NORTH-STAR");
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
 
   const fetchBriefs = useCallback(async () => {
@@ -55,6 +56,14 @@ export default function BriefQueue() {
   }, []);
 
   useEffect(() => {
+    const saved = localStorage.getItem("ns_active_tenant") || "NORTH-STAR";
+    setActiveTenant(saved);
+
+    const onTenantChange = (e: Event) => {
+      setActiveTenant((e as CustomEvent).detail);
+    };
+
+    window.addEventListener("tenant-change", onTenantChange);
     fetchBriefs();
 
     const channel = supabase
@@ -67,11 +76,16 @@ export default function BriefQueue() {
       .subscribe();
 
     return () => {
+      window.removeEventListener("tenant-change", onTenantChange);
       supabase.removeChannel(channel);
     };
   }, [fetchBriefs]);
 
-  const filtered = briefs.filter((b) => b.status === activeTab);
+  const filtered = briefs.filter((b) => {
+    const statusMatch = b.status === activeTab;
+    const tenantMatch = b.tenant_id === activeTenant || (b as any).tenant_slug === activeTenant;
+    return statusMatch && tenantMatch;
+  });
   const tabs = ["QUEUED", "CLAIMED", "COMPLETED", "FAILED"];
 
   return (

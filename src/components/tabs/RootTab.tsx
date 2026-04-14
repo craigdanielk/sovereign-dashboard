@@ -170,6 +170,7 @@ export default function RootTab() {
               { key: "recon", label: "Recon" },
               { key: "r17", label: "R17" },
               { key: "command", label: "Workspace" },
+              { key: "ops", label: "Operational" },
               { key: "comms", label: "Comms" },
               { key: "artifacts", label: "Artifacts" },
             ].map((item) => (

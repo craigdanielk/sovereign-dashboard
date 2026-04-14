@@ -32,6 +32,7 @@ const CATEGORIES: NavCategory[] = [
       { key: "north-star", label: "North Star", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
       { key: "battlefield", label: "Battlefield", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
       { key: "workspace", label: "Workspace", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> },
+      { key: "ops", label: "Operational", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12h-4l-3 9L9 3l-3 9H2"/></svg> },
     ]
   },
   {
@@ -108,11 +109,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       | ((tab: string) => void)
       | undefined;
     if (setter) setter(key);
-  }
-
-  // Hide shell on /ops and /login
-  const isChromeless = pathname === "/ops" || pathname === "/login";
-  if (isChromeless) return <>{children}</>;
+  };
 
   const currentNav = CATEGORIES.flatMap(c => c.items).find((n) => n.key === activeTab);
   const breadcrumb = currentNav ? currentNav.label : "Overview";
