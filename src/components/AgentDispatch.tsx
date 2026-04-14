@@ -76,6 +76,7 @@ export default function AgentDispatch({
     setAgents(sorted);
   }, []);
 
+  useEffect(() => {
     const saved = (localStorage.getItem("ns_active_tenant") || "NORTH-STAR").toUpperCase();
     setActiveTenant(saved);
 
@@ -99,6 +100,7 @@ export default function AgentDispatch({
     const interval = setInterval(fetchAgentStatus, 30000);
 
     return () => {
+      window.removeEventListener("tenant-change", onTenantChange);
       supabase.removeChannel(channel);
       clearInterval(interval);
     };

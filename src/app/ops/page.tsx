@@ -5,8 +5,12 @@ import BriefQueue from "@/components/BriefQueue";
 import AgentDispatch from "@/components/AgentDispatch";
 import SystemHealth from "@/components/SystemHealth";
 import Retrospectives from "@/components/Retrospectives";
+import { useState } from "react";
+import { Brief } from "@/lib/supabase";
 
 export default function OpsDashboard() {
+  const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
+  
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Main grid */}
@@ -18,10 +22,10 @@ export default function OpsDashboard() {
           {/* Top: Brief Queue + Agent Dispatch */}
           <div className="flex-[3] border-b border-border overflow-hidden grid grid-cols-2 gap-0 min-h-0">
             <div className="border-r border-border overflow-hidden">
-              <BriefQueue />
+              <BriefQueue selectedBrief={selectedBrief} onSelect={setSelectedBrief} />
             </div>
             <div className="overflow-hidden">
-              <AgentDispatch />
+              <AgentDispatch selectedBrief={selectedBrief} onSelect={setSelectedBrief} />
             </div>
           </div>
 
