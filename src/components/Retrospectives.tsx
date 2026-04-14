@@ -155,36 +155,42 @@ export default function Retrospectives() {
                     </div>
                   )}
                   {retro.brief_ids_failed && retro.brief_ids_failed.length > 0 && (
-                    <div>
-                      <span className="text-text-muted">failed: </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-text-muted w-16">failed: </span>
                       <span className="text-accent-red">
                         {retro.brief_ids_failed.map((id) => `#${id}`).join(", ")}
                       </span>
                     </div>
                   )}
-                  {retro.tool_calls_by_type && Object.keys(retro.tool_calls_by_type).length > 0 && (
-                    <div>
-                      <span className="text-text-muted">tools: </span>
-                      <span className="text-text-secondary">
-                        {Object.entries(retro.tool_calls_by_type)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([tool, count]) => `${tool}(${count})`)
-                          .join(", ")}
-                      </span>
-                    </div>
-                  )}
-                  {retro.files_modified && retro.files_modified.length > 0 && (
-                    <div>
-                      <span className="text-text-muted">modified: </span>
-                      <span className="text-accent-blue">{retro.files_modified.length} files</span>
-                    </div>
-                  )}
-                  {retro.files_created && retro.files_created.length > 0 && (
-                    <div>
-                      <span className="text-text-muted">created: </span>
-                      <span className="text-accent-green">{retro.files_created.length} files</span>
-                    </div>
-                  )}
+
+                  <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-2 gap-x-4 gap-y-1">
+                    {retro.tool_calls_by_type && Object.keys(retro.tool_calls_by_type).length > 0 ? (
+                      <div className="col-span-2">
+                        <span className="text-text-muted">tool_matrix: </span>
+                        <span className="text-accent-cyan font-mono">
+                          {Object.entries(retro.tool_calls_by_type)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([tool, count]) => `${tool}(${count})`)
+                            .join(" ")}
+                        </span>
+                      </div>
+                    ) : (
+                       <div className="col-span-2 text-text-muted italic opacity-50">-- no tool signatures recorded --</div>
+                    )}
+                    
+                    {retro.files_modified && retro.files_modified.length > 0 && (
+                      <div>
+                        <span className="text-text-muted">modified: </span>
+                        <span className="text-accent-blue font-bold">{retro.files_modified.length} units</span>
+                      </div>
+                    )}
+                    {retro.files_created && retro.files_created.length > 0 && (
+                      <div>
+                        <span className="text-text-muted">created: </span>
+                        <span className="text-accent-green font-bold">{retro.files_created.length} units</span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Errors encountered */}
                   {retro.errors_encountered &&
