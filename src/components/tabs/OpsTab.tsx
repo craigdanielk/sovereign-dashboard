@@ -5,8 +5,13 @@ import BriefQueue from "@/components/BriefQueue";
 import AgentDispatch from "@/components/AgentDispatch";
 import SystemHealth from "@/components/SystemHealth";
 import Retrospectives from "@/components/Retrospectives";
+import PlanningWindow from "@/components/PlanningWindow";
+import { useState } from "react";
+import { Brief } from "@/lib/supabase";
 
 export default function OpsTab() {
+  const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Main grid */}
@@ -16,18 +21,24 @@ export default function OpsTab() {
         <div className="col-span-8 flex flex-col border-r border-border min-h-0">
           
           {/* Top: Brief Queue + Agent Dispatch */}
-          <div className="flex-[3] border-b border-border overflow-hidden grid grid-cols-2 gap-0 min-h-0">
+          <div className="flex-[2] border-b border-border overflow-hidden grid grid-cols-2 gap-0 min-h-0">
             <div className="border-r border-border overflow-hidden">
-              <BriefQueue />
+              <BriefQueue 
+                selectedBrief={selectedBrief} 
+                onSelect={setSelectedBrief} 
+              />
             </div>
             <div className="overflow-hidden">
-              <AgentDispatch />
+              <AgentDispatch 
+                selectedBrief={selectedBrief} 
+                onSelect={setSelectedBrief} 
+              />
             </div>
           </div>
 
-          {/* Bottom: Retrospectives */}
-          <div className="flex-[2] overflow-hidden min-h-0">
-            <Retrospectives />
+          {/* Bottom: Planning Window */}
+          <div className="flex-[1] overflow-hidden min-h-0">
+            <PlanningWindow selectedBrief={selectedBrief} />
           </div>
         </div>
 
@@ -38,6 +49,9 @@ export default function OpsTab() {
           </div>
           <div className="flex-[1] overflow-hidden">
             <SystemHealth />
+            <div className="p-2 border-t border-border bg-bg-primary/20">
+               <Retrospectives />
+            </div>
           </div>
         </div>
       </div>

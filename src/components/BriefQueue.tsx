@@ -32,12 +32,17 @@ function timeAgo(ts: string | null): string {
   return `${Math.floor(h / 24)}d`;
 }
 
-export default function BriefQueue() {
+export default function BriefQueue({ 
+  selectedBrief, 
+  onSelect 
+}: { 
+  selectedBrief: Brief | null, 
+  onSelect: (b: Brief | null) => void 
+}) {
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState("QUEUED");
   const [activeTenant, setActiveTenant] = useState<string>("NORTH-STAR");
-  const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
 
   const fetchBriefs = useCallback(async () => {
     const { data } = await supabase
@@ -139,7 +144,7 @@ export default function BriefQueue() {
         {filtered.map((brief) => (
           <div
             key={brief.id}
-            onClick={() => setSelectedBrief(brief)}
+            onClick={() => onSelect(brief)}
             className="px-3 py-2 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between mb-1">
@@ -195,7 +200,7 @@ export default function BriefQueue() {
 
       <BriefDetailPanel
         brief={selectedBrief}
-        onClose={() => setSelectedBrief(null)}
+        onClose={() => onSelect(null)}
       />
     </div>
   );

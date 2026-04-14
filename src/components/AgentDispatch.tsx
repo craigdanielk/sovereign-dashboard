@@ -21,10 +21,15 @@ function timeAgo(ts: string): string {
   return `${Math.floor(m / 60)}h`;
 }
 
-export default function AgentDispatch() {
+export default function AgentDispatch({ 
+  selectedBrief, 
+  onSelect 
+}: { 
+  selectedBrief: Brief | null, 
+  onSelect: (b: Brief | null) => void 
+}) {
   const [agents, setAgents] = useState<AgentStatus[]>([]);
   const [activeTenant, setActiveTenant] = useState("NORTH-STAR");
-  const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   const [claimedBriefs, setClaimedBriefs] = useState<Brief[]>([]);
 
   const fetchAgentStatus = useCallback(async () => {
@@ -130,7 +135,7 @@ export default function AgentDispatch() {
             onClick={() => {
               if (agent.briefId) {
                 const b = claimedBriefs.find(cb => cb.id === agent.briefId);
-                if (b) setSelectedBrief(b);
+                if (b) onSelect(b);
               }
             }}
             className={`flex items-center gap-3 px-3 py-2 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors ${agent.briefId ? 'cursor-pointer' : ''}`}
@@ -166,7 +171,7 @@ export default function AgentDispatch() {
 
       <BriefDetailPanel
         brief={selectedBrief}
-        onClose={() => setSelectedBrief(null)}
+        onClose={() => onSelect(null)}
       />
     </div>
   );
