@@ -105,7 +105,7 @@ export default function MissionObserver({ brief }: MissionObserverProps) {
                     {/* Card */}
                     <div className="flex-1 p-3 rounded-xl border border-border bg-bg-card/80 hover:bg-bg-card transition-all shadow-sm group">
                       <p className="text-[11px] font-bold text-text-primary mb-1 group-hover:text-accent-blue transition-colors">
-                        {step.action || step.description || "Node Action"}
+                        {step.action || step.description || step.task || "Node Action"}
                       </p>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 border-t border-border/50 pt-2">
                         {(step.agent || step.assigned_to) && (
