@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase, type Brief } from "@/lib/supabase";
+import BriefDetailPanel from "./BriefDetailPanel";
 
 interface AgentStatus {
   agent: string;
@@ -22,12 +23,17 @@ function timeAgo(ts: string): string {
 
 export default function AgentDispatch() {
   const [agents, setAgents] = useState<AgentStatus[]>([]);
+  const [activeTenant, setActiveTenant] = useState("NORTH-STAR");
+  const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
+  const [claimedBriefs, setClaimedBriefs] = useState<Brief[]>([]);
 
   const fetchAgentStatus = useCallback(async () => {
     const { data: claimed } = await supabase
       .from("briefs")
       .select("*")
       .eq("status", "CLAIMED");
+
+    if (claimed) setClaimedBriefs(claimed);
 
     const { data: recentLogs } = await supabase
       .from("execution_log")
@@ -65,7 +71,14 @@ export default function AgentDispatch() {
     setAgents(sorted);
   }, []);
 
-  useEffect(() => {
+    const saved = (localStorage.getItem("ns_active_tenant") || "NORTH-STAR").toUpperCase();
+    setActiveTenant(saved);
+
+    const onTenantChange = (e: Event) => {
+      setActiveTenant((e as CustomEvent).detail.toUpperCase());
+    };
+
+    window.addEventListener("tenant-change", onTenantChange);
     fetchAgentStatus();
 
     const channel = supabase
@@ -114,7 +127,13 @@ export default function AgentDispatch() {
         {agents.map((agent) => (
           <div
             key={agent.agent}
-            className="flex items-center gap-3 px-3 py-2 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors"
+            onClick={() => {
+              if (agent.briefId) {
+                const b = claimedBriefs.find(cb => cb.id === agent.briefId);
+                if (b) setSelectedBrief(b);
+              }
+            }}
+            className={`flex items-center gap-3 px-3 py-2 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors ${agent.briefId ? 'cursor-pointer' : ''}`}
           >
             <span
               className={`w-2 h-2 rounded-full shrink-0 ${statusDot[agent.status]} ${
@@ -144,6 +163,11 @@ export default function AgentDispatch() {
           <div className="text-center text-text-muted py-4 text-xs">No agent activity yet</div>
         )}
       </div>
+
+      <BriefDetailPanel
+        brief={selectedBrief}
+        onClose={() => setSelectedBrief(null)}
+      />
     </div>
   );
 }

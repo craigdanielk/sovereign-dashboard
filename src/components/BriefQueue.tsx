@@ -47,13 +47,21 @@ export default function BriefQueue() {
       .limit(200);
     if (data) {
       setBriefs(data);
-      const c: Record<string, number> = {};
-      data.forEach((b: Brief) => {
-        c[b.status] = (c[b.status] || 0) + 1;
-      });
-      setCounts(c);
     }
   }, []);
+
+  useEffect(() => {
+    const c: Record<string, number> = {};
+    const currentTenant = activeTenant.toUpperCase();
+    
+    briefs.forEach((b: Brief) => {
+      const bTenant = (b.tenant_id || (b as any).tenant_slug || "").toUpperCase();
+      if (bTenant === currentTenant) {
+        c[b.status] = (c[b.status] || 0) + 1;
+      }
+    });
+    setCounts(c);
+  }, [briefs, activeTenant]);
 
   useEffect(() => {
     const saved = localStorage.getItem("ns_active_tenant") || "NORTH-STAR";
@@ -83,7 +91,20 @@ export default function BriefQueue() {
 
   const filtered = briefs.filter((b) => {
     const statusMatch = b.status === activeTab;
-    const tenantMatch = b.tenant_id === activeTenant || (b as any).tenant_slug === activeTenant;
+    
+    const currentTenant = activeTenant.toUpperCase();
+    const NORTH_STAR_ID = "00000000-0000-0000-0000-000000000001";
+    
+    // Normalize tenant ID
+    const bTenant = (b.tenant_id || "").toUpperCase();
+    
+    let tenantMatch = false;
+    if (currentTenant === "NORTH-STAR") {
+      tenantMatch = bTenant === NORTH_STAR_ID || bTenant === "NORTH-STAR";
+    } else {
+      tenantMatch = bTenant === currentTenant;
+    }
+    
     return statusMatch && tenantMatch;
   });
   const tabs = ["QUEUED", "CLAIMED", "COMPLETED", "FAILED"];

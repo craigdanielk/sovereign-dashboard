@@ -12,12 +12,12 @@ export default function TenantSwitcher() {
         { data: briefsData },
         { data: intakesData }
       ] = await Promise.all([
-        supabase.from("briefs").select("tenant_slug"),
+        supabase.from("briefs").select("tenant_id"),
         supabase.from("phase0_intakes").select("tenant_slug")
       ]);
       
       const slugs = [
-        ...(briefsData || []).map(b => b.tenant_slug),
+        ...(briefsData || []).map(b => (b as any).tenant_id),
         ...(intakesData || []).map(i => i.tenant_slug)
       ].filter(Boolean);
 
