@@ -8,6 +8,48 @@ function getSupabase() {
   return createClient(url, key);
 }
 
+async function ragSearch(query: string, limit = 4): Promise<string> {
+  const ragUrl = process.env.RAG_CLOUD_URL;
+  const ragToken = process.env.RAG_AUTH_TOKEN;
+  if (!ragUrl || !ragToken) return "";
+
+  try {
+    const resp = await fetch(ragUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${ragToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: { name: "rag_search", arguments: { input: { query, limit } } },
+        id: 1,
+      }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    const lines = (await resp.text()).split("\n");
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      const data = JSON.parse(line.slice(5));
+      const results: Array<{ content: string; source_file?: string; score?: number }> =
+        data?.result?.content?.[0]
+          ? JSON.parse(data.result.content[0].text)?.results ?? []
+          : [];
+
+      if (!results.length) return "";
+
+      return results
+        .slice(0, limit)
+        .map((r) => `[${r.source_file ?? "unknown"}]\n${r.content}`)
+        .join("\n\n---\n\n");
+    }
+  } catch { /* non-fatal */ }
+
+  return "";
+}
+
 const SYSTEM_PROMPT = `You are the Planning Window assistant inside the Sovereign Dashboard — Craig's AI agent orchestration system.
 
 ## What you can do
@@ -114,6 +156,15 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch { /* non-fatal — proceed without live context */ }
+
+  // RAG search — use the last user message as the query
+  const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content ?? "";
+  if (lastUserMsg) {
+    const ragResults = await ragSearch(lastUserMsg);
+    if (ragResults) {
+      contextPrompt += `\n\n## Knowledge Base (RAG)\n${ragResults}`;
+    }
+  }
 
   const anthropicResp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
