@@ -169,10 +169,6 @@ export default function AgentDispatch({
         )}
       </div>
 
-      <BriefDetailPanel
-        brief={selectedBrief}
-        onClose={() => onSelect(null)}
-      />
     </div>
   );
 }

@@ -198,10 +198,6 @@ export default function BriefQueue({
         )}
       </div>
 
-      <BriefDetailPanel
-        brief={selectedBrief}
-        onClose={() => onSelect(null)}
-      />
     </div>
   );
 }
