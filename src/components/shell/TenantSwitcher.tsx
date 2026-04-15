@@ -4,36 +4,142 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTenant, TENANT_NAMES, NORTH_STAR_ID } from "@/lib/tenant-context";
 
+interface TenantRow {
+  id: string;
+  name: string;
+  slug: string;
+  parent_tenant_id: string | null;
+}
+
+interface TreeNode {
+  tenant: TenantRow;
+  children: TreeNode[];
+}
+
+function buildTree(tenants: TenantRow[]): TreeNode[] {
+  const map: Record<string, TreeNode> = {};
+  for (const t of tenants) map[t.id] = { tenant: t, children: [] };
+
+  const roots: TreeNode[] = [];
+  for (const t of tenants) {
+    const node = map[t.id];
+    if (!t.parent_tenant_id) {
+      roots.push(node);
+    } else if (map[t.parent_tenant_id]) {
+      map[t.parent_tenant_id].children.push(node);
+    } else {
+      roots.push(node); // orphan — show at root level
+    }
+  }
+
+  const sort = (nodes: TreeNode[]) =>
+    nodes.sort((a, b) => {
+      // North Star always first
+      if (a.tenant.id === NORTH_STAR_ID) return -1;
+      if (b.tenant.id === NORTH_STAR_ID) return 1;
+      return a.tenant.name.localeCompare(b.tenant.name);
+    });
+
+  const sortAll = (nodes: TreeNode[]): TreeNode[] =>
+    sort(nodes).map((n) => ({ ...n, children: sortAll(n.children) }));
+
+  return sortAll(roots);
+}
+
+function TenantRow({
+  node,
+  depth,
+  activeTenant,
+  onSelect,
+}: {
+  node: TreeNode;
+  depth: number;
+  activeTenant: string;
+  onSelect: (id: string) => void;
+}) {
+  const t = node.tenant;
+  const isActive = activeTenant === t.id;
+  const hasChildren = node.children.length > 0;
+  const isAncestor = node.children.some(
+    (c) =>
+      c.tenant.id === activeTenant ||
+      c.children.some((gc) => gc.tenant.id === activeTenant)
+  );
+
+  return (
+    <>
+      <button
+        onClick={() => onSelect(t.id)}
+        style={{
+          width: "100%",
+          padding: `6px ${12 + depth * 14}px 6px ${12 + depth * 14}px`,
+          textAlign: "left",
+          fontSize: 11,
+          color: isActive ? "#7C3AED" : isAncestor ? "#A0A0A0" : "#666666",
+          background: isActive ? "#7C3AED11" : "transparent",
+          border: "none",
+          borderRadius: 4,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        {/* Tree connector */}
+        {depth > 0 && (
+          <span style={{ color: "#2A2A2A", fontSize: 9, flexShrink: 0 }}>
+            {hasChildren ? "▸" : "└"}
+          </span>
+        )}
+
+        <span
+          style={{
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            fontWeight: isActive ? 700 : 400,
+            flex: 1,
+          }}
+        >
+          {t.name.replace(" (internal)", "").replace(" (client work)", "")}
+        </span>
+
+        {isActive && (
+          <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#7C3AED", flexShrink: 0 }} />
+        )}
+      </button>
+
+      {/* Children always visible — tree is always expanded */}
+      {node.children.map((child) => (
+        <TenantRow
+          key={child.tenant.id}
+          node={child}
+          depth={depth + 1}
+          activeTenant={activeTenant}
+          onSelect={onSelect}
+        />
+      ))}
+    </>
+  );
+}
+
 export default function TenantSwitcher() {
   const { activeTenant, tenantName, setActiveTenant } = useTenant();
-  const [tenants, setTenants] = useState<Array<{ id: string; name: string }>>([]);
+  const [tree, setTree] = useState<TreeNode[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     async function fetchTenants() {
-      // Query tenants table directly — source of truth for all tenants
       const { data } = await supabase
         .from("tenants")
-        .select("id, name, is_sub_tenant")
+        .select("id, name, slug, parent_tenant_id")
         .order("name");
 
       if (!data) return;
 
-      // Populate TENANT_NAMES cache for resolveTenantName()
-      for (const t of data) {
-        TENANT_NAMES[t.id] = t.name;
-      }
+      // Populate TENANT_NAMES cache
+      for (const t of data) TENANT_NAMES[t.id] = t.name;
 
-      // Show top-level tenants only (sub-tenants accessible via parent context)
-      const topLevel = data.filter((t) => !t.is_sub_tenant);
-
-      // Ensure North Star is always first
-      const sorted = [
-        ...topLevel.filter((t) => t.id === NORTH_STAR_ID),
-        ...topLevel.filter((t) => t.id !== NORTH_STAR_ID),
-      ];
-
-      setTenants(sorted.map((t) => ({ id: t.id, name: t.name })));
+      setTree(buildTree(data as TenantRow[]));
     }
     fetchTenants();
   }, []);
@@ -62,51 +168,43 @@ export default function TenantSwitcher() {
         }}
       >
         <span style={{ color: "#7C3AED", fontWeight: 700 }}>T:</span>
-        <span style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>{tenantName}</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 4, transform: isOpen ? "rotate(180deg)" : "none" }}>
-          <path d="M2 4L5 7L8 4" stroke="#6B6B6B" strokeWidth="1.5" strokeLinecap="round"/>
+        <span style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          {tenantName.replace(" (internal)", "").replace(" (client work)", "")}
+        </span>
+        <svg
+          width="10" height="10" viewBox="0 0 10 10" fill="none"
+          style={{ marginLeft: 4, transform: isOpen ? "rotate(180deg)" : "none" }}
+        >
+          <path d="M2 4L5 7L8 4" stroke="#6B6B6B" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </button>
 
       {isOpen && (
-        <div style={{
-          position: "absolute",
-          top: "100%",
-          right: 0,
-          marginTop: 6,
-          minWidth: 180,
-          background: "#161616",
-          border: "1px solid #2A2A2A",
-          borderRadius: 8,
-          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.5)",
-          zIndex: 1000,
-          padding: 4,
-        }}>
-          {tenants.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => switchTenant(t.id)}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                textAlign: "left",
-                fontSize: 12,
-                color: activeTenant === t.id ? "#7C3AED" : "#A0A0A0",
-                background: activeTenant === t.id ? "#7C3AED11" : "transparent",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-                textTransform: "uppercase",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              {t.name}
-              {activeTenant === t.id && (
-                <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#7C3AED" }} />
-              )}
-            </button>
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            right: 0,
+            marginTop: 6,
+            minWidth: 220,
+            background: "#161616",
+            border: "1px solid #2A2A2A",
+            borderRadius: 8,
+            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.5)",
+            zIndex: 1000,
+            padding: 4,
+            maxHeight: 400,
+            overflowY: "auto",
+          }}
+        >
+          {tree.map((node) => (
+            <TenantRow
+              key={node.tenant.id}
+              node={node}
+              depth={0}
+              activeTenant={activeTenant}
+              onSelect={switchTenant}
+            />
           ))}
         </div>
       )}
