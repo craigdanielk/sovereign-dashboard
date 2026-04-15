@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTenant, TENANT_NAMES, NORTH_STAR_ID } from "@/lib/tenant-context";
 
-interface TenantRow {
+interface TenantRecord {
   id: string;
   name: string;
   slug: string;
@@ -12,11 +12,11 @@ interface TenantRow {
 }
 
 interface TreeNode {
-  tenant: TenantRow;
+  tenant: TenantRecord;
   children: TreeNode[];
 }
 
-function buildTree(tenants: TenantRow[]): TreeNode[] {
+function buildTree(tenants: TenantRecord[]): TreeNode[] {
   const map: Record<string, TreeNode> = {};
   for (const t of tenants) map[t.id] = { tenant: t, children: [] };
 
@@ -46,7 +46,7 @@ function buildTree(tenants: TenantRow[]): TreeNode[] {
   return sortAll(roots);
 }
 
-function TenantRow({
+function TenantItem({
   node,
   depth,
   activeTenant,
@@ -110,7 +110,7 @@ function TenantRow({
 
       {/* Children always visible — tree is always expanded */}
       {node.children.map((child) => (
-        <TenantRow
+        <TenantItem
           key={child.tenant.id}
           node={child}
           depth={depth + 1}
@@ -139,7 +139,7 @@ export default function TenantSwitcher() {
       // Populate TENANT_NAMES cache
       for (const t of data) TENANT_NAMES[t.id] = t.name;
 
-      setTree(buildTree(data as TenantRow[]));
+      setTree(buildTree(data as TenantRecord[]));
     }
     fetchTenants();
   }, []);
@@ -198,7 +198,7 @@ export default function TenantSwitcher() {
           }}
         >
           {tree.map((node) => (
-            <TenantRow
+            <TenantItem
               key={node.tenant.id}
               node={node}
               depth={0}
