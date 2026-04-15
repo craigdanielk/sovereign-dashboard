@@ -24,22 +24,20 @@ export default function OpsTab() {
   const PLANNING_HEIGHT = 240;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-bg-primary">
+    <div className="h-full flex flex-col overflow-hidden" style={{ background: "#111111" }}>
       {/* ── Three-lane body ──────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden min-h-0">
 
-        {/* ── LANE 1: Brief Queue (QUEUED + CLAIMED only, 280px) ── */}
+        {/* ── LANE 1: Brief Queue (280px) ── */}
         <div
-          className="flex flex-col flex-shrink-0 border-r border-border overflow-hidden bg-bg-sidebar"
-          style={{ width: 280 }}
+          className="flex flex-col flex-shrink-0 overflow-hidden"
+          style={{ width: 280, background: "#0D0D0D", borderRight: "1px solid #1C1C1C" }}
         >
           <div
-            className="flex-shrink-0 flex items-center px-4 border-b border-border"
-            style={{ height: 48 }}
+            className="flex-shrink-0 flex items-center justify-between"
+            style={{ height: 48, padding: "0 16px", borderBottom: "1px solid #1C1C1C" }}
           >
-            <span className="text-xs font-semibold tracking-wide uppercase text-text-secondary">
-              Queue
-            </span>
+            <span className="panel-label">Queue</span>
           </div>
           <div className="flex-1 overflow-hidden min-h-0">
             <BriefQueue
@@ -50,25 +48,59 @@ export default function OpsTab() {
           </div>
         </div>
 
-        {/* ── LANE 2: Agent / DAG (flex) ──────────────────────────── */}
-        <div className="flex flex-col flex-1 overflow-hidden min-h-0 border-r border-border">
+        {/* ── LANE 2: Execution (flex) ── */}
+        <div
+          className="flex flex-col flex-1 overflow-hidden min-h-0"
+          style={{ background: "#111111", borderRight: "1px solid #1C1C1C" }}
+        >
           <div
-            className="flex-shrink-0 flex items-center justify-between px-4 border-b border-border"
-            style={{ height: 48 }}
+            className="flex-shrink-0 flex items-center justify-between"
+            style={{ height: 48, padding: "0 16px", borderBottom: "1px solid #1C1C1C" }}
           >
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold tracking-wide uppercase text-text-secondary">
-                Execution
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span className="panel-label">Execution</span>
               {selectedBrief && (
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-border bg-bg-hover text-accent">
-                  #{selectedBrief.id} — {selectedBrief.name?.split("::")[1] ?? selectedBrief.name}
+                <span style={{
+                  fontSize: 11,
+                  fontFamily: "var(--font-mono)",
+                  color: "#5B21B6",
+                  background: "rgba(124,58,237,0.08)",
+                  border: "1px solid rgba(124,58,237,0.18)",
+                  borderRadius: 5,
+                  padding: "2px 8px",
+                }}>
+                  B-{selectedBrief.id}
+                </span>
+              )}
+              {selectedBrief && (
+                <span style={{ fontSize: 12, color: "#737373", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {selectedBrief.name?.split("::").slice(1, 3).join(" · ") ?? selectedBrief.name}
                 </span>
               )}
             </div>
             <button
               onClick={() => setKpiOpen(true)}
-              className="text-[11px] font-semibold tracking-wide uppercase px-3 py-1 rounded border border-border text-text-muted hover:text-accent hover:border-accent/40 transition-all"
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                padding: "5px 12px",
+                borderRadius: 6,
+                border: "1px solid #222222",
+                background: "transparent",
+                color: "#525252",
+                cursor: "pointer",
+                transition: "all 0.12s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(124,58,237,0.35)";
+                e.currentTarget.style.color = "#9D6FEB";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#222222";
+                e.currentTarget.style.color = "#525252";
+              }}
             >
               KPIs
             </button>
@@ -83,20 +115,18 @@ export default function OpsTab() {
           </div>
         </div>
 
-        {/* ── LANE 3: System Health + Live Logs (320px) ───────────── */}
+        {/* ── LANE 3: System (320px) ── */}
         <div
-          className="flex flex-col flex-shrink-0 overflow-hidden bg-bg-sidebar"
-          style={{ width: 320 }}
+          className="flex flex-col flex-shrink-0 overflow-hidden"
+          style={{ width: 320, background: "#0D0D0D" }}
         >
           <div
-            className="flex-shrink-0 flex items-center px-4 border-b border-border"
-            style={{ height: 48 }}
+            className="flex-shrink-0 flex items-center"
+            style={{ height: 48, padding: "0 16px", borderBottom: "1px solid #1C1C1C" }}
           >
-            <span className="text-xs font-semibold tracking-wide uppercase text-text-secondary">
-              System
-            </span>
+            <span className="panel-label">System</span>
           </div>
-          <div className="flex-shrink-0 border-b border-border">
+          <div style={{ flexShrink: 0, borderBottom: "1px solid #1C1C1C" }}>
             <SystemHealth />
           </div>
           <div className="flex-1 overflow-hidden min-h-0">

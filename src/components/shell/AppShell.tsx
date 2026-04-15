@@ -3,85 +3,121 @@
 import { useEffect, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useTenant } from "@/lib/tenant-context";
 import TenantSwitcher from "./TenantSwitcher";
 
-// ── Nav Items categorised for Optimal System Use ──────────────────
 interface NavItem {
   key: string;
   label: string;
   icon: React.ReactNode;
 }
 
-interface NavCategory {
-  label: string;
-  items: NavItem[];
-}
-
-const CATEGORIES: NavCategory[] = [
+const PRIMARY_NAV: NavItem[] = [
   {
-    label: "Intelligence",
-    items: [
-      { key: "root", label: "Overview", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
-      { key: "genesis", label: "Genesis Portal", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
-      { key: "recon", label: "Deep Recon", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> },
-    ]
+    key: "dashboard",
+    label: "Dashboard",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+      </svg>
+    ),
   },
   {
+    key: "ops",
     label: "Operations",
-    items: [
-      { key: "north-star", label: "North Star", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
-      { key: "battlefield", label: "Battlefield", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
-      { key: "workspace", label: "Workspace", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> },
-      { key: "ops", label: "Operational", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12h-4l-3 9L9 3l-3 9H2"/></svg> },
-    ]
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 12h-4l-3 9L9 3l-3 9H2"/>
+      </svg>
+    ),
   },
   {
-    label: "Logistics",
-    items: [
-      { key: "comms", label: "Comms Inbox", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
-      { key: "artifacts", label: "Artifact Vault", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
-    ]
+    key: "tasks",
+    label: "Tasks",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+    ),
   },
   {
-    label: "Sovereign",
-    items: [
-      { key: "r17", label: "R17 Master", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
-    ]
-  }
+    key: "briefs",
+    label: "Briefs",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+    ),
+  },
+  {
+    key: "capabilitymap",
+    label: "Cap Map",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+      </svg>
+    ),
+  },
+  {
+    key: "verifications",
+    label: "Verify",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    ),
+  },
+  {
+    key: "recon",
+    label: "Recon",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+      </svg>
+    ),
+  },
+  {
+    key: "comms",
+    label: "Comms",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+        <polyline points="22,6 12,13 2,6"/>
+      </svg>
+    ),
+  },
+  {
+    key: "battlefield",
+    label: "Battlefield",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    ),
+  },
 ];
 
-// ── Health indicator ──────────────────────────────────────────────
 type HealthStatus = "ok" | "warn" | "error";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [activeTab, setActiveTabLocal] = useState("root");
+  const { tenantName } = useTenant();
+  const [activeTab, setActiveTabLocal] = useState("ops");
   const [collapsed, setCollapsed] = useState(false);
   const [health, setHealth] = useState<HealthStatus>("ok");
   const [queueDepth, setQueueDepth] = useState(0);
-  const [activeTenant, setActiveTenant] = useState("NORTH-STAR");
 
-  // Sync with global tab state
   useEffect(() => {
     function onTabChange(e: Event) {
       setActiveTabLocal((e as CustomEvent).detail);
     }
-    const savedTenant = (typeof window !== "undefined" ? localStorage.getItem("ns_active_tenant") : null) || "NORTH-STAR";
-    setActiveTenant(savedTenant);
-
-    function onTenantChange(e: Event) {
-      setActiveTenant((e as CustomEvent).detail);
-    }
-
     window.addEventListener("tab-change", onTabChange);
-    window.addEventListener("tenant-change", onTenantChange);
-    return () => {
-      window.removeEventListener("tab-change", onTabChange);
-      window.removeEventListener("tenant-change", onTenantChange);
-    };
+    return () => window.removeEventListener("tab-change", onTabChange);
   }, []);
 
-  // Health + queue data
   const fetchStats = useCallback(async () => {
     const { data: queued } = await supabase
       .from("briefs")
@@ -107,11 +143,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isLogin = pathname === "/login";
   if (isLogin) return <>{children}</>;
 
-  // Ensure 'ops' tab highlights correctly when on /ops
   useEffect(() => {
-    if (pathname === "/ops") {
-      setActiveTabLocal("ops");
-    }
+    if (pathname === "/ops") setActiveTabLocal("ops");
   }, [pathname]);
 
   const switchTab = (key: string) => {
@@ -121,135 +154,358 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (setter) setter(key);
   };
 
-  const currentNav = CATEGORIES.flatMap(c => c.items).find((n) => n.key === activeTab);
-  const breadcrumb = currentNav ? currentNav.label : "Overview";
+  const currentNav = PRIMARY_NAV.find((n) => n.key === activeTab);
+  const breadcrumb = currentNav?.label ?? "Operations";
 
-  const healthColour = health === "ok" ? "#10B981" : health === "warn" ? "#F59E0B" : "#EF4444";
-  const sidebarWidth = collapsed ? 52 : 240;
+  const healthColor =
+    health === "ok" ? "#22C55E" : health === "warn" ? "#EAB308" : "#EF4444";
+
+  const sidebarWidth = collapsed ? 52 : 220;
 
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: "#111111" }}>
-      {/* ── Left Sidebar ─────────────────────────────────────────── */}
+    <div
+      className="h-screen flex overflow-hidden"
+      style={{ background: "#080808", position: "relative", zIndex: 1 }}
+    >
+      {/* ── Sidebar ─────────────────────────────────────────────── */}
       <aside
-        className="flex flex-col flex-shrink-0 h-screen border-r overflow-hidden transition-all duration-300 ease-in-out"
+        className="flex flex-col flex-shrink-0 h-screen overflow-hidden transition-all duration-250 ease-in-out"
         style={{
           width: sidebarWidth,
-          background: "#121212",
-          borderColor: "#222222",
+          background: "#0D0D0D",
+          borderRight: "1px solid #1C1C1C",
         }}
       >
-        {/* Logo / brand */}
+        {/* Brand row */}
         <div
-          className="flex items-center h-14 border-b px-4 flex-shrink-0"
-          style={{ borderColor: "#222222" }}
+          className="flex items-center flex-shrink-0 gap-3"
+          style={{
+            height: 52,
+            padding: "0 14px",
+            borderBottom: "1px solid #1C1C1C",
+          }}
         >
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] shadow-lg shadow-[#7C3AED22]"
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              width: 24,
+              height: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 5,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              flexShrink: 0,
+              color: "#454545",
+              transition: "background 0.12s, color 0.12s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+              e.currentTarget.style.color = "#A3A3A3";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "#454545";
+            }}
+            title={collapsed ? "Expand" : "Collapse"}
           >
-            <span style={{ color: "#fff", fontSize: 13, fontWeight: 800, lineHeight: 1 }}>S</span>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                transform: collapsed ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.25s ease-in-out",
+              }}
+            >
+              <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* Logo mark — always visible */}
+          <div
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 6,
+              background: "#7C3AED",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: "-0.02em" }}>S</span>
           </div>
+
           {!collapsed && (
-            <div className="ml-3 flex flex-col overflow-hidden">
-               <span className="font-bold text-[13px] text-[#E5E5E5] tracking-tight truncate">SOVEREIGN OS</span>
-               <span className="text-[10px] text-[#444444] font-bold tracking-widest uppercase truncate">Mission Control</span>
+            <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", flex: 1 }}>
+              <span style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#D4D4D4",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+              }}>
+                Sovereign
+              </span>
+              <span style={{
+                fontSize: 10,
+                fontWeight: 500,
+                color: "#454545",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+              }}>
+                Command Center
+              </span>
             </div>
           )}
         </div>
 
-        {/* Categories + Nav items */}
-        <nav className="flex-1 overflow-y-auto pt-6 pb-4 custom-scrollbar" style={{ overflowX: "hidden" }}>
-          {CATEGORIES.map((cat, idx) => (
-            <div key={cat.label} className={idx > 0 ? "mt-6" : ""}>
-               {!collapsed && (
-                 <div className="px-5 mb-2 text-[10px] font-bold text-[#333333] tracking-[0.2em] uppercase">
-                   {cat.label}
-                 </div>
-               )}
-               {cat.items.map((item) => {
-                 const active = activeTab === item.key;
-                 // Hide R17 if not in master context
-                 if (item.key === "r17" && activeTenant !== "NORTH-STAR") return null;
-                 
-                 return (
-                   <button
-                     key={item.key}
-                     onClick={() => switchTab(item.key)}
-                     className={`w-full flex items-center gap-3 transition-all duration-200 group relative ${
-                       active ? "bg-[#7C3AED10]" : "hover:bg-[#1A1A1A]"
-                     }`}
-                     style={{
-                       height: 40,
-                       paddingLeft: collapsed ? 18 : 20,
-                       paddingRight: 12,
-                       fontSize: 13,
-                       fontWeight: active ? 600 : 500,
-                       color: active ? "#7C3AED" : "#777777",
-                       textAlign: "left",
-                     }}
-                   >
-                     {active && (
-                        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#7C3AED]" />
-                     )}
-                     <span className={`flex-shrink-0 transition-colors ${active ? "text-[#7C3AED]" : "text-[#333333] group-hover:text-[#666666]"}`}>
-                       {item.icon}
-                     </span>
-                     {!collapsed && <span className="truncate">{item.label}</span>}
-                   </button>
-                 );
-               })}
-            </div>
-          ))}
+        {/* Nav */}
+        <nav
+          className="flex-1 overflow-y-auto custom-scrollbar"
+          style={{ padding: "8px 8px", overflowX: "hidden" }}
+        >
+          {PRIMARY_NAV.map((item) => {
+            const active = activeTab === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => switchTab(item.key)}
+                className="nav-item"
+                style={{
+                  height: 36,
+                  padding: collapsed ? "0 14px" : "0 10px",
+                  marginBottom: 1,
+                  color: active ? "#EBEBEB" : "#616161",
+                  background: active ? "rgba(255,255,255,0.055)" : "transparent",
+                  fontWeight: active ? 600 : 500,
+                  justifyContent: collapsed ? "center" : "flex-start",
+                  gap: 10,
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                    e.currentTarget.style.color = "#A3A3A3";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "#616161";
+                  }
+                }}
+                title={collapsed ? item.label : undefined}
+              >
+                {/* Active indicator */}
+                {active && (
+                  <div style={{
+                    position: "absolute",
+                    left: 0,
+                    top: "25%",
+                    bottom: "25%",
+                    width: 2,
+                    borderRadius: "0 2px 2px 0",
+                    background: "#7C3AED",
+                  }} />
+                )}
+                <span style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  color: active ? "#9D6FEB" : "currentColor",
+                  opacity: active ? 1 : 0.7,
+                }}>
+                  {item.icon}
+                </span>
+                {!collapsed && (
+                  <span style={{ fontSize: 13, lineHeight: 1 }}>{item.label}</span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* Sidebar footer: Command Palette Proxy */}
-        <div className="flex-shrink-0 border-t py-4 px-4 bg-[#0E0E0E]" style={{ borderColor: "#222222" }}>
+        {/* Footer */}
+        <div
+          style={{
+            flexShrink: 0,
+            borderTop: "1px solid #1C1C1C",
+            background: "#0A0A0A",
+            padding: "10px 8px",
+          }}
+        >
           <button
             onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
-            className="w-full flex items-center gap-3 px-3 py-2 bg-[#1A1A1A] hover:bg-[#222222] border border-[#2A2A2A] rounded-lg transition-all"
-            style={{ fontSize: 11, color: "#555555" }}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: collapsed ? "center" : "flex-start",
+              gap: 8,
+              padding: collapsed ? "7px 0" : "7px 10px",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid #1E1E1E",
+              borderRadius: 6,
+              cursor: "pointer",
+              color: "#525252",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              transition: "background 0.12s, border-color 0.12s, color 0.12s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.055)";
+              e.currentTarget.style.borderColor = "#2A2A2A";
+              e.currentTarget.style.color = "#737373";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+              e.currentTarget.style.borderColor = "#1E1E1E";
+              e.currentTarget.style.color = "#525252";
+            }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            {!collapsed && <span className="font-bold tracking-widest uppercase">Command K</span>}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            {!collapsed && <span>Search</span>}
+            {!collapsed && (
+              <span style={{
+                marginLeft: "auto",
+                fontSize: 10,
+                color: "#3A3A3A",
+                background: "#181818",
+                border: "1px solid #2A2A2A",
+                borderRadius: 4,
+                padding: "1px 5px",
+                fontFamily: "var(--font-mono)",
+              }}>
+                ⌘K
+              </span>
+            )}
           </button>
-          
-          <div className="mt-4 flex items-center justify-between px-1">
-             <button onClick={() => setCollapsed(!collapsed)} className="p-1 hover:bg-[#1A1A1A] rounded transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="2.5"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-             </button>
-             {!collapsed && (
-                <div className="flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
-                   <span className="text-[10px] text-[#333333] font-bold tracking-widest">LIVE</span>
-                </div>
-             )}
-          </div>
+
+          {!collapsed && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "8px 10px 2px",
+            }}>
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#22C55E",
+                  flexShrink: 0,
+                  animation: "pulse-dot 2s ease-in-out infinite",
+                  boxShadow: "0 0 6px #22C55E44",
+                }}
+              />
+              <span style={{ fontSize: 10, color: "#525252", fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                Live
+              </span>
+            </div>
+          )}
         </div>
       </aside>
 
-      {/* ── Right Content ────────────────────────────────────────── */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-[#111111]">
-        {/* Header Bar */}
+      {/* ── Content area ────────────────────────────────────────── */}
+      <div
+        className="flex flex-col flex-1 min-w-0 overflow-hidden"
+        style={{ background: "#111111" }}
+      >
+        {/* Header bar */}
         <header
-          className="flex-shrink-0 flex items-center justify-between border-b px-6"
-          style={{ height: 56, background: "#111111", borderColor: "#222222" }}
+          style={{
+            flexShrink: 0,
+            height: 52,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 24px",
+            background: "#111111",
+            borderBottom: "1px solid #1C1C1C",
+          }}
         >
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase">
-              <span className="text-[#444444]">Mission</span>
-              <span className="text-[#222222]">/</span>
-              <span className="text-[#7C3AED]">{activeTenant}</span>
-              <span className="text-[#222222]">/</span>
-              <span className="text-[#E5E5E5]">{breadcrumb}</span>
-            </div>
+          {/* Breadcrumb */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12,
+            fontWeight: 500,
+          }}>
+            <span style={{ color: "#3A3A3A" }}>Mission</span>
+            <span style={{ color: "#242424" }}>/</span>
+            <span style={{ color: "#5B21B6" }}>{tenantName}</span>
+            <span style={{ color: "#242424" }}>/</span>
+            <span style={{ color: "#A3A3A3" }}>{breadcrumb}</span>
           </div>
-          <div className="flex items-center gap-4">
-             <TenantSwitcher />
-             <div className="h-4 w-[1px] bg-[#222222]" />
-             <div className="flex items-center gap-2 text-[10px] font-bold text-[#444444] tracking-widest uppercase">
-                {queueDepth > 0 && <span className="text-[#7C3AED]">{queueDepth} PENDING</span>}
-                <div className={`w-1.5 h-1.5 rounded-full`} style={{ background: healthColour, boxShadow: `0 0 8px ${healthColour}44` }} />
-                <span>VER v0.3</span>
-             </div>
+
+          {/* Right controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <TenantSwitcher />
+
+            <div style={{
+              width: 1,
+              height: 16,
+              background: "#1E1E1E",
+              flexShrink: 0,
+            }} />
+
+            {/* Queue depth + health */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.05em",
+            }}>
+              {queueDepth > 0 && (
+                <span style={{
+                  color: "#7C3AED",
+                  background: "rgba(124,58,237,0.1)",
+                  border: "1px solid rgba(124,58,237,0.2)",
+                  borderRadius: 5,
+                  padding: "2px 8px",
+                  fontSize: 11,
+                }}>
+                  {queueDepth} queued
+                </span>
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: healthColor,
+                    boxShadow: `0 0 8px ${healthColor}55`,
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ color: "#454545", textTransform: "uppercase" }}>
+                  v0.4
+                </span>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -257,13 +513,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-
-      <style jsx global>{`
-        .nav-item-active { background: #7C3AED10; color: #7C3AED; }
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1A1A1A; border-radius: 10px; }
-      `}</style>
     </div>
   );
 }

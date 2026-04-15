@@ -138,87 +138,208 @@ export default function BriefQueue({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-2 border-b border-border">
-        <h2 className="text-sm font-bold tracking-wider uppercase text-accent-blue mb-2">
-          BRIEF Queue
-        </h2>
-        <div className="flex gap-2">
-          {tabs.map((tab) => (
+      {/* Tab bar */}
+      <div
+        style={{
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          padding: "0 12px",
+          height: 44,
+          borderBottom: "1px solid #1C1C1C",
+        }}
+      >
+        {tabs.map((tab) => {
+          const active = activeTab === tab;
+          const count = counts[tab] || 0;
+          return (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 text-[11px] px-2 py-1 rounded transition-colors ${
-                activeTab === tab
-                  ? "bg-bg-card-hover " + (STATUS_TEXT[tab] || "")
-                  : "text-text-muted hover:text-text-secondary"
-              }`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 10px",
+                borderRadius: 6,
+                border: active ? "1px solid #2A2A2A" : "1px solid transparent",
+                background: active ? "#1A1A1A" : "transparent",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.04em",
+                color: active ? "#C4C4C4" : "#525252",
+                transition: "all 0.12s",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) e.currentTarget.style.color = "#737373";
+              }}
+              onMouseLeave={(e) => {
+                if (!active) e.currentTarget.style.color = "#525252";
+              }}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${STATUS_BG[tab] || "bg-gray-500"}`} />
-              {tab}
-              <span className="font-mono">{counts[tab] || 0}</span>
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  background:
+                    tab === "QUEUED" ? "#6366F1" :
+                    tab === "CLAIMED" ? "#EAB308" :
+                    tab === "COMPLETED" ? "#22C55E" :
+                    tab === "FAILED" ? "#EF4444" : "#525252",
+                }}
+              />
+              {tab.charAt(0) + tab.slice(1).toLowerCase()}
+              {count > 0 && (
+                <span style={{
+                  fontSize: 10,
+                  fontFamily: "var(--font-mono)",
+                  color: active ? "#737373" : "#3A3A3A",
+                  minWidth: 14,
+                }}>
+                  {count}
+                </span>
+              )}
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {filtered.map((brief) => (
-          <div
-            key={brief.id}
-            onClick={() => onSelect(brief)}
-            className="px-3 py-3 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <span className="text-accent-yellow text-xs font-bold">#{brief.id}</span>
+      {/* List */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {filtered.map((brief) => {
+          const isSelected = selectedBrief?.id === brief.id;
+          const gradeColor =
+            brief.quality_grade === "GREEN" ? "#22C55E" :
+            brief.quality_grade === "YELLOW" ? "#EAB308" :
+            brief.quality_grade === "RED" ? "#EF4444" : "#2A2A2A";
+          return (
+            <div
+              key={brief.id}
+              onClick={() => onSelect(brief)}
+              style={{
+                padding: "11px 14px",
+                borderBottom: "1px solid #161616",
+                cursor: "pointer",
+                background: isSelected ? "rgba(124,58,237,0.07)" : "transparent",
+                borderLeft: isSelected ? "2px solid #7C3AED" : "2px solid transparent",
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.022)";
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) e.currentTarget.style.background = "transparent";
+              }}
+            >
+              {/* Primary row — name is the hero */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 5 }}>
                 <span
-                  className="w-2 h-2 rounded-full shrink-0"
                   style={{
-                    backgroundColor:
-                      brief.quality_grade === "GREEN" ? "#00ff41" :
-                      brief.quality_grade === "YELLOW" ? "#ffb800" :
-                      brief.quality_grade === "RED" ? "#ff1744" : "#404040",
+                    fontSize: 10,
+                    fontFamily: "var(--font-mono)",
+                    color: "#5B21B6",
+                    fontWeight: 600,
+                    flexShrink: 0,
+                    marginTop: 1,
                   }}
-                  title={brief.quality_grade ? `Quality: ${brief.quality_grade}` : "No grade"}
-                />
-                <span className="text-xs font-medium text-text-primary truncate max-w-[180px]">
+                >
+                  #{brief.id}
+                </span>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "#D4D4D4",
+                    lineHeight: 1.35,
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: "hidden",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                >
                   {displayName(brief.name ?? "")}
                 </span>
-              </div>
-              <div className="flex items-center gap-2">
                 <span
-                  className={`text-[11px] px-1.5 py-0.5 rounded ${STATUS_BG[brief.status] || "bg-gray-500"} text-black font-bold`}
-                >
-                  {brief.status}
-                </span>
-                <span className="text-[11px] text-text-muted">P:{brief.priority}</span>
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: gradeColor,
+                    flexShrink: 0,
+                    marginTop: 4,
+                  }}
+                  title={brief.quality_grade ? `Grade: ${brief.quality_grade}` : "Ungraded"}
+                />
               </div>
-            </div>
-            <div className="flex items-center gap-3 text-[11px] text-text-muted">
-              {brief.claimed_by && (
-                <span>
-                  agent: <span className="text-accent-purple">{brief.claimed_by}</span>
+
+              {/* Meta row */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 11,
+                color: "#525252",
+              }}>
+                {/* Priority */}
+                <span style={{
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                  background: "#181818",
+                  border: "1px solid #242424",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  color: "#737373",
+                }}>
+                  {brief.priority || "P2"}
                 </span>
+
+                {/* Agent */}
+                {brief.claimed_by && (
+                  <span style={{ color: "#7C3AED", fontSize: 11 }}>
+                    {brief.claimed_by}
+                  </span>
+                )}
+
+                {/* WSJF */}
+                {brief.wsjf_score != null && (
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#454545" }}>
+                    {Number(brief.wsjf_score).toFixed(1)}
+                  </span>
+                )}
+
+                {/* Time — pushed right */}
+                <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: 10, color: "#3A3A3A" }}>
+                  {timeAgo(brief.created_at)}
+                </span>
+              </div>
+
+              {/* Failure reason if present */}
+              {brief.failure_reason && (
+                <p style={{ fontSize: 11, color: "#EF4444", marginTop: 5, lineHeight: 1.35 }} className="truncate">
+                  {brief.failure_reason}
+                </p>
               )}
-              {brief.wsjf_score != null && (
-                <span>WSJF: {Number(brief.wsjf_score).toFixed(1)}</span>
-              )}
-              {brief.triggered_by && <span>from: {brief.triggered_by}</span>}
-              <span className="ml-auto">{timeAgo(brief.created_at)}</span>
             </div>
-            {brief.summary && (
-              <p className="text-[11px] text-text-secondary mt-1 truncate">{brief.summary}</p>
-            )}
-            {brief.failure_reason && (
-              <p className="text-[11px] text-accent-red mt-1 truncate">{brief.failure_reason}</p>
-            )}
-          </div>
-        ))}
+          );
+        })}
+
         {filtered.length === 0 && (
-          <div className="text-center text-text-muted py-4 text-xs">No {activeTab} briefs</div>
+          <div style={{
+            padding: "40px 16px",
+            textAlign: "center",
+            fontSize: 12,
+            color: "#3A3A3A",
+          }}>
+            No {activeTab.toLowerCase()} briefs
+          </div>
         )}
       </div>
-
     </div>
   );
 }

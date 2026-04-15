@@ -136,34 +136,32 @@ export default function LiveLogs() {
         {filtered.map((log) => (
           <div
             key={log.id}
-            className="animate-[fade-in-up_0.3s_ease-out] flex items-start gap-2 px-2 py-1 rounded text-xs hover:bg-bg-card-hover group"
+            style={{ animation: "fade-in-up 0.25s ease-out" }}
+            className="flex items-center gap-2 px-3 py-2 hover:bg-bg-hover group cursor-default"
+            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.022)"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
           >
-            <span className="text-text-muted shrink-0 w-14 text-right">
+            <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#3A3A3A", flexShrink: 0, width: 40, textAlign: "right" }}>
               {timeAgo(log.created_at)}
             </span>
-            <span className="text-accent-purple shrink-0 w-6 text-center font-bold">
+            <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#5B21B6", flexShrink: 0, width: 16, textAlign: "center", fontWeight: 700 }}>
               {operationIcon(log.operation)}
             </span>
-            <span className="text-accent-blue shrink-0 w-20 truncate">
+            <span style={{ fontSize: 11, color: "#6366F1", flexShrink: 0, width: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {log.agent}
             </span>
-            <span className="text-text-primary shrink-0 w-24 truncate">
+            <span style={{ fontSize: 11, color: "#737373", flexShrink: 0, width: 76, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {log.operation}
             </span>
-            <span className={`shrink-0 w-12 ${outcomeColor(log.actual_outcome)}`}>
+            <span className={`shrink-0 w-12 text-xs ${outcomeColor(log.actual_outcome)}`}>
               {log.actual_outcome || log.trigger || ""}
             </span>
-            <span className="text-text-secondary flex-1 truncate">
-              {truncate(log.input_summary || log.output_summary, 120)}
+            <span style={{ fontSize: 11, color: "#525252", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {truncate(log.input_summary || log.output_summary, 100)}
             </span>
             {log.duration_ms != null && (
-              <span className="text-text-muted shrink-0 w-16 text-right">
+              <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#333333", flexShrink: 0 }}>
                 {log.duration_ms}ms
-              </span>
-            )}
-            {log.brief_id && (
-              <span className="text-accent-yellow shrink-0 text-right">
-                #{log.brief_id}
               </span>
             )}
           </div>
