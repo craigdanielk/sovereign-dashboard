@@ -1,44 +1,34 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { TABS } from "@/lib/types";
-import RootTab from "@/components/tabs/RootTab";
-import NorthStarTab from "@/components/tabs/NorthStarTab";
-import BattlefieldTab from "@/components/tabs/BattlefieldTab";
-import ReconTab from "@/components/tabs/ReconTab";
-import R17Tab from "@/components/tabs/R17Tab";
-import CommsTab from "@/components/tabs/CommsTab";
-import ArtifactsTab from "@/components/tabs/ArtifactsTab";
-import WorkspaceTab from "@/components/tabs/WorkspaceTab";
-import CommandTab from "@/components/tabs/CommandTab";
-import CostTab from "@/components/tabs/CostTab";
-import ReviewTab from "@/components/tabs/ReviewTab";
-import CatalogueTab from "@/components/tabs/CatalogueTab";
-import GenesisTab from "@/components/tabs/GenesisTab";
-import OpsTab from "@/components/tabs/OpsTab";
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 
-// Map tab keys to components — all rendered in one page, zero routing latency
+// Dynamic imports prevent hook evaluation during /_global-error prerender
+const DashboardTab     = dynamic(() => import("@/components/tabs/DashboardTab"),     { ssr: false });
+const OpsTab           = dynamic(() => import("@/components/tabs/OpsTab"),           { ssr: false });
+const WorkspaceTab     = dynamic(() => import("@/components/tabs/WorkspaceTab"),     { ssr: false });
+const BriefsTab        = dynamic(() => import("@/components/tabs/BriefsTab"),        { ssr: false });
+const CapabilityMapTab = dynamic(() => import("@/components/tabs/CapabilityMapTab"), { ssr: false });
+const VerificationsTab = dynamic(() => import("@/components/tabs/VerificationsTab"), { ssr: false });
+const ReconTab         = dynamic(() => import("@/components/tabs/ReconTab"),         { ssr: false });
+const CommsTab         = dynamic(() => import("@/components/tabs/CommsTab"),         { ssr: false });
+const BattlefieldTab   = dynamic(() => import("@/components/tabs/BattlefieldTab"),   { ssr: false });
+
 const TAB_COMPONENTS: Record<string, React.ComponentType> = {
-  root: RootTab,
-  "north-star": NorthStarTab,
-  battlefield: BattlefieldTab,
-  recon: ReconTab,
-  r17: R17Tab,
-  comms: CommsTab,
-  artifacts: ArtifactsTab,
-  workspace: WorkspaceTab,
-  command: CommandTab,
-  cost: CostTab,
-  review: ReviewTab,
-  catalogue: CatalogueTab,
-  genesis: GenesisTab,
-  ops: OpsTab,
+  dashboard:     DashboardTab,
+  ops:           OpsTab,
+  tasks:         WorkspaceTab,
+  briefs:        BriefsTab,
+  capabilitymap: CapabilityMapTab,
+  verifications: VerificationsTab,
+  recon:         ReconTab,
+  comms:         CommsTab,
+  battlefield:   BattlefieldTab,
 };
 
 export default function WarRoom() {
-  const [activeTab, setActiveTab] = useState("root");
+  const [activeTab, setActiveTab] = useState("ops");
 
-  // Expose tab setter globally so TopBar/TabBar can use it
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__setActiveTab = setActiveTab;
     (window as unknown as Record<string, unknown>).__activeTab = activeTab;
@@ -49,20 +39,20 @@ export default function WarRoom() {
     };
   }, [activeTab]);
 
-  // Keyboard shortcuts: Ctrl+1-8 for tabs
+  // Keyboard shortcuts: Ctrl+1-5
   useEffect(() => {
+    const keys = ["dashboard", "ops", "tasks", "briefs", "recon"];
     function handleKey(e: KeyboardEvent) {
-      if (e.ctrlKey && e.key >= "1" && e.key <= "8") {
+      if (e.ctrlKey && e.key >= "1" && e.key <= "5") {
         e.preventDefault();
-        const idx = parseInt(e.key) - 1;
-        if (TABS[idx]) setActiveTab(TABS[idx].key);
+        setActiveTab(keys[parseInt(e.key) - 1]);
       }
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  const ActiveComponent = TAB_COMPONENTS[activeTab] || TAB_COMPONENTS.root;
+  const ActiveComponent = TAB_COMPONENTS[activeTab] || TAB_COMPONENTS.ops;
 
   return (
     <div className="h-full overflow-hidden">
