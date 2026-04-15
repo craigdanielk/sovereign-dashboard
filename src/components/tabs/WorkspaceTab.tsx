@@ -408,12 +408,14 @@ export default function WorkspaceTab() {
     return () => { supabase.removeChannel(ch); };
   }, [activeTenant, fetchTasks]);
 
+  const knownStatuses = new Set(KANBAN_COLS.map((c) => c.key).concat(["BRIEF_QUEUED"]));
+
   const tasksByCol = KANBAN_COLS.reduce<Record<string, Task[]>>((acc, col) => {
-    acc[col.key] = tasks.filter((t) =>
-      col.key === "BRIEF_READY"
-        ? t.status === "BRIEF_READY" || t.status === "BRIEF_QUEUED"
-        : t.status === col.key
-    );
+    acc[col.key] = tasks.filter((t) => {
+      if (col.key === "BRIEF_READY") return t.status === "BRIEF_READY" || t.status === "BRIEF_QUEUED";
+      if (col.key === "TODO") return t.status === "TODO" || !knownStatuses.has(t.status);
+      return t.status === col.key;
+    });
     return acc;
   }, {} as Record<string, Task[]>);
 
