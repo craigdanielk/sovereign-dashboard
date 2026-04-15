@@ -408,7 +408,7 @@ export default function WorkspaceTab() {
     return () => { supabase.removeChannel(ch); };
   }, [activeTenant, fetchTasks]);
 
-  const knownStatuses = new Set(KANBAN_COLS.map((c) => c.key).concat(["BRIEF_QUEUED"]));
+  const knownStatuses = new Set<string>([...KANBAN_COLS.map((c) => c.key), "BRIEF_QUEUED"]);
 
   const tasksByCol = KANBAN_COLS.reduce<Record<string, Task[]>>((acc, col) => {
     acc[col.key] = tasks.filter((t) => {
