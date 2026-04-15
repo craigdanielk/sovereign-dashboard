@@ -4,22 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase, type Brief } from "@/lib/supabase";
 import BriefDetailPanel from "./BriefDetailPanel";
 
-const STATUS_BG: Record<string, string> = {
-  QUEUED: "bg-accent-blue",
-  CLAIMED: "bg-accent-yellow",
-  COMPLETED: "bg-accent-green",
-  FAILED: "bg-accent-red",
-  PENDING: "bg-text-muted",
-  SUPERSEDED: "bg-accent-purple",
-};
-
-const STATUS_TEXT: Record<string, string> = {
-  QUEUED: "text-accent-blue",
-  CLAIMED: "text-accent-yellow",
-  COMPLETED: "text-accent-green",
-  FAILED: "text-accent-red",
-  PENDING: "text-text-muted",
-  SUPERSEDED: "text-accent-purple",
+const STATUS_COLOR: Record<string, string> = {
+  QUEUED:     "#6366F1",
+  CLAIMED:    "#EAB308",
+  COMPLETED:  "#22C55E",
+  FAILED:     "#EF4444",
+  PENDING:    "#737373",
+  SUPERSEDED: "#7C3AED",
 };
 
 function timeAgo(ts: string | null): string {
@@ -185,11 +176,7 @@ export default function BriefQueue({
                   height: 5,
                   borderRadius: "50%",
                   flexShrink: 0,
-                  background:
-                    tab === "QUEUED" ? "#6366F1" :
-                    tab === "CLAIMED" ? "#EAB308" :
-                    tab === "COMPLETED" ? "#22C55E" :
-                    tab === "FAILED" ? "#EF4444" : "#525252",
+                  background: STATUS_COLOR[tab] ?? "#525252",
                 }}
               />
               {tab.charAt(0) + tab.slice(1).toLowerCase()}
@@ -286,6 +273,23 @@ export default function BriefQueue({
                 fontSize: 11,
                 color: "#525252",
               }}>
+                {/* Status pip */}
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                  background: `${STATUS_COLOR[brief.status] ?? "#525252"}14`,
+                  border: `1px solid ${STATUS_COLOR[brief.status] ?? "#525252"}30`,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: STATUS_COLOR[brief.status] ?? "#737373",
+                  letterSpacing: "0.03em",
+                }}>
+                  {brief.status}
+                </span>
+
                 {/* Priority */}
                 <span style={{
                   padding: "1px 6px",
@@ -294,7 +298,7 @@ export default function BriefQueue({
                   border: "1px solid #242424",
                   fontFamily: "var(--font-mono)",
                   fontSize: 10,
-                  color: "#737373",
+                  color: "#525252",
                 }}>
                   {brief.priority || "P2"}
                 </span>

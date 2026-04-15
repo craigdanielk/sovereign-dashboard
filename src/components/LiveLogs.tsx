@@ -137,9 +137,7 @@ export default function LiveLogs() {
           <div
             key={log.id}
             style={{ animation: "fade-in-up 0.25s ease-out" }}
-            className="flex items-center gap-2 px-3 py-2 hover:bg-bg-hover group cursor-default"
-            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.022)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+            className="list-row group cursor-default"
           >
             <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#3A3A3A", flexShrink: 0, width: 40, textAlign: "right" }}>
               {timeAgo(log.created_at)}

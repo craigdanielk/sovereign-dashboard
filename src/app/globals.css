@@ -259,6 +259,39 @@ body::before {
   font-weight: 600;
 }
 
+/* Icon button — sidebar collapse toggle */
+.icon-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #454545;
+  transition: background 0.12s, color 0.12s;
+}
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #A3A3A3;
+}
+
+/* Command K / search button */
+.cmd-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #1E1E1E;
+  color: #525252;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.cmd-btn:hover {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: #2A2A2A;
+  color: #737373;
+}
+
 /* ── Removed war-room utilities — kept as no-ops ───────────────── */
 .glow-green { }
 .glow-green-bright { }

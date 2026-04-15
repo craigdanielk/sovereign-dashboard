@@ -187,28 +187,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         >
           <button
             onClick={() => setCollapsed(!collapsed)}
-            style={{
-              width: 24,
-              height: 24,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 5,
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              flexShrink: 0,
-              color: "#454545",
-              transition: "background 0.12s, color 0.12s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-              e.currentTarget.style.color = "#A3A3A3";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "#454545";
-            }}
+            className="icon-btn"
             title={collapsed ? "Expand" : "Collapse"}
           >
             <svg
@@ -284,28 +263,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <button
                 key={item.key}
                 onClick={() => switchTab(item.key)}
-                className="nav-item"
+                className={`nav-item${active ? " active" : ""}`}
                 style={{
                   height: 36,
                   padding: collapsed ? "0 14px" : "0 10px",
                   marginBottom: 1,
-                  color: active ? "#EBEBEB" : "#616161",
-                  background: active ? "rgba(255,255,255,0.055)" : "transparent",
-                  fontWeight: active ? 600 : 500,
                   justifyContent: collapsed ? "center" : "flex-start",
                   gap: 10,
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                    e.currentTarget.style.color = "#A3A3A3";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "#616161";
-                  }
                 }}
                 title={collapsed ? item.label : undefined}
               >
@@ -350,6 +314,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         >
           <button
             onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+            className="cmd-btn"
             style={{
               width: "100%",
               display: "flex",
@@ -357,26 +322,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               justifyContent: collapsed ? "center" : "flex-start",
               gap: 8,
               padding: collapsed ? "7px 0" : "7px 10px",
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid #1E1E1E",
               borderRadius: 6,
               cursor: "pointer",
-              color: "#525252",
               fontSize: 11,
               fontWeight: 600,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
-              transition: "background 0.12s, border-color 0.12s, color 0.12s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.055)";
-              e.currentTarget.style.borderColor = "#2A2A2A";
-              e.currentTarget.style.color = "#737373";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-              e.currentTarget.style.borderColor = "#1E1E1E";
-              e.currentTarget.style.color = "#525252";
             }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
