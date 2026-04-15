@@ -41,9 +41,9 @@ export default function MissionObserver({ brief }: MissionObserverProps) {
   return (
     <div className="h-full flex flex-col overflow-hidden bg-bg-primary/30">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-border bg-bg-card">
+      <div className="shrink-0 flex items-center justify-between px-4 border-b border-border bg-bg-card" style={{ height: 48 }}>
         <div className="flex flex-col">
-          <span className="text-[10px] font-bold tracking-wider text-accent-blue uppercase">
+          <span className="text-xs font-semibold tracking-wide text-accent-blue uppercase">
             Mission Observer // B-{brief.id}
           </span>
           <span className="text-xs text-text-primary font-medium truncate mt-0.5">
@@ -53,7 +53,7 @@ export default function MissionObserver({ brief }: MissionObserverProps) {
         <div className="flex items-center gap-4">
            <div className="flex items-center gap-1.5">
              <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-             <span className="text-[10px] text-accent-green font-bold tracking-tighter uppercase">Observing</span>
+             <span className="text-xs text-accent-green font-bold tracking-tighter uppercase">Observing</span>
            </div>
         </div>
       </div>
@@ -62,18 +62,18 @@ export default function MissionObserver({ brief }: MissionObserverProps) {
         {/* Status overview */}
         <div className="flex flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-1 px-2 py-1 border border-border bg-bg-primary rounded">
-            <span className="text-text-muted uppercase text-[9px] font-bold">Status</span>
+            <span className="text-text-muted uppercase text-[11px] font-bold">Status</span>
             <span className="font-mono font-bold text-text-primary px-1.5 rounded bg-bg-card">{brief.status}</span>
           </div>
           {brief.wsjf_score && (
             <div className="flex items-center gap-1 px-2 py-1 border border-border bg-bg-primary rounded">
-              <span className="text-text-muted uppercase text-[9px] font-bold">WSJF</span>
+              <span className="text-text-muted uppercase text-[11px] font-bold">WSJF</span>
               <span className="font-mono font-bold text-accent-yellow px-1.5 rounded bg-bg-card">{Number(brief.wsjf_score).toFixed(2)}</span>
             </div>
           )}
           {brief.claimed_by && (
             <div className="flex items-center gap-1 px-2 py-1 border border-border bg-bg-primary rounded">
-              <span className="text-text-muted uppercase text-[9px] font-bold">Agent</span>
+              <span className="text-text-muted uppercase text-[11px] font-bold">Agent</span>
               <span className="font-mono font-bold text-accent-purple px-1.5 rounded bg-bg-card">{brief.claimed_by}</span>
             </div>
           )}
@@ -81,9 +81,9 @@ export default function MissionObserver({ brief }: MissionObserverProps) {
 
         {/* DAG Steps */}
         <div className="relative">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2">
             Directed Acyclic Graph (DAG) Execution Matrix
-            <span className="px-1.5 py-0.5 rounded bg-accent-blue/10 text-accent-blue text-[9px]">
+            <span className="px-1.5 py-0.5 rounded bg-accent-blue/10 text-accent-blue text-[11px]">
               {planSteps.length} nodes
             </span>
           </p>
@@ -100,7 +100,7 @@ export default function MissionObserver({ brief }: MissionObserverProps) {
                   <div key={idx} className="relative flex items-start gap-4">
                     {/* Dot */}
                     <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-bg-primary bg-bg-card shrink-0 z-10">
-                      <span className="text-[10px] text-accent-blue font-bold">{stepNum}</span>
+                      <span className="text-xs text-accent-blue font-bold">{stepNum}</span>
                     </div>
                     {/* Card */}
                     <div className="flex-1 p-3 rounded-xl border border-border bg-bg-card/80 hover:bg-bg-card transition-all shadow-sm group">
@@ -109,18 +109,18 @@ export default function MissionObserver({ brief }: MissionObserverProps) {
                       </p>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 border-t border-border/50 pt-2">
                         {(step.agent || step.assigned_to) && (
-                          <div className="text-[9px] flex items-center gap-1">
+                          <div className="text-[11px] flex items-center gap-1">
                              <span className="text-text-muted">AGENT:</span>
                              <span className="text-accent-purple font-bold">{step.agent || step.assigned_to}</span>
                           </div>
                         )}
                         {(step.dependencies || step.depends_on) && (
-                          <div className="text-[9px] flex items-center gap-1">
+                          <div className="text-[11px] flex items-center gap-1">
                              <span className="text-text-muted">BLOCKS:</span>
                              <span className="text-accent-yellow font-bold">NODE {JSON.stringify(step.dependencies || step.depends_on)}</span>
                           </div>
                         )}
-                        <div className="text-[9px] flex items-center gap-1">
+                        <div className="text-[11px] flex items-center gap-1">
                            <span className="text-text-muted">STATUS:</span>
                            <span className="text-accent-green font-bold uppercase">Ready</span>
                         </div>
@@ -137,15 +137,15 @@ export default function MissionObserver({ brief }: MissionObserverProps) {
         <div className="grid grid-cols-2 gap-4">
            {routing && (
               <div className="p-3 bg-bg-card border border-border rounded-xl">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-text-muted mb-2 font-mono">Routing Manifest</p>
-                <pre className="text-[9px] text-text-secondary font-mono overflow-auto max-h-32">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted mb-2 font-mono">Routing Manifest</p>
+                <pre className="text-[11px] text-text-secondary font-mono overflow-auto max-h-32">
                   {JSON.stringify(routing, null, 2)}
                 </pre>
               </div>
            )}
            <div className="p-3 bg-bg-card border border-border rounded-xl">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-text-muted mb-2 font-mono">Raw Node Payload</p>
-              <pre className="text-[9px] text-text-muted/50 font-mono overflow-auto max-h-32">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted mb-2 font-mono">Raw Node Payload</p>
+              <pre className="text-[11px] text-text-muted/50 font-mono overflow-auto max-h-32">
                 {JSON.stringify(brief.payload, null, 2)}
               </pre>
            </div>

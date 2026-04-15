@@ -109,16 +109,16 @@ export default function PlanningWindow({ selectedBrief }: { selectedBrief: Brief
       {/* Header */}
       <div className="px-4 py-1.5 border-b border-border bg-bg-primary/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-accent-purple">Planning Window</span>
+          <span className="text-xs font-bold tracking-widest uppercase text-accent-purple">Planning Window</span>
           {selectedBrief && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 font-mono">
+            <span className="text-[11px] px-1.5 py-0.5 rounded bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 font-mono">
               TARGET: #{selectedBrief.id}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
            <div className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-           <span className="text-[9px] text-text-muted font-bold tracking-wider uppercase">Neural Link Active</span>
+           <span className="text-[11px] text-text-muted font-bold tracking-wider uppercase">Neural Link Active</span>
         </div>
       </div>
 
@@ -132,7 +132,7 @@ export default function PlanningWindow({ selectedBrief }: { selectedBrief: Brief
                </svg>
             </div>
             <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Awaiting Planning Directives</p>
-            <p className="text-[10px] text-text-muted max-w-[200px] mt-2">Initialize mission parameters or select a brief to begin targeted authoring.</p>
+            <p className="text-xs text-text-muted max-w-[200px] mt-2">Initialize mission parameters or select a brief to begin targeted authoring.</p>
           </div>
         )}
         
@@ -142,7 +142,7 @@ export default function PlanningWindow({ selectedBrief }: { selectedBrief: Brief
               msg.role === 'user' 
                 ? 'bg-accent-purple text-white rounded-br-none shadow-lg shadow-accent-purple/20' 
                 : msg.role === 'system'
-                ? 'bg-bg-primary/50 border border-border text-[10px] uppercase tracking-wider text-text-muted font-bold text-center w-full'
+                ? 'bg-bg-primary/50 border border-border text-xs uppercase tracking-wider text-text-muted font-bold text-center w-full'
                 : 'bg-bg-card border border-border text-text-primary rounded-bl-none'
             }`}>
               {msg.content}

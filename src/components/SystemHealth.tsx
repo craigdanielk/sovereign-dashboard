@@ -126,7 +126,7 @@ export default function SystemHealth() {
           </h2>
           <div className="flex items-center gap-2">
             <span className={`text-xs font-bold ${color[overall]}`}>{overall.toUpperCase()}</span>
-            {lastUpdate && <span className="text-[10px] text-text-muted">{lastUpdate}</span>}
+            {lastUpdate && <span className="text-[11px] text-text-muted">{lastUpdate}</span>}
           </div>
         </div>
       </div>
@@ -135,13 +135,13 @@ export default function SystemHealth() {
         {checks.map((check) => (
           <div
             key={check.label}
-            className={`flex items-center gap-3 px-3 py-2 rounded bg-bg-card border ${border[check.status]} transition-colors`}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded bg-bg-card border ${border[check.status]} transition-colors`}
           >
             <span className={`text-xs font-bold shrink-0 w-6 ${color[check.status]}`}>
               {icon[check.status]}
             </span>
             <span className="text-xs text-text-primary shrink-0 w-28">{check.label}</span>
-            <span className="text-[10px] text-text-secondary flex-1 truncate">{check.detail}</span>
+            <span className="text-[11px] text-text-secondary flex-1 truncate">{check.detail}</span>
           </div>
         ))}
       </div>

@@ -32,16 +32,28 @@ function timeAgo(ts: string | null): string {
   return `${Math.floor(h / 24)}d`;
 }
 
-export default function BriefQueue({ 
-  selectedBrief, 
-  onSelect 
-}: { 
-  selectedBrief: Brief | null, 
-  onSelect: (b: Brief | null) => void 
+function displayName(name: string): string {
+  let n = name.replace(/^BRIEF::/, "");
+  // Strip trailing ::YYYYMMDD-HHMMSS or ::YYYY-MM-DD timestamp
+  n = n.replace(/::[\d]{8}-[\d]{6}$/, "").replace(/::[\d]{4}-[\d]{2}-[\d]{2}$/, "");
+  return n;
+}
+
+const ALL_TABS = ["QUEUED", "CLAIMED", "COMPLETED", "FAILED"];
+
+export default function BriefQueue({
+  selectedBrief,
+  onSelect,
+  statusFilter,
+}: {
+  selectedBrief: Brief | null,
+  onSelect: (b: Brief | null) => void,
+  statusFilter?: string[],
 }) {
+  const tabs = statusFilter ?? ALL_TABS;
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [activeTab, setActiveTab] = useState("QUEUED");
+  const [activeTab, setActiveTab] = useState(tabs[0] ?? "QUEUED");
   const [activeTenant, setActiveTenant] = useState<string>("NORTH-STAR");
 
   const fetchBriefs = useCallback(async () => {
@@ -122,7 +134,7 @@ export default function BriefQueue({
     
     return statusMatch && tenantMatch;
   });
-  const tabs = ["QUEUED", "CLAIMED", "COMPLETED", "FAILED"];
+  // tabs is derived from statusFilter prop (defined above)
 
   return (
     <div className="flex flex-col h-full">
@@ -135,7 +147,7 @@ export default function BriefQueue({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded transition-colors ${
+              className={`flex items-center gap-1.5 text-[11px] px-2 py-1 rounded transition-colors ${
                 activeTab === tab
                   ? "bg-bg-card-hover " + (STATUS_TEXT[tab] || "")
                   : "text-text-muted hover:text-text-secondary"
@@ -154,7 +166,7 @@ export default function BriefQueue({
           <div
             key={brief.id}
             onClick={() => onSelect(brief)}
-            className="px-3 py-2 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors cursor-pointer"
+            className="px-3 py-3 rounded bg-bg-card hover:bg-bg-card-hover border border-border transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
@@ -170,19 +182,19 @@ export default function BriefQueue({
                   title={brief.quality_grade ? `Quality: ${brief.quality_grade}` : "No grade"}
                 />
                 <span className="text-xs font-medium text-text-primary truncate max-w-[180px]">
-                  {brief.name}
+                  {displayName(brief.name ?? "")}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded ${STATUS_BG[brief.status] || "bg-gray-500"} text-black font-bold`}
+                  className={`text-[11px] px-1.5 py-0.5 rounded ${STATUS_BG[brief.status] || "bg-gray-500"} text-black font-bold`}
                 >
                   {brief.status}
                 </span>
-                <span className="text-[10px] text-text-muted">P:{brief.priority}</span>
+                <span className="text-[11px] text-text-muted">P:{brief.priority}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3 text-[10px] text-text-muted">
+            <div className="flex items-center gap-3 text-[11px] text-text-muted">
               {brief.claimed_by && (
                 <span>
                   agent: <span className="text-accent-purple">{brief.claimed_by}</span>
@@ -195,10 +207,10 @@ export default function BriefQueue({
               <span className="ml-auto">{timeAgo(brief.created_at)}</span>
             </div>
             {brief.summary && (
-              <p className="text-[10px] text-text-secondary mt-1 truncate">{brief.summary}</p>
+              <p className="text-[11px] text-text-secondary mt-1 truncate">{brief.summary}</p>
             )}
             {brief.failure_reason && (
-              <p className="text-[10px] text-accent-red mt-1 truncate">{brief.failure_reason}</p>
+              <p className="text-[11px] text-accent-red mt-1 truncate">{brief.failure_reason}</p>
             )}
           </div>
         ))}
