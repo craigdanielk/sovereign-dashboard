@@ -347,7 +347,7 @@ function TaskDetailPanel({
 // ── WorkspaceTab ──────────────────────────────────────────────────
 
 export default function WorkspaceTab() {
-  const { activeTenant } = useTenant();
+  const { activeTenant, activeTenantIds } = useTenant();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWs, setSelectedWs] = useState<Workspace | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -379,17 +379,17 @@ export default function WorkspaceTab() {
   }, [activeTenant]);
 
   const fetchTasks = useCallback(async () => {
-    if (!activeTenant) return;
+    if (!activeTenant || activeTenantIds.length === 0) return;
     setLoading(true);
-    // Query by tenant_id directly — canonical FK since schema migration
+    // Query across the full subtree: active tenant + all descendants
     const { data } = await supabase
       .from("tasks")
       .select("*")
-      .eq("tenant_id", activeTenant)
+      .in("tenant_id", activeTenantIds)
       .order("created_at", { ascending: false });
     if (data) setTasks(data);
     setLoading(false);
-  }, [activeTenant]);
+  }, [activeTenant, activeTenantIds]);
 
   useEffect(() => {
     fetchTasks();
@@ -399,8 +399,10 @@ export default function WorkspaceTab() {
   useEffect(() => {
     if (!activeTenant) return;
 
+    // Supabase realtime only supports single-value filters — subscribe broadly,
+    // fetchTasks re-queries with the full activeTenantIds array
     const ch = supabase.channel("workspace-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `tenant_id=eq.${activeTenant}` }, fetchTasks)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, fetchTasks)
       .subscribe();
 
     return () => { supabase.removeChannel(ch); };
