@@ -7,9 +7,6 @@ const nextConfig: NextConfig = {
   experimental: {
     staticGenerationRetryCount: 0,
   },
-  // Skip static export — all pages are dynamic (Supabase + tenant context)
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: false },
 };
 
 export default nextConfig;
