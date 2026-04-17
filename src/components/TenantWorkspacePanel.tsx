@@ -19,10 +19,16 @@ interface Task {
   priority: string;
   source: string | null;
   client_slug: string;
+  project_id: string | null;
   created_at: string;
   wsjf_score: number | null;
   tags: string[] | null;
   brief_id: string | null;
+}
+
+interface Project {
+  id: string;
+  name: string;
 }
 
 interface CommRow {
@@ -35,6 +41,7 @@ interface CommRow {
 
 interface WorkspacePayload {
   tenant: WorkspaceTenant;
+  projects: Project[];
   tasks: Task[];
   comms: CommRow[];
 }
@@ -322,6 +329,7 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
   const [submitting, setSubmitting]     = useState(false);
   const [toast, setToast]               = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   const effectiveTenantId = tenantId === null || tenantId === "all" ? "all" : tenantId;
 
@@ -336,12 +344,21 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
       }
       const data: WorkspacePayload = await res.json();
       setPayload(data);
+      // Auto-select first project if none selected
+      if (!activeProjectId && data.projects?.length > 0) {
+        setActiveProjectId(data.projects[0].id);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load workspace");
     } finally {
       setLoading(false);
     }
-  }, [effectiveTenantId]);
+  }, [effectiveTenantId, activeProjectId]);
+
+  // Reset project selection when tenant changes
+  useEffect(() => {
+    setActiveProjectId(null);
+  }, [tenantId]);
 
   useEffect(() => {
     load();
@@ -417,9 +434,12 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
     );
   }
 
-  const { tenant, tasks, comms } = payload;
+  const { tenant, projects = [], tasks, comms } = payload;
+  const filteredTasks = activeProjectId
+    ? tasks.filter((t) => t.project_id === activeProjectId)
+    : tasks;
   const tasksByCol = KANBAN_COLS.reduce<Record<string, Task[]>>((acc, col) => {
-    acc[col.key] = tasks
+    acc[col.key] = filteredTasks
       .filter((t) => t.status === col.key)
       .sort((a, b) => {
         if (a.wsjf_score !== null && b.wsjf_score !== null) return b.wsjf_score - a.wsjf_score;
@@ -448,7 +468,7 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
           <span className="text-[9px] text-text-muted">{tenant.slug}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-text-muted">{tasks.length} tasks</span>
+          <span className="text-[9px] text-text-muted">{filteredTasks.length} tasks</span>
           <button
             onClick={load}
             className="text-[9px] text-text-muted hover:text-text-primary transition-colors"
@@ -458,6 +478,59 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
           </button>
         </div>
       </div>
+
+      {/* Project tabs */}
+      {projects.length > 1 && (
+        <div
+          className="shrink-0 flex items-center gap-1 px-3 py-1 border-b border-border overflow-x-auto"
+          style={{ backgroundColor: "#0a0a0a" }}
+        >
+          <button
+            onClick={() => setActiveProjectId(null)}
+            style={{
+              fontSize: 10,
+              padding: "3px 8px",
+              borderRadius: 4,
+              border: !activeProjectId ? "1px solid #2A2A2A" : "1px solid transparent",
+              background: !activeProjectId ? "#1A1A1A" : "transparent",
+              color: !activeProjectId ? "#C4C4C4" : "#525252",
+              cursor: "pointer",
+              fontWeight: !activeProjectId ? 600 : 400,
+              whiteSpace: "nowrap",
+            }}
+          >
+            All ({tasks.length})
+          </button>
+          {projects.map((p) => {
+            const isActive = activeProjectId === p.id;
+            const count = tasks.filter((t) => t.project_id === p.id).length;
+            const label = p.name
+              .replace(` — Default Project`, "")
+              .replace(` -- Default Project`, "")
+              .replace(tenant.name, "").trim()
+              || p.name;
+            return (
+              <button
+                key={p.id}
+                onClick={() => setActiveProjectId(p.id)}
+                style={{
+                  fontSize: 10,
+                  padding: "3px 8px",
+                  borderRadius: 4,
+                  border: isActive ? "1px solid #2A2A2A" : "1px solid transparent",
+                  background: isActive ? "#1A1A1A" : "transparent",
+                  color: isActive ? "#C4C4C4" : "#525252",
+                  cursor: "pointer",
+                  fontWeight: isActive ? 600 : 400,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Kanban board */}
       <div className="shrink-0 px-2 pt-2 pb-1">
