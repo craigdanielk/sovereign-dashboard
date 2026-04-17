@@ -47,10 +47,12 @@ interface BriefDraft {
 }
 
 const KANBAN_COLS: { key: string; label: string }[] = [
-  { key: "TODO",         label: "TODO"         },
-  { key: "IN_PROGRESS",  label: "IN PROGRESS"  },
-  { key: "DONE",         label: "DONE"         },
-  { key: "BRIEF_QUEUED", label: "BRIEF QUEUED" },
+  { key: "backlog",      label: "BACKLOG"      },
+  { key: "open",         label: "OPEN"         },
+  { key: "in_progress",  label: "IN PROGRESS"  },
+  { key: "in_review",    label: "IN REVIEW"    },
+  { key: "blocked",      label: "BLOCKED"      },
+  { key: "complete",     label: "COMPLETE"     },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -462,7 +464,7 @@ export default function TenantWorkspacePanel({ tenantId }: TenantWorkspacePanelP
         <div className="text-[9px] text-text-muted font-bold tracking-wider mb-1.5 px-1">
           TASK BOARD
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-6 gap-1.5">
           {KANBAN_COLS.map((col) => {
             const colTasks = tasksByCol[col.key] || [];
             const colColor = getStatusColour(col.key);
