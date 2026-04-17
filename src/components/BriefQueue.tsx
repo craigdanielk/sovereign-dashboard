@@ -68,7 +68,7 @@ export default function BriefQueue({
       let tenantMatch = false;
 
       if (currentTenant === "NORTH-STAR") {
-        tenantMatch = bTenant === NORTH_STAR_ID || bTenant === "NORTH-STAR" || bTenant === "";
+        tenantMatch = bTenant === NORTH_STAR_ID || bTenant === "NORTH-STAR";
       } else {
         tenantMatch = bTenant === currentTenant;
       }
@@ -117,8 +117,7 @@ export default function BriefQueue({
     
     let tenantMatch = false;
     if (currentTenant === "NORTH-STAR") {
-      // NORTH-STAR is the catch-all for default UUID, literal string, or null
-      tenantMatch = bTenant === NORTH_STAR_ID || bTenant === "NORTH-STAR" || bTenant === "";
+      tenantMatch = bTenant === NORTH_STAR_ID || bTenant === "NORTH-STAR";
     } else {
       tenantMatch = bTenant === currentTenant;
     }

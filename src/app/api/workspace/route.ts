@@ -57,16 +57,15 @@ export async function GET(request: NextRequest) {
     }
 
     const tenant = tenants[0];
-    const clientSlug = tenant.slug;
 
-    // 2. Fetch tasks and comms in parallel
+    // 2. Fetch tasks and comms in parallel — filter by tenant_id (source of truth)
     const [tasksRes, commsRes] = await Promise.all([
       fetch(
-        `${url}/rest/v1/tasks?client_slug=eq.${encodeURIComponent(clientSlug)}&order=created_at.desc`,
+        `${url}/rest/v1/tasks?tenant_id=eq.${encodeURIComponent(tenant.id)}&order=created_at.desc`,
         { headers, signal: AbortSignal.timeout(5000) }
       ).catch(() => null),
       fetch(
-        `${url}/rest/v1/v_inbox?client_slug=eq.${encodeURIComponent(clientSlug)}&limit=20`,
+        `${url}/rest/v1/v_inbox?client_slug=eq.${encodeURIComponent(tenant.slug)}&limit=20`,
         { headers, signal: AbortSignal.timeout(5000) }
       ).catch(() => null),
     ]);
