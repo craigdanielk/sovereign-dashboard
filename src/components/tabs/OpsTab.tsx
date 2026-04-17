@@ -1,6 +1,7 @@
 "use client";
 
 import BriefQueue from "@/components/BriefQueue";
+import HitlBriefGate from "@/components/HitlBriefGate";
 import SystemHealth from "@/components/SystemHealth";
 import LiveLogs from "@/components/LiveLogs";
 import PlanningWindow from "@/components/PlanningWindow";
@@ -39,12 +40,15 @@ export default function OpsTab() {
           >
             <span className="panel-label">Queue</span>
           </div>
-          <div className="flex-1 overflow-hidden min-h-0">
-            <BriefQueue
-              selectedBrief={selectedBrief}
-              onSelect={handleBriefSelect}
-              statusFilter={["QUEUED", "CLAIMED"]}
-            />
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+            <HitlBriefGate />
+            <div className="flex-1 overflow-hidden min-h-0">
+              <BriefQueue
+                selectedBrief={selectedBrief}
+                onSelect={handleBriefSelect}
+                statusFilter={["QUEUED", "CLAIMED"]}
+              />
+            </div>
           </div>
         </div>
 

@@ -115,6 +115,8 @@ export interface Brief {
   name: string;
   priority: string;
   status: string;
+  /** HITL, SUPERVISED, AUTONOMOUS, etc. */
+  supervision_mode?: string | null;
   triggered_by: string | null;
   blocked_by: number[] | null;
   created_at: string;
@@ -126,7 +128,9 @@ export interface Brief {
   payload: BriefPayload | null;
   wsjf_score: number | null;
   quality_grade: string | null;
-  tenant_id: string | null; // Added tenant_id
+  tenant_id: string | null;
+  actual_cost_usd: number | null;
+  estimated_cost_usd: number | null;
 }
 
 export interface SessionRetrospective {
