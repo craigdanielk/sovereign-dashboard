@@ -199,14 +199,18 @@ function TaskCard({
 
 // ── TaskDetailPanel ───────────────────────────────────────────────
 
+const PRIORITY_OPTIONS = ["P0", "P1", "P2", "P3", "P4"] as const;
+
 function TaskDetailPanel({
   task,
   onClose,
   onRefresh,
+  onStatusChange,
 }: {
   task: Task;
   onClose: () => void;
   onRefresh: () => void;
+  onStatusChange: (taskId: string, status: TaskStatus) => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -216,8 +220,63 @@ function TaskDetailPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const msgCount = messages.filter((m) => m.role === "user").length;
 
+  // Editable fields
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editDesc, setEditDesc] = useState(task.description ?? "");
+  const [editPriority, setEditPriority] = useState(task.priority);
+  const [editDueDate, setEditDueDate] = useState(task.due_date ?? "");
+  const [editAssignedTo, setEditAssignedTo] = useState(task.assigned_to ?? "");
+  const [editHours, setEditHours] = useState(task.estimated_hours?.toString() ?? "");
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  // Reset editable fields when task changes
   useEffect(() => {
-    // Seed system context when task changes
+    setEditTitle(task.title);
+    setEditDesc(task.description ?? "");
+    setEditPriority(task.priority);
+    setEditDueDate(task.due_date ?? "");
+    setEditAssignedTo(task.assigned_to ?? "");
+    setEditHours(task.estimated_hours?.toString() ?? "");
+    setDirty(false);
+  }, [task.id, task.title, task.description, task.priority, task.due_date, task.assigned_to, task.estimated_hours]);
+
+  // Track dirty state
+  useEffect(() => {
+    const changed =
+      editTitle !== task.title ||
+      editDesc !== (task.description ?? "") ||
+      editPriority !== task.priority ||
+      editDueDate !== (task.due_date ?? "") ||
+      editAssignedTo !== (task.assigned_to ?? "") ||
+      editHours !== (task.estimated_hours?.toString() ?? "");
+    setDirty(changed);
+  }, [editTitle, editDesc, editPriority, editDueDate, editAssignedTo, editHours, task]);
+
+  async function saveFields() {
+    if (!dirty || saving) return;
+    setSaving(true);
+    const updates: Record<string, unknown> = {
+      title: editTitle.trim() || task.title,
+      description: editDesc.trim() || null,
+      priority: editPriority,
+      due_date: editDueDate || null,
+      assigned_to: editAssignedTo.trim() || null,
+      estimated_hours: editHours ? parseFloat(editHours) : null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.from("tasks").update(updates).eq("id", task.id);
+    if (error) {
+      showToast(`Save failed: ${error.message}`);
+    } else {
+      showToast("Saved");
+      onRefresh();
+    }
+    setSaving(false);
+  }
+
+  useEffect(() => {
     setMessages([{
       id: "sys-0",
       role: "assistant",
@@ -323,10 +382,37 @@ function TaskDetailPanel({
         </button>
       </div>
 
-      {/* Metadata */}
-      <div className="flex-shrink-0 px-4 py-3 border-b space-y-2" style={{ borderColor: "#1E1E1E" }}>
-        <div className="text-[11px] font-semibold text-[#E5E5E5] leading-snug">{task.title}</div>
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Editable metadata */}
+      <div className="flex-shrink-0 px-4 py-3 border-b space-y-2 overflow-y-auto" style={{ borderColor: "#1E1E1E", maxHeight: 280 }}>
+        {/* Title */}
+        <input
+          className="w-full bg-transparent text-[11px] font-semibold text-[#E5E5E5] leading-snug outline-none border-b border-transparent focus:border-[#7C3AED44] pb-0.5"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onBlur={saveFields}
+        />
+
+        {/* Status + Priority row */}
+        <div className="flex items-center gap-2">
+          <select
+            className="bg-[#1A1A1A] border border-[#2A2A2A] rounded text-[9px] text-[#888] px-1.5 py-0.5 outline-none focus:border-[#7C3AED44]"
+            value={task.status}
+            onChange={(e) => onStatusChange(task.id, e.target.value as TaskStatus)}
+          >
+            {KANBAN_COLS.map((col) => (
+              <option key={col.key} value={col.key}>{col.label}</option>
+            ))}
+          </select>
+          <select
+            className="bg-[#1A1A1A] border border-[#2A2A2A] rounded text-[9px] text-[#888] px-1.5 py-0.5 outline-none focus:border-[#7C3AED44]"
+            value={editPriority}
+            onChange={(e) => { setEditPriority(e.target.value); }}
+            onBlur={saveFields}
+          >
+            {PRIORITY_OPTIONS.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
           {task.source && (
             <span
               className="text-[8px] font-bold px-1.5 py-0.5 rounded"
@@ -335,28 +421,82 @@ function TaskDetailPanel({
               {task.source.toUpperCase()}
             </span>
           )}
-          <span className="text-[8px] font-mono text-[#444444]">{task.priority}</span>
           {task.wsjf_score != null && (
             <span className="text-[8px] font-mono text-[#444444]">WSJF {task.wsjf_score.toFixed(1)}</span>
           )}
-          <span className="text-[8px] text-[#333333]">{task.client_slug}</span>
         </div>
-        {task.description && (
-          <p className="text-[10px] text-[#555555] leading-relaxed line-clamp-3">{task.description}</p>
-        )}
-        {/* Research signals counter */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            <span className="text-[8px] font-mono text-[#333333]">{msgCount} signals</span>
+
+        {/* Description */}
+        <textarea
+          className="w-full bg-[#0D0D0D] border border-[#1E1E1E] rounded text-[10px] text-[#888] leading-relaxed px-2 py-1.5 outline-none focus:border-[#7C3AED44] resize-none"
+          rows={2}
+          placeholder="Description..."
+          value={editDesc}
+          onChange={(e) => setEditDesc(e.target.value)}
+          onBlur={saveFields}
+        />
+
+        {/* Due date, Assigned to, Estimated hours */}
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <label className="text-[8px] text-[#444] uppercase tracking-wider block mb-0.5">Due</label>
+            <input
+              type="date"
+              className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded text-[9px] text-[#888] px-1.5 py-0.5 outline-none focus:border-[#7C3AED44]"
+              value={editDueDate}
+              onChange={(e) => setEditDueDate(e.target.value)}
+              onBlur={saveFields}
+            />
           </div>
-          {promotable && task.status !== "complete" && task.status !== "cancelled" && (
+          <div>
+            <label className="text-[8px] text-[#444] uppercase tracking-wider block mb-0.5">Assigned</label>
+            <input
+              className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded text-[9px] text-[#888] px-1.5 py-0.5 outline-none focus:border-[#7C3AED44]"
+              placeholder="—"
+              value={editAssignedTo}
+              onChange={(e) => setEditAssignedTo(e.target.value)}
+              onBlur={saveFields}
+            />
+          </div>
+          <div>
+            <label className="text-[8px] text-[#444] uppercase tracking-wider block mb-0.5">Est. hrs</label>
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded text-[9px] text-[#888] px-1.5 py-0.5 outline-none focus:border-[#7C3AED44]"
+              placeholder="—"
+              value={editHours}
+              onChange={(e) => setEditHours(e.target.value)}
+              onBlur={saveFields}
+            />
+          </div>
+        </div>
+
+        {/* Save button + signals */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
-              <div className="w-1 h-1 rounded-full bg-[#7C3AED]" />
-              <span className="text-[8px] text-[#7C3AED]">threshold met</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span className="text-[8px] font-mono text-[#333333]">{msgCount} signals</span>
             </div>
+            {promotable && task.status !== "complete" && task.status !== "cancelled" && (
+              <div className="flex items-center gap-1">
+                <div className="w-1 h-1 rounded-full bg-[#7C3AED]" />
+                <span className="text-[8px] text-[#7C3AED]">threshold met</span>
+              </div>
+            )}
+          </div>
+          {dirty && (
+            <button
+              onClick={saveFields}
+              disabled={saving}
+              className="text-[8px] font-bold tracking-wider px-2 py-0.5 rounded border border-[#10B98144] text-[#10B981] hover:bg-[#10B98111] transition-all disabled:opacity-40"
+            >
+              {saving ? "SAVING..." : "SAVE"}
+            </button>
           )}
         </div>
       </div>
@@ -594,6 +734,7 @@ export default function WorkspaceTab() {
             task={selectedTask}
             onClose={() => setSelectedTask(null)}
             onRefresh={fetchTasks}
+            onStatusChange={handleStatusChange}
           />
         )}
       </div>
