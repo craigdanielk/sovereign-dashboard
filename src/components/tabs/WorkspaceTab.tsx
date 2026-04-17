@@ -43,10 +43,12 @@ interface ChatMessage {
 // ── Constants ────────────────────────────────────────────────────
 
 const KANBAN_COLS = [
-  { key: "TODO",        label: "TO DO",       color: "#4B4B6B" },
-  { key: "IN_PROGRESS", label: "IN PROGRESS", color: "#F59E0B" },
-  { key: "BRIEF_READY", label: "BRIEF READY", color: "#7C3AED" },
-  { key: "DONE",        label: "DONE",        color: "#10B981" },
+  { key: "backlog",     label: "BACKLOG",     color: "#4B4B6B" },
+  { key: "open",        label: "OPEN",        color: "#6366F1" },
+  { key: "in_progress", label: "IN PROGRESS", color: "#F59E0B" },
+  { key: "in_review",   label: "IN REVIEW",   color: "#8B5CF6" },
+  { key: "blocked",     label: "BLOCKED",     color: "#EF4444" },
+  { key: "complete",    label: "COMPLETE",     color: "#10B981" },
 ] as const;
 
 const SOURCE_COLOURS: Record<string, string> = {
@@ -110,7 +112,7 @@ function TaskCard({ task, selected, onClick }: { task: Task; selected: boolean; 
         </div>
         <span className="text-[8px] text-[#333333]">{timeAgo(task.created_at)}</span>
       </div>
-      {isPromotable(task) && task.status !== "BRIEF_READY" && task.status !== "DONE" && (
+      {isPromotable(task) && task.status !== "complete" && task.status !== "cancelled" && (
         <div className="mt-1 flex items-center gap-1">
           <div className="w-1 h-1 rounded-full bg-[#7C3AED] animate-pulse" />
           <span className="text-[8px] text-[#7C3AED]">ready to promote</span>
@@ -275,7 +277,7 @@ function TaskDetailPanel({
             </svg>
             <span className="text-[8px] font-mono text-[#333333]">{msgCount} signals</span>
           </div>
-          {promotable && task.status !== "BRIEF_READY" && task.status !== "DONE" && (
+          {promotable && task.status !== "complete" && task.status !== "cancelled" && (
             <div className="flex items-center gap-1">
               <div className="w-1 h-1 rounded-full bg-[#7C3AED]" />
               <span className="text-[8px] text-[#7C3AED]">threshold met</span>
@@ -324,7 +326,7 @@ function TaskDetailPanel({
         </div>
 
         {/* Promote */}
-        {promotable && task.status !== "BRIEF_READY" && task.status !== "DONE" && (
+        {promotable && task.status !== "complete" && task.status !== "cancelled" && (
           <button
             onClick={handlePromote}
             disabled={promoting}
@@ -379,17 +381,18 @@ export default function WorkspaceTab() {
   }, [activeTenant]);
 
   const fetchTasks = useCallback(async () => {
-    if (!activeTenant || activeTenantIds.length === 0) return;
+    if (!activeTenant) return;
     setLoading(true);
-    // Query across the full subtree: active tenant + all descendants
+    // Query by exact tenant_id — each tenant shows only its own tasks.
+    // Sub-tenant tasks are viewed by selecting that sub-tenant in the switcher.
     const { data } = await supabase
       .from("tasks")
       .select("*")
-      .in("tenant_id", activeTenantIds)
+      .eq("tenant_id", activeTenant)
       .order("created_at", { ascending: false });
     if (data) setTasks(data);
     setLoading(false);
-  }, [activeTenant, activeTenantIds]);
+  }, [activeTenant]);
 
   useEffect(() => {
     fetchTasks();
@@ -408,14 +411,8 @@ export default function WorkspaceTab() {
     return () => { supabase.removeChannel(ch); };
   }, [activeTenant, fetchTasks]);
 
-  const knownStatuses = new Set<string>([...KANBAN_COLS.map((c) => c.key), "BRIEF_QUEUED"]);
-
   const tasksByCol = KANBAN_COLS.reduce<Record<string, Task[]>>((acc, col) => {
-    acc[col.key] = tasks.filter((t) => {
-      if (col.key === "BRIEF_READY") return t.status === "BRIEF_READY" || t.status === "BRIEF_QUEUED";
-      if (col.key === "TODO") return t.status === "TODO" || !knownStatuses.has(t.status);
-      return t.status === col.key;
-    });
+    acc[col.key] = tasks.filter((t) => t.status === col.key);
     return acc;
   }, {} as Record<string, Task[]>);
 
