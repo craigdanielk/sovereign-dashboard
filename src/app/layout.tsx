@@ -15,10 +15,6 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-// Prevent static prerender — layout uses client providers (TenantContext)
-// that fail during /_global-error prerender in Next.js 16.
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "Sovereign",
   description: "North Star command surface — multi-agent orchestration dashboard",

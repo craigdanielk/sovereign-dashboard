@@ -1,10 +1,15 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { TenantProvider } from "@/lib/tenant-context";
 
-// ssr:false prevents usePathname/useRouter/useContext from running during
-// /_global-error and /_not-found static prerendering in Next.js 15.
+// Lazy-import TenantProvider to prevent createContext from being evaluated
+// during Vercel's static prerender of /_global-error (React dispatcher null).
+const TenantProviderLazy = dynamic(
+  () => import("@/lib/tenant-context").then((m) => ({ default: m.TenantProvider })),
+  { ssr: false }
+);
+
 const AppShell = dynamic(() => import("./AppShell"), {
   ssr: false,
   loading: () => <div style={{ height: "100vh", background: "#111111" }} />,
@@ -12,14 +17,19 @@ const AppShell = dynamic(() => import("./AppShell"), {
 const GlobalSearch = dynamic(() => import("./GlobalSearch"), { ssr: false });
 const CommandPalette = dynamic(() => import("@/components/CommandPalette"), { ssr: false });
 
-// TenantProvider lives here so both AppShell (TenantSwitcher) and
-// page children (tab components) share the same context instance.
 export default function Shell({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return <div style={{ height: "100vh", background: "#111111" }} />;
+  }
+
   return (
-    <TenantProvider>
+    <TenantProviderLazy>
       <AppShell>{children}</AppShell>
       <GlobalSearch />
       <CommandPalette />
-    </TenantProvider>
+    </TenantProviderLazy>
   );
 }
