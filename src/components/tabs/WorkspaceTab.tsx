@@ -17,7 +17,9 @@ interface Workspace {
 interface Task {
   id: string;
   workspace_id: string;
+  tenant_id: string;
   client_slug: string;
+  slug: string | null;
   title: string;
   description: string | null;
   status: string;
@@ -30,6 +32,9 @@ interface Task {
   system_leverage: number | null;
   job_size: number | null;
   tags: string[] | null;
+  due_date: string | null;
+  assigned_to: string | null;
+  estimated_hours: number | null;
   created_at: string;
   updated_at: string | null;
 }
@@ -42,6 +47,12 @@ interface ChatMessage {
 
 // ── Constants ────────────────────────────────────────────────────
 
+const CANONICAL_STATUSES = [
+  "backlog", "open", "in_progress", "in_review", "blocked", "complete", "cancelled",
+] as const;
+
+type TaskStatus = (typeof CANONICAL_STATUSES)[number];
+
 const KANBAN_COLS = [
   { key: "backlog",     label: "BACKLOG",     color: "#4B4B6B" },
   { key: "open",        label: "OPEN",        color: "#6366F1" },
@@ -49,6 +60,7 @@ const KANBAN_COLS = [
   { key: "in_review",   label: "IN REVIEW",   color: "#8B5CF6" },
   { key: "blocked",     label: "BLOCKED",     color: "#EF4444" },
   { key: "complete",    label: "COMPLETE",     color: "#10B981" },
+  { key: "cancelled",   label: "CANCELLED",   color: "#6B7280" },
 ] as const;
 
 const SOURCE_COLOURS: Record<string, string> = {
@@ -81,7 +93,32 @@ function isPromotable(task: Task): boolean {
 
 // ── TaskCard ─────────────────────────────────────────────────────
 
-function TaskCard({ task, selected, onClick }: { task: Task; selected: boolean; onClick: () => void }) {
+function TaskCard({
+  task,
+  selected,
+  onClick,
+  onStatusChange,
+}: {
+  task: Task;
+  selected: boolean;
+  onClick: () => void;
+  onStatusChange: (taskId: string, status: TaskStatus) => void;
+}) {
+  const [statusOpen, setStatusOpen] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!statusOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [statusOpen]);
+
+  const currentCol = KANBAN_COLS.find((c) => c.key === task.status);
+
   return (
     <div
       onClick={onClick}
@@ -91,8 +128,46 @@ function TaskCard({ task, selected, onClick }: { task: Task; selected: boolean; 
         borderColor: selected ? "#7C3AED" : "#1E1E1E",
       }}
     >
-      <div className="text-[10px] font-medium text-[#E5E5E5] leading-snug mb-1.5">
-        {task.title}
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="text-[10px] font-medium text-[#E5E5E5] leading-snug flex-1 mr-1">
+          {task.title}
+        </div>
+        {/* Status chip — click to change */}
+        <div className="relative flex-shrink-0" ref={statusRef}>
+          <button
+            onClick={(e) => { e.stopPropagation(); setStatusOpen((o) => !o); }}
+            className="text-[7px] font-bold tracking-wider px-1.5 py-0.5 rounded border transition-all hover:brightness-125"
+            style={{
+              color: currentCol?.color ?? "#666",
+              borderColor: `${currentCol?.color ?? "#666"}44`,
+              background: `${currentCol?.color ?? "#666"}11`,
+            }}
+          >
+            {currentCol?.label ?? task.status.toUpperCase()}
+          </button>
+          {statusOpen && (
+            <div
+              className="absolute right-0 top-full mt-1 z-50 rounded border py-1 shadow-lg"
+              style={{ background: "#1A1A1A", borderColor: "#2A2A2A", minWidth: 120 }}
+            >
+              {KANBAN_COLS.map((col) => (
+                <button
+                  key={col.key}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (col.key !== task.status) onStatusChange(task.id, col.key as TaskStatus);
+                    setStatusOpen(false);
+                  }}
+                  className="w-full text-left px-2.5 py-1 text-[9px] font-medium hover:bg-[#222222] transition-colors flex items-center gap-1.5"
+                  style={{ color: col.key === task.status ? col.color : "#888" }}
+                >
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: col.color }} />
+                  {col.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-center justify-between gap-1">
         <div className="flex items-center gap-1.5">
@@ -411,6 +486,22 @@ export default function WorkspaceTab() {
     return () => { supabase.removeChannel(ch); };
   }, [activeTenant, fetchTasks]);
 
+  const handleStatusChange = useCallback(async (taskId: string, newStatus: TaskStatus) => {
+    // Optimistic update
+    setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t));
+    if (selectedTask?.id === taskId) setSelectedTask((t) => t ? { ...t, status: newStatus } : t);
+
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq("id", taskId);
+
+    if (error) {
+      console.error("[status-change] failed:", error);
+      fetchTasks(); // revert on error
+    }
+  }, [fetchTasks, selectedTask?.id]);
+
   const tasksByCol = KANBAN_COLS.reduce<Record<string, Task[]>>((acc, col) => {
     acc[col.key] = tasks.filter((t) => t.status === col.key);
     return acc;
@@ -483,6 +574,7 @@ export default function WorkspaceTab() {
                         task={task}
                         selected={selectedTask?.id === task.id}
                         onClick={() => setSelectedTask((t) => t?.id === task.id ? null : task)}
+                        onStatusChange={handleStatusChange}
                       />
                     ))}
                     {colTasks.length === 0 && (
