@@ -86,7 +86,14 @@ export async function POST(request: NextRequest) {
 
     const tenant = tenants[0];
     const clientSlug = tenant.slug;
-    const briefName = `BRIEF::${slugify(title)}::${todayDate()}`;
+    // Modal may send a full `BRIEF::slug::date` name — do not double-wrap
+    const briefName = title.trim().startsWith("BRIEF::")
+      ? title.trim()
+      : `BRIEF::${slugify(title)}::${todayDate()}`;
+    const triggerTitle =
+      title.trim().startsWith("BRIEF::") && description?.trim()
+        ? description.trim().slice(0, 500)
+        : title.trim().slice(0, 500);
 
     // 2. Build brief payload with node_1–node_6 skeleton pre-filled from task data
     const payload = {
@@ -99,7 +106,7 @@ export async function POST(request: NextRequest) {
         demo_target: false,
       },
       node_1_trigger: {
-        event: title,
+        event: triggerTitle,
         context: description ?? "",
         decision: `Task (id: ${task_id}) converted to BRIEF. Awaiting HITL approval before execution.`,
       },
@@ -108,12 +115,12 @@ export async function POST(request: NextRequest) {
         stakeholders: ["Craig"],
         current_state: {
           complete: [],
-          not_built: [title],
+          not_built: [triggerTitle],
           in_progress: [],
         },
       },
       node_3_deliverables: {
-        definition_of_done: [`Complete: ${title}`],
+        definition_of_done: [`Complete: ${triggerTitle}`],
         acceptance_criteria: [],
         out_of_scope: [],
       },

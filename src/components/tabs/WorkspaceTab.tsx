@@ -53,6 +53,23 @@ const CANONICAL_STATUSES = [
 
 type TaskStatus = (typeof CANONICAL_STATUSES)[number];
 
+const LEGACY_TO_CANONICAL: Record<string, TaskStatus> = {
+  TODO: "open",
+  INTAKE: "open",
+  IN_PROGRESS: "in_progress",
+  BRIEF_READY: "in_review",
+  BRIEF_QUEUED: "in_review",
+  DONE: "complete",
+  CANCELLED: "cancelled",
+};
+
+function normalizeTaskStatus(raw: string | null | undefined): TaskStatus {
+  const s = (raw ?? "").trim();
+  if (LEGACY_TO_CANONICAL[s]) return LEGACY_TO_CANONICAL[s];
+  if ((CANONICAL_STATUSES as readonly string[]).includes(s)) return s as TaskStatus;
+  return "open";
+}
+
 const KANBAN_COLS = [
   { key: "backlog",     label: "BACKLOG",     color: "#4B4B6B" },
   { key: "open",        label: "OPEN",        color: "#6366F1" },
@@ -85,8 +102,9 @@ function timeAgo(ts: string | null): string {
   return `${Math.floor(h / 24)}d`;
 }
 
-// Promotion: wsjf_score >= 5 or no score but high business_value
 function isPromotable(task: Task): boolean {
+  const st = normalizeTaskStatus(task.status);
+  if (["in_review", "complete", "cancelled"].includes(st)) return false;
   if (task.wsjf_score != null) return task.wsjf_score >= 5;
   return (task.business_value ?? 0) >= 6;
 }
@@ -117,7 +135,8 @@ function TaskCard({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [statusOpen]);
 
-  const currentCol = KANBAN_COLS.find((c) => c.key === task.status);
+  const ns = normalizeTaskStatus(task.status);
+  const currentCol = KANBAN_COLS.find((c) => c.key === ns);
 
   return (
     <div
@@ -143,7 +162,7 @@ function TaskCard({
               background: `${currentCol?.color ?? "#666"}11`,
             }}
           >
-            {currentCol?.label ?? task.status.toUpperCase()}
+            {currentCol?.label ?? ns.replace(/_/g, " ").toUpperCase()}
           </button>
           {statusOpen && (
             <div
@@ -155,11 +174,11 @@ function TaskCard({
                   key={col.key}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (col.key !== task.status) onStatusChange(task.id, col.key as TaskStatus);
+                    if (col.key !== ns) onStatusChange(task.id, col.key as TaskStatus);
                     setStatusOpen(false);
                   }}
                   className="w-full text-left px-2.5 py-1 text-[9px] font-medium hover:bg-[#222222] transition-colors flex items-center gap-1.5"
-                  style={{ color: col.key === task.status ? col.color : "#888" }}
+                  style={{ color: col.key === ns ? col.color : "#888" }}
                 >
                   <div className="w-1.5 h-1.5 rounded-full" style={{ background: col.color }} />
                   {col.label}
@@ -187,7 +206,7 @@ function TaskCard({
         </div>
         <span className="text-[8px] text-[#333333]">{timeAgo(task.created_at)}</span>
       </div>
-      {isPromotable(task) && task.status !== "complete" && task.status !== "cancelled" && (
+      {isPromotable(task) && (
         <div className="mt-1 flex items-center gap-1">
           <div className="w-1 h-1 rounded-full bg-[#7C3AED] animate-pulse" />
           <span className="text-[8px] text-[#7C3AED]">ready to promote</span>
@@ -196,6 +215,119 @@ function TaskCard({
     </div>
   );
 }
+
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 60);
+}
+
+function todayYmd(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+interface BriefDraft {
+  task: Task;
+  name: string;
+  priority: string;
+  description: string;
+}
+
+function BriefModal({
+  draft,
+  onClose,
+  onConfirm,
+  submitting,
+}: {
+  draft: BriefDraft;
+  onClose: () => void;
+  onConfirm: (d: BriefDraft) => void;
+  submitting: boolean;
+}) {
+  const [name, setName] = useState(draft.name);
+  const [priority, setPriority] = useState(draft.priority);
+  const [description, setDescription] = useState(draft.description);
+
+  useEffect(() => {
+    setName(draft.name);
+    setPriority(draft.priority);
+    setDescription(draft.description);
+  }, [draft.task.id, draft.name, draft.priority, draft.description]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center"
+      style={{ backgroundColor: "rgba(0,0,0,0.78)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded border p-4 space-y-3"
+        style={{ backgroundColor: "#0a0a0a", borderColor: "#7C3AED44" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold tracking-widest uppercase text-[#7C3AED]">
+            → BRIEF
+          </span>
+          <button type="button" onClick={onClose} className="text-[10px] text-[#555555] hover:text-[#888888]">
+            ✕
+          </button>
+        </div>
+        <div className="space-y-2">
+          <div>
+            <label className="block text-[8px] text-[#555555] mb-0.5 uppercase tracking-wider">Name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-[#111111] border border-[#1E1E1E] rounded px-2 py-1.5 text-[10px] text-[#E5E5E5] outline-none focus:border-[#7C3AED44]"
+            />
+          </div>
+          <div>
+            <label className="block text-[8px] text-[#555555] mb-0.5 uppercase tracking-wider">Priority</label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full bg-[#111111] border border-[#1E1E1E] rounded px-2 py-1.5 text-[10px] text-[#E5E5E5]"
+            >
+              {["P0", "P1", "P2", "P3"].map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[8px] text-[#555555] mb-0.5 uppercase tracking-wider">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              className="w-full bg-[#111111] border border-[#1E1E1E] rounded px-2 py-1.5 text-[10px] text-[#E5E5E5] outline-none focus:border-[#7C3AED44] resize-none"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          <span className="text-[8px] text-[#444444] flex-1">Queues HITL brief in Supabase</span>
+          <button type="button" onClick={onClose} className="text-[9px] px-2 py-1 rounded border border-[#2A2A2A] text-[#666666]">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm({ ...draft, name, priority, description })}
+            disabled={submitting || !name.trim()}
+            className="text-[9px] px-2 py-1 rounded border border-[#7C3AED] text-[#7C3AED] disabled:opacity-40"
+          >
+            {submitting ? "Creating…" : "Confirm"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 // ── TaskDetailPanel ───────────────────────────────────────────────
 
@@ -206,16 +338,17 @@ function TaskDetailPanel({
   onClose,
   onRefresh,
   onStatusChange,
+  onOpenBriefModal,
 }: {
   task: Task;
   onClose: () => void;
   onRefresh: () => void;
   onStatusChange: (taskId: string, status: TaskStatus) => void;
+  onOpenBriefModal: (t: Task) => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [promoting, setPromoting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const msgCount = messages.filter((m) => m.role === "user").length;
@@ -336,27 +469,6 @@ function TaskDetailPanel({
       );
     } finally {
       setSending(false);
-    }
-  }
-
-  async function handlePromote() {
-    setPromoting(true);
-    try {
-      const res = await fetch("/api/promote-task-to-brief", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task_id: task.id }),
-      });
-      const json = await res.json();
-      if (res.ok) {
-        showToast(`BRIEF #${json.brief_id} queued — ${json.name}`);
-        onRefresh();
-        onClose();
-      } else {
-        showToast(`Error: ${json.error}`);
-      }
-    } finally {
-      setPromoting(false);
     }
   }
 
@@ -482,7 +594,7 @@ function TaskDetailPanel({
               </svg>
               <span className="text-[8px] font-mono text-[#333333]">{msgCount} signals</span>
             </div>
-            {promotable && task.status !== "complete" && task.status !== "cancelled" && (
+            {promotable && (
               <div className="flex items-center gap-1">
                 <div className="w-1 h-1 rounded-full bg-[#7C3AED]" />
                 <span className="text-[8px] text-[#7C3AED]">threshold met</span>
@@ -540,14 +652,14 @@ function TaskDetailPanel({
           </button>
         </div>
 
-        {/* Promote */}
-        {promotable && task.status !== "complete" && task.status !== "cancelled" && (
+        {/* → BRIEF via /api/workspace/create-brief */}
+        {promotable && (
           <button
-            onClick={handlePromote}
-            disabled={promoting}
-            className="w-full py-1.5 text-[9px] font-bold tracking-widest border border-[#7C3AED44] text-[#7C3AED] rounded hover:bg-[#7C3AED11] transition-all disabled:opacity-40"
+            type="button"
+            onClick={() => onOpenBriefModal(task)}
+            className="w-full py-1.5 text-[9px] font-bold tracking-widest border border-[#7C3AED44] text-[#7C3AED] rounded hover:bg-[#7C3AED11] transition-all"
           >
-            {promoting ? "QUEUING BRIEF..." : "→ PROMOTE TO BRIEF"}
+            → BRIEF
           </button>
         )}
       </div>
@@ -570,6 +682,8 @@ export default function WorkspaceTab() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
+  const [briefDraft, setBriefDraft] = useState<BriefDraft | null>(null);
+  const [briefSubmitting, setBriefSubmitting] = useState(false);
 
   // Reset board when tenant changes
   useEffect(() => {
@@ -596,22 +710,60 @@ export default function WorkspaceTab() {
   }, [activeTenant]);
 
   const fetchTasks = useCallback(async () => {
-    if (!activeTenant) return;
+    if (!activeTenant || activeTenantIds.length === 0) return;
     setLoading(true);
-    // Query by exact tenant_id — each tenant shows only its own tasks.
-    // Sub-tenant tasks are viewed by selecting that sub-tenant in the switcher.
     const { data } = await supabase
       .from("tasks")
       .select("*")
-      .eq("tenant_id", activeTenant)
+      .in("tenant_id", activeTenantIds)
       .order("created_at", { ascending: false });
     if (data) setTasks(data);
     setLoading(false);
-  }, [activeTenant]);
+  }, [activeTenant, activeTenantIds]);
 
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  useEffect(() => {
+    setSelectedTask((prev) => {
+      if (!prev) return null;
+      return tasks.find((x) => x.id === prev.id) ?? null;
+    });
+  }, [tasks]);
+
+  async function handleQueueBrief(d: BriefDraft) {
+    setBriefSubmitting(true);
+    try {
+      const res = await fetch("/api/workspace/create-brief", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          task_id: d.task.id,
+          tenant_id: d.task.tenant_id,
+          title: d.name,
+          description: d.description,
+          priority: d.priority,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      const briefId = json.brief_id as string | number | null | undefined;
+      await supabase
+        .from("tasks")
+        .update({
+          status: "in_review",
+          source_id: briefId != null ? String(briefId) : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", d.task.id);
+      setBriefDraft(null);
+      setSelectedTask(null);
+      await fetchTasks();
+    } finally {
+      setBriefSubmitting(false);
+    }
+  }
 
   // Realtime: subscribe to tasks for this tenant
   useEffect(() => {
@@ -643,7 +795,7 @@ export default function WorkspaceTab() {
   }, [fetchTasks, selectedTask?.id]);
 
   const tasksByCol = KANBAN_COLS.reduce<Record<string, Task[]>>((acc, col) => {
-    acc[col.key] = tasks.filter((t) => t.status === col.key);
+    acc[col.key] = tasks.filter((t) => normalizeTaskStatus(t.status) === col.key);
     return acc;
   }, {} as Record<string, Task[]>);
 
@@ -735,9 +887,26 @@ export default function WorkspaceTab() {
             onClose={() => setSelectedTask(null)}
             onRefresh={fetchTasks}
             onStatusChange={handleStatusChange}
+            onOpenBriefModal={(t) =>
+              setBriefDraft({
+                task: t,
+                name: `BRIEF::${slugify(t.title)}::${todayYmd()}`,
+                priority: t.priority || "P2",
+                description: t.description?.trim() || t.title,
+              })
+            }
           />
         )}
       </div>
+
+      {briefDraft && (
+        <BriefModal
+          draft={briefDraft}
+          onClose={() => setBriefDraft(null)}
+          onConfirm={handleQueueBrief}
+          submitting={briefSubmitting}
+        />
+      )}
     </div>
   );
 }
