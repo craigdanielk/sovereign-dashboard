@@ -46,7 +46,9 @@ export default function WorkspaceBoard() {
             payload: null,
             wsjf_score: (b.wsjf_score as number) || null,
             quality_grade: (b.quality_grade as string) || null,
-            tenant_id: (b.client_slug as string) || null, // Added tenant_id
+            tenant_id: (b.client_slug as string) || null,
+            actual_cost_usd: null,
+            estimated_cost_usd: null,
           }))
         );
       } else {

@@ -20,28 +20,36 @@ export default function ReconTab() {
   const [loading, setLoading] = useState(true);
 
   const fetchFeeds = useCallback(async () => {
-    const { data } = await supabase
-      .from("feed_sources")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    if (data) setFeedSources(data);
+    try {
+      const { data } = await supabase
+        .from("feed_sources")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setFeedSources(data ?? []);
+    } catch {
+      // table may not exist
+    }
   }, []);
 
   const fetchPatterns = useCallback(async () => {
-    const { data } = await supabase
-      .from("pattern_detections")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    if (data) {
-      setPatterns(data);
+    try {
+      const { data } = await supabase
+        .from("pattern_detections")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      const rows = data ?? [];
+      setPatterns(rows);
       const c: Record<string, number> = {};
-      data.forEach((p: PatternDetection) => {
+      rows.forEach((p: PatternDetection) => {
         const s = p.status?.toUpperCase() || "UNKNOWN";
         c[s] = (c[s] || 0) + 1;
       });
       setSignalCounts(c);
+    } catch {
+      // table may not exist — show empty state
+    } finally {
       setLoading(false);
     }
   }, []);
