@@ -54,7 +54,7 @@
       "source_files": [
         "agents/ATLAS.yaml",
         "commands/rag.md",
-        "Personal/RAG-System/"
+        "Personal/platform/RAG-System/"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -63,8 +63,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# ATLAS\n\n**Category**: agent\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `agents/ATLAS.yaml`\n- `commands/rag.md`\n- `Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from agents/ATLAS.yaml in a follow-on BRIEF._",
-      "body": "# ATLAS\n\n**Category**: agent\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `agents/ATLAS.yaml`\n- `commands/rag.md`\n- `Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from agents/ATLAS.yaml in a follow-on BRIEF._",
+      "body_preview": "# ATLAS\n\n**Category**: agent\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `agents/ATLAS.yaml`\n- `commands/rag.md`\n- `Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from agents/ATLAS.yaml in a follow-on BRIEF._",
+      "body": "# ATLAS\n\n**Category**: agent\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `agents/ATLAS.yaml`\n- `commands/rag.md`\n- `Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from agents/ATLAS.yaml in a follow-on BRIEF._",
       "search_text": "atlas agent # atlas\n\n**category**: agent\n**operational status**: working\n**completeness score**: 85\n\n## source files\n\n- `agents/atlas.yaml`\n- `commands/rag.md`\n- `personal/rag-system/`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from agents/atlas.yaml in a follow-on brief._ working agents/atlas.yaml commands/rag.md personal/rag-system/",
       "file_path": "catalogue/pages/agent/ATLAS.md"
     },
@@ -2293,8 +2293,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — anthropic\n\nConsolidated credential references for the `anthropic` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `anthropic` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — anthropic\n\nConsolidated credential references for the `anthropic` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `anthropic` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — anthropic\n\nConsolidated credential references for the `anthropic` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `anthropic` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — anthropic\n\nConsolidated credential references for the `anthropic` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `anthropic` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-anthropic credential_reference # credentials — anthropic\n\nconsolidated credential references for the `anthropic` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `anthropic` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ anthropic true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-anthropic.md"
     },
@@ -2314,8 +2314,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — app_config\n\nConsolidated credential references for the `app_config` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `app_config` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — app_config\n\nConsolidated credential references for the `app_config` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `app_config` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — app_config\n\nConsolidated credential references for the `app_config` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `app_config` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — app_config\n\nConsolidated credential references for the `app_config` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `app_config` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-app_config credential_reference # credentials — app_config\n\nconsolidated credential references for the `app_config` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `app_config` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ app_config true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-app_config.md"
     },
@@ -2335,8 +2335,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — cloudinary\n\nConsolidated credential references for the `cloudinary` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `cloudinary` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — cloudinary\n\nConsolidated credential references for the `cloudinary` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `cloudinary` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — cloudinary\n\nConsolidated credential references for the `cloudinary` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `cloudinary` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — cloudinary\n\nConsolidated credential references for the `cloudinary` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `cloudinary` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-cloudinary credential_reference # credentials — cloudinary\n\nconsolidated credential references for the `cloudinary` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `cloudinary` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ cloudinary true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-cloudinary.md"
     },
@@ -2356,8 +2356,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — codia\n\nConsolidated credential references for the `codia` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `codia` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — codia\n\nConsolidated credential references for the `codia` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `codia` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — codia\n\nConsolidated credential references for the `codia` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `codia` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — codia\n\nConsolidated credential references for the `codia` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `codia` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-codia credential_reference # credentials — codia\n\nconsolidated credential references for the `codia` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `codia` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ codia true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-codia.md"
     },
@@ -2377,8 +2377,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — fal\n\nConsolidated credential references for the `fal` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `fal` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — fal\n\nConsolidated credential references for the `fal` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `fal` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — fal\n\nConsolidated credential references for the `fal` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `fal` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — fal\n\nConsolidated credential references for the `fal` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `fal` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-fal credential_reference # credentials — fal\n\nconsolidated credential references for the `fal` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `fal` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ fal true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-fal.md"
     },
@@ -2398,8 +2398,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — github\n\nConsolidated credential references for the `github` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `github` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — github\n\nConsolidated credential references for the `github` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `github` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — github\n\nConsolidated credential references for the `github` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `github` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — github\n\nConsolidated credential references for the `github` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `github` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-github credential_reference # credentials — github\n\nconsolidated credential references for the `github` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `github` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ github true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-github.md"
     },
@@ -2419,8 +2419,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — google\n\nConsolidated credential references for the `google` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `google` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — google\n\nConsolidated credential references for the `google` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `google` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — google\n\nConsolidated credential references for the `google` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `google` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — google\n\nConsolidated credential references for the `google` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `google` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-google credential_reference # credentials — google\n\nconsolidated credential references for the `google` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `google` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ google true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-google.md"
     },
@@ -2440,8 +2440,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — monday\n\nConsolidated credential references for the `monday` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `monday` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — monday\n\nConsolidated credential references for the `monday` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `monday` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — monday\n\nConsolidated credential references for the `monday` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `monday` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — monday\n\nConsolidated credential references for the `monday` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `monday` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-monday credential_reference # credentials — monday\n\nconsolidated credential references for the `monday` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `monday` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ monday true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-monday.md"
     },
@@ -2461,8 +2461,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — openrouter\n\nConsolidated credential references for the `openrouter` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `openrouter` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — openrouter\n\nConsolidated credential references for the `openrouter` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `openrouter` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — openrouter\n\nConsolidated credential references for the `openrouter` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `openrouter` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — openrouter\n\nConsolidated credential references for the `openrouter` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `openrouter` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-openrouter credential_reference # credentials — openrouter\n\nconsolidated credential references for the `openrouter` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `openrouter` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ openrouter true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-openrouter.md"
     },
@@ -2482,8 +2482,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — paths\n\nConsolidated credential references for the `paths` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `paths` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — paths\n\nConsolidated credential references for the `paths` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `paths` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — paths\n\nConsolidated credential references for the `paths` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `paths` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — paths\n\nConsolidated credential references for the `paths` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `paths` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-paths credential_reference # credentials — paths\n\nconsolidated credential references for the `paths` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `paths` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ paths true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-paths.md"
     },
@@ -2503,8 +2503,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — percy\n\nConsolidated credential references for the `percy` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `percy` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — percy\n\nConsolidated credential references for the `percy` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `percy` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — percy\n\nConsolidated credential references for the `percy` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `percy` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — percy\n\nConsolidated credential references for the `percy` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `percy` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-percy credential_reference # credentials — percy\n\nconsolidated credential references for the `percy` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `percy` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ percy true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-percy.md"
     },
@@ -2524,8 +2524,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — rag\n\nConsolidated credential references for the `rag` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `rag` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — rag\n\nConsolidated credential references for the `rag` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `rag` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — rag\n\nConsolidated credential references for the `rag` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `rag` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — rag\n\nConsolidated credential references for the `rag` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `rag` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-rag credential_reference # credentials — rag\n\nconsolidated credential references for the `rag` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `rag` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ rag true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-rag.md"
     },
@@ -2545,8 +2545,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — supabase\n\nConsolidated credential references for the `supabase` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `supabase` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — supabase\n\nConsolidated credential references for the `supabase` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `supabase` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — supabase\n\nConsolidated credential references for the `supabase` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `supabase` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — supabase\n\nConsolidated credential references for the `supabase` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `supabase` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-supabase credential_reference # credentials — supabase\n\nconsolidated credential references for the `supabase` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `supabase` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ supabase true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-supabase.md"
     },
@@ -2566,8 +2566,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — telegram\n\nConsolidated credential references for the `telegram` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `telegram` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — telegram\n\nConsolidated credential references for the `telegram` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `telegram` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — telegram\n\nConsolidated credential references for the `telegram` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `telegram` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — telegram\n\nConsolidated credential references for the `telegram` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `telegram` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-telegram credential_reference # credentials — telegram\n\nconsolidated credential references for the `telegram` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `telegram` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ telegram true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-telegram.md"
     },
@@ -2587,8 +2587,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Credentials — vercel\n\nConsolidated credential references for the `vercel` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `vercel` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
-      "body": "# Credentials — vercel\n\nConsolidated credential references for the `vercel` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `vercel` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body_preview": "# Credentials — vercel\n\nConsolidated credential references for the `vercel` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `vercel` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials — vercel\n\nConsolidated credential references for the `vercel` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `vercel` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "search_text": "credentials-vercel credential_reference # credentials — vercel\n\nconsolidated credential references for the `vercel` category.\n\n**source of truth**: `registry/env-var-registry.yaml`\n**total documented (all categories)**: 82\n\n## env files\n\n- `personal/mcp-configs/.env`\n\n## details\n\n_individual credential details for `vercel` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on brief._ vercel true registry/env-var-registry.yaml 82",
       "file_path": "catalogue/pages/credential_reference/credentials-vercel.md"
     },
@@ -3293,7 +3293,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/gitkraken.json"
+        "Personal/platform/mcp-configs/servers/gitkraken.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3302,8 +3302,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# gitkraken\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/gitkraken.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/gitkraken.json in a follow-on BRIEF._",
-      "body": "# gitkraken\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/gitkraken.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/gitkraken.json in a follow-on BRIEF._",
+      "body_preview": "# gitkraken\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/gitkraken.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/gitkraken.json in a follow-on BRIEF._",
+      "body": "# gitkraken\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/gitkraken.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/gitkraken.json in a follow-on BRIEF._",
       "search_text": "gitkraken mcp_connector # gitkraken\n\n**category**: mcp_connector\n**operational status**: configured\n**completeness score**: 75\n\n## source files\n\n- `personal/mcp-configs/servers/gitkraken.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/gitkraken.json in a follow-on brief._ configured personal/mcp-configs/servers/gitkraken.json",
       "file_path": "catalogue/pages/mcp_connector/gitkraken.md"
     },
@@ -3316,7 +3316,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/google-workspace.json"
+        "Personal/platform/mcp-configs/servers/google-workspace.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3325,8 +3325,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# google-workspace-alt\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
-      "body": "# google-workspace-alt\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
+      "body_preview": "# google-workspace-alt\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
+      "body": "# google-workspace-alt\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
       "search_text": "google-workspace-alt mcp_connector # google-workspace-alt\n\n**category**: mcp_connector\n**operational status**: configured\n**completeness score**: 75\n\n## source files\n\n- `personal/mcp-configs/servers/google-workspace.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/google-workspace.json in a follow-on brief._ configured personal/mcp-configs/servers/google-workspace.json",
       "file_path": "catalogue/pages/mcp_connector/google-workspace-alt.md"
     },
@@ -3339,7 +3339,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/google-workspace-r17.json"
+        "Personal/platform/mcp-configs/servers/google-workspace-r17.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3348,8 +3348,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# google-workspace-r17\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace-r17.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace-r17.json in a follow-on BRIEF._",
-      "body": "# google-workspace-r17\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace-r17.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace-r17.json in a follow-on BRIEF._",
+      "body_preview": "# google-workspace-r17\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace-r17.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace-r17.json in a follow-on BRIEF._",
+      "body": "# google-workspace-r17\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace-r17.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace-r17.json in a follow-on BRIEF._",
       "search_text": "google-workspace-r17 mcp_connector # google-workspace-r17\n\n**category**: mcp_connector\n**operational status**: working\n**completeness score**: 50\n\n## source files\n\n- `personal/mcp-configs/servers/google-workspace-r17.json`\n\n## known gaps\n\n- needs_audit\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/google-workspace-r17.json in a follow-on brief._ working personal/mcp-configs/servers/google-workspace-r17.json",
       "file_path": "catalogue/pages/mcp_connector/google-workspace-r17.md"
     },
@@ -3362,7 +3362,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/google-workspace.json"
+        "Personal/platform/mcp-configs/servers/google-workspace.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3371,8 +3371,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# google-workspace\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
-      "body": "# google-workspace\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
+      "body_preview": "# google-workspace\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
+      "body": "# google-workspace\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
       "search_text": "google-workspace mcp_connector # google-workspace\n\n**category**: mcp_connector\n**operational status**: working\n**completeness score**: 50\n\n## source files\n\n- `personal/mcp-configs/servers/google-workspace.json`\n\n## known gaps\n\n- needs_audit\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/google-workspace.json in a follow-on brief._ working personal/mcp-configs/servers/google-workspace.json",
       "file_path": "catalogue/pages/mcp_connector/google-workspace.md"
     },
@@ -3431,7 +3431,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/monday-cloud.json"
+        "Personal/platform/mcp-configs/servers/monday-cloud.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3440,8 +3440,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# monday-cloud\n\n**Category**: mcp_connector\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/monday-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/monday-cloud.json in a follow-on BRIEF._",
-      "body": "# monday-cloud\n\n**Category**: mcp_connector\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/monday-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/monday-cloud.json in a follow-on BRIEF._",
+      "body_preview": "# monday-cloud\n\n**Category**: mcp_connector\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/monday-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/monday-cloud.json in a follow-on BRIEF._",
+      "body": "# monday-cloud\n\n**Category**: mcp_connector\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/monday-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/monday-cloud.json in a follow-on BRIEF._",
       "search_text": "monday-cloud mcp_connector # monday-cloud\n\n**category**: mcp_connector\n**operational status**: degraded\n**completeness score**: 75\n\n## source files\n\n- `personal/mcp-configs/servers/monday-cloud.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/monday-cloud.json in a follow-on brief._ degraded personal/mcp-configs/servers/monday-cloud.json",
       "file_path": "catalogue/pages/mcp_connector/monday-cloud.md"
     },
@@ -3454,7 +3454,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/monday.json"
+        "Personal/platform/mcp-configs/servers/monday.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3463,8 +3463,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# monday\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `Personal/mcp-configs/servers/monday.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/monday.json in a follow-on BRIEF._",
-      "body": "# monday\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `Personal/mcp-configs/servers/monday.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/monday.json in a follow-on BRIEF._",
+      "body_preview": "# monday\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/monday.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/monday.json in a follow-on BRIEF._",
+      "body": "# monday\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/monday.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/monday.json in a follow-on BRIEF._",
       "search_text": "monday mcp_connector # monday\n\n**category**: mcp_connector\n**operational status**: working\n**completeness score**: 80\n\n## source files\n\n- `personal/mcp-configs/servers/monday.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/monday.json in a follow-on brief._ working personal/mcp-configs/servers/monday.json",
       "file_path": "catalogue/pages/mcp_connector/monday.md"
     },
@@ -3477,7 +3477,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/playwright-mcp.json"
+        "Personal/platform/mcp-configs/servers/playwright-mcp.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3486,8 +3486,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# playwright-mcp\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/playwright-mcp.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
-      "body": "# playwright-mcp\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/playwright-mcp.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
+      "body_preview": "# playwright-mcp\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/playwright-mcp.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
+      "body": "# playwright-mcp\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/playwright-mcp.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
       "search_text": "playwright-mcp mcp_connector # playwright-mcp\n\n**category**: mcp_connector\n**operational status**: working\n**completeness score**: 50\n\n## source files\n\n- `personal/mcp-configs/servers/playwright-mcp.json`\n\n## known gaps\n\n- needs_audit\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/playwright-mcp.json in a follow-on brief._ working personal/mcp-configs/servers/playwright-mcp.json",
       "file_path": "catalogue/pages/mcp_connector/playwright-mcp.md"
     },
@@ -3500,7 +3500,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/playwright-mcp.json"
+        "Personal/platform/mcp-configs/servers/playwright-mcp.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3509,8 +3509,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# playwright\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 70\n\n## Source Files\n\n- `Personal/mcp-configs/servers/playwright-mcp.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
-      "body": "# playwright\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 70\n\n## Source Files\n\n- `Personal/mcp-configs/servers/playwright-mcp.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
+      "body_preview": "# playwright\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 70\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/playwright-mcp.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
+      "body": "# playwright\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 70\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/playwright-mcp.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
       "search_text": "playwright mcp_connector # playwright\n\n**category**: mcp_connector\n**operational status**: configured\n**completeness score**: 70\n\n## source files\n\n- `personal/mcp-configs/servers/playwright-mcp.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/playwright-mcp.json in a follow-on brief._ configured personal/mcp-configs/servers/playwright-mcp.json",
       "file_path": "catalogue/pages/mcp_connector/playwright.md"
     },
@@ -3523,7 +3523,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/rag-system-cloud.json"
+        "Personal/platform/mcp-configs/servers/rag-system-cloud.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3532,8 +3532,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# rag-system-cloud\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-cloud.json in a follow-on BRIEF._",
-      "body": "# rag-system-cloud\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-cloud.json in a follow-on BRIEF._",
+      "body_preview": "# rag-system-cloud\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-cloud.json in a follow-on BRIEF._",
+      "body": "# rag-system-cloud\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-cloud.json in a follow-on BRIEF._",
       "search_text": "rag-system-cloud mcp_connector # rag-system-cloud\n\n**category**: mcp_connector\n**operational status**: working\n**completeness score**: 95\n\n## source files\n\n- `personal/mcp-configs/servers/rag-system-cloud.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/rag-system-cloud.json in a follow-on brief._ working personal/mcp-configs/servers/rag-system-cloud.json",
       "file_path": "catalogue/pages/mcp_connector/rag-system-cloud.md"
     },
@@ -3546,7 +3546,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/rag-system-local-fallback.json"
+        "Personal/platform/mcp-configs/servers/rag-system-local-fallback.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3555,8 +3555,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# rag-system-local-fallback\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-local-fallback.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-local-fallback.json in a follow-on BRIEF._",
-      "body": "# rag-system-local-fallback\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-local-fallback.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-local-fallback.json in a follow-on BRIEF._",
+      "body_preview": "# rag-system-local-fallback\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-local-fallback.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-local-fallback.json in a follow-on BRIEF._",
+      "body": "# rag-system-local-fallback\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-local-fallback.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-local-fallback.json in a follow-on BRIEF._",
       "search_text": "rag-system-local-fallback mcp_connector # rag-system-local-fallback\n\n**category**: mcp_connector\n**operational status**: configured\n**completeness score**: 85\n\n## source files\n\n- `personal/mcp-configs/servers/rag-system-local-fallback.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/rag-system-local-fallback.json in a follow-on brief._ configured personal/mcp-configs/servers/rag-system-local-fallback.json",
       "file_path": "catalogue/pages/mcp_connector/rag-system-local-fallback.md"
     },
@@ -3569,7 +3569,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/rag-system-local.json"
+        "Personal/platform/mcp-configs/servers/rag-system-local.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3578,8 +3578,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# rag-system-local\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-local.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-local.json in a follow-on BRIEF._",
-      "body": "# rag-system-local\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-local.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-local.json in a follow-on BRIEF._",
+      "body_preview": "# rag-system-local\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-local.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-local.json in a follow-on BRIEF._",
+      "body": "# rag-system-local\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-local.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-local.json in a follow-on BRIEF._",
       "search_text": "rag-system-local mcp_connector # rag-system-local\n\n**category**: mcp_connector\n**operational status**: working\n**completeness score**: 85\n\n## source files\n\n- `personal/mcp-configs/servers/rag-system-local.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/rag-system-local.json in a follow-on brief._ working personal/mcp-configs/servers/rag-system-local.json",
       "file_path": "catalogue/pages/mcp_connector/rag-system-local.md"
     },
@@ -3592,7 +3592,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/rag-system-web.json"
+        "Personal/platform/mcp-configs/servers/rag-system-web.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3601,8 +3601,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# rag-system-web\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-web.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-web.json in a follow-on BRIEF._",
-      "body": "# rag-system-web\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-web.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-web.json in a follow-on BRIEF._",
+      "body_preview": "# rag-system-web\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-web.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-web.json in a follow-on BRIEF._",
+      "body": "# rag-system-web\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-web.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-web.json in a follow-on BRIEF._",
       "search_text": "rag-system-web mcp_connector # rag-system-web\n\n**category**: mcp_connector\n**operational status**: working\n**completeness score**: 50\n\n## source files\n\n- `personal/mcp-configs/servers/rag-system-web.json`\n\n## known gaps\n\n- needs_audit\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/rag-system-web.json in a follow-on brief._ working personal/mcp-configs/servers/rag-system-web.json",
       "file_path": "catalogue/pages/mcp_connector/rag-system-web.md"
     },
@@ -3638,7 +3638,7 @@
       "gap_count": 8,
       "has_gaps": true,
       "source_files": [
-        "Personal/mcp-configs/servers/supabase.json"
+        "Personal/platform/mcp-configs/servers/supabase.json"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -3647,8 +3647,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# supabase\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/supabase.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/supabase.json in a follow-on BRIEF._",
-      "body": "# supabase\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/supabase.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/supabase.json in a follow-on BRIEF._",
+      "body_preview": "# supabase\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/supabase.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/supabase.json in a follow-on BRIEF._",
+      "body": "# supabase\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/supabase.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/supabase.json in a follow-on BRIEF._",
       "search_text": "supabase mcp_connector # supabase\n\n**category**: mcp_connector\n**operational status**: working\n**completeness score**: 85\n\n## source files\n\n- `personal/mcp-configs/servers/supabase.json`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/mcp-configs/servers/supabase.json in a follow-on brief._ working personal/mcp-configs/servers/supabase.json",
       "file_path": "catalogue/pages/mcp_connector/supabase.md"
     },
@@ -5317,7 +5317,7 @@
       "gap_count": 9,
       "has_gaps": true,
       "source_files": [
-        "~/Developer/GitHub/Personal/RAG-System/"
+        "~/Developer/GitHub/Personal/platform/RAG-System/"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -5326,8 +5326,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# RAG-System\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/RAG-System/ in a follow-on BRIEF._",
-      "body": "# RAG-System\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/RAG-System/ in a follow-on BRIEF._",
+      "body_preview": "# RAG-System\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/RAG-System/ in a follow-on BRIEF._",
+      "body": "# RAG-System\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/RAG-System/ in a follow-on BRIEF._",
       "search_text": "rag-system repository # rag-system\n\n**category**: repository\n**operational status**: working\n**completeness score**: 95\n\n## source files\n\n- `~/developer/github/personal/rag-system/`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from ~/developer/github/personal/rag-system/ in a follow-on brief._ working ~/developer/github/personal/rag-system/",
       "file_path": "catalogue/pages/repository/RAG-System.md"
     },
@@ -5340,7 +5340,7 @@
       "gap_count": 9,
       "has_gaps": true,
       "source_files": [
-        "~/Developer/GitHub/Personal/SUPABASE/"
+        "~/Developer/GitHub/Personal/platform/SUPABASE/"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -5349,8 +5349,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# SUPABASE\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 90\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/SUPABASE/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/SUPABASE/ in a follow-on BRIEF._",
-      "body": "# SUPABASE\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 90\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/SUPABASE/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/SUPABASE/ in a follow-on BRIEF._",
+      "body_preview": "# SUPABASE\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 90\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/SUPABASE/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/SUPABASE/ in a follow-on BRIEF._",
+      "body": "# SUPABASE\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 90\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/SUPABASE/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/SUPABASE/ in a follow-on BRIEF._",
       "search_text": "supabase repository # supabase\n\n**category**: repository\n**operational status**: working\n**completeness score**: 90\n\n## source files\n\n- `~/developer/github/personal/supabase/`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from ~/developer/github/personal/supabase/ in a follow-on brief._ working ~/developer/github/personal/supabase/",
       "file_path": "catalogue/pages/repository/SUPABASE.md"
     },
@@ -5524,7 +5524,7 @@
       "gap_count": 9,
       "has_gaps": true,
       "source_files": [
-        "~/Developer/GitHub/Personal/mcp-configs/"
+        "~/Developer/GitHub/Personal/platform/mcp-configs/"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -5533,8 +5533,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# mcp-configs\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/mcp-configs/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/mcp-configs/ in a follow-on BRIEF._",
-      "body": "# mcp-configs\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/mcp-configs/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/mcp-configs/ in a follow-on BRIEF._",
+      "body_preview": "# mcp-configs\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/mcp-configs/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/mcp-configs/ in a follow-on BRIEF._",
+      "body": "# mcp-configs\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/mcp-configs/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/mcp-configs/ in a follow-on BRIEF._",
       "search_text": "mcp-configs repository # mcp-configs\n\n**category**: repository\n**operational status**: working\n**completeness score**: 80\n\n## source files\n\n- `~/developer/github/personal/mcp-configs/`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from ~/developer/github/personal/mcp-configs/ in a follow-on brief._ working ~/developer/github/personal/mcp-configs/",
       "file_path": "catalogue/pages/repository/mcp-configs.md"
     },
@@ -5547,7 +5547,7 @@
       "gap_count": 9,
       "has_gaps": true,
       "source_files": [
-        "~/Developer/GitHub/Personal/monday-mcp-server/"
+        "~/Developer/GitHub/Personal/platform/monday-mcp-server/"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -5556,8 +5556,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# monday-mcp-server\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/monday-mcp-server/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/monday-mcp-server/ in a follow-on BRIEF._",
-      "body": "# monday-mcp-server\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/monday-mcp-server/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/monday-mcp-server/ in a follow-on BRIEF._",
+      "body_preview": "# monday-mcp-server\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/monday-mcp-server/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/monday-mcp-server/ in a follow-on BRIEF._",
+      "body": "# monday-mcp-server\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/monday-mcp-server/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/monday-mcp-server/ in a follow-on BRIEF._",
       "search_text": "monday-mcp-server repository # monday-mcp-server\n\n**category**: repository\n**operational status**: working\n**completeness score**: 85\n\n## source files\n\n- `~/developer/github/personal/monday-mcp-server/`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from ~/developer/github/personal/monday-mcp-server/ in a follow-on brief._ working ~/developer/github/personal/monday-mcp-server/",
       "file_path": "catalogue/pages/repository/monday-mcp-server.md"
     },
@@ -7456,7 +7456,7 @@
       "gap_count": 11,
       "has_gaps": true,
       "source_files": [
-        "Personal/monday-mcp-server/"
+        "Personal/platform/monday-mcp-server/"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -7465,8 +7465,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# Monday Cloud MCP\n\n**Category**: service\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/monday-mcp-server/`\n\n## Known Gaps\n\n- health_endpoint\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/monday-mcp-server/ in a follow-on BRIEF._",
-      "body": "# Monday Cloud MCP\n\n**Category**: service\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/monday-mcp-server/`\n\n## Known Gaps\n\n- health_endpoint\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/monday-mcp-server/ in a follow-on BRIEF._",
+      "body_preview": "# Monday Cloud MCP\n\n**Category**: service\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/monday-mcp-server/`\n\n## Known Gaps\n\n- health_endpoint\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/monday-mcp-server/ in a follow-on BRIEF._",
+      "body": "# Monday Cloud MCP\n\n**Category**: service\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/monday-mcp-server/`\n\n## Known Gaps\n\n- health_endpoint\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/monday-mcp-server/ in a follow-on BRIEF._",
       "search_text": "monday cloud mcp service # monday cloud mcp\n\n**category**: service\n**operational status**: degraded\n**completeness score**: 75\n\n## source files\n\n- `personal/monday-mcp-server/`\n\n## known gaps\n\n- health_endpoint\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/monday-mcp-server/ in a follow-on brief._ degraded personal/monday-mcp-server/",
       "file_path": "catalogue/pages/service/Monday-Cloud-MCP.md"
     },
@@ -7502,7 +7502,7 @@
       "gap_count": 11,
       "has_gaps": true,
       "source_files": [
-        "Personal/RAG-System/"
+        "Personal/platform/RAG-System/"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -7511,8 +7511,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# RAG System (Local)\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/RAG-System/ in a follow-on BRIEF._",
-      "body": "# RAG System (Local)\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/RAG-System/ in a follow-on BRIEF._",
+      "body_preview": "# RAG System (Local)\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/RAG-System/ in a follow-on BRIEF._",
+      "body": "# RAG System (Local)\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/RAG-System/ in a follow-on BRIEF._",
       "search_text": "rag system (local) service # rag system (local)\n\n**category**: service\n**operational status**: working\n**completeness score**: 95\n\n## source files\n\n- `personal/rag-system/`\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/rag-system/ in a follow-on brief._ working personal/rag-system/",
       "file_path": "catalogue/pages/service/RAG-System-Local.md"
     },
@@ -7525,7 +7525,7 @@
       "gap_count": 11,
       "has_gaps": true,
       "source_files": [
-        "Personal/RAG-System"
+        "Personal/platform/RAG-System"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -7534,8 +7534,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# RAG-System\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/RAG-System`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/RAG-System in a follow-on BRIEF._",
-      "body": "# RAG-System\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/RAG-System`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/RAG-System in a follow-on BRIEF._",
+      "body_preview": "# RAG-System\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/RAG-System`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/RAG-System in a follow-on BRIEF._",
+      "body": "# RAG-System\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/RAG-System`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/RAG-System in a follow-on BRIEF._",
       "search_text": "rag-system service # rag-system\n\n**category**: service\n**operational status**: working\n**completeness score**: 50\n\n## source files\n\n- `personal/rag-system`\n\n## known gaps\n\n- needs_audit\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/rag-system in a follow-on brief._ working personal/rag-system",
       "file_path": "catalogue/pages/service/RAG-System.md"
     },
@@ -7548,7 +7548,7 @@
       "gap_count": 11,
       "has_gaps": true,
       "source_files": [
-        "Personal/monday-mcp-server"
+        "Personal/platform/monday-mcp-server"
       ],
       "brief_id": "603",
       "version": "1.0",
@@ -7557,8 +7557,8 @@
       "dependencies_agents": [],
       "dependencies_services": [],
       "dependencies_skills": [],
-      "body_preview": "# monday-mcp-server\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/monday-mcp-server`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/monday-mcp-server in a follow-on BRIEF._",
-      "body": "# monday-mcp-server\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/monday-mcp-server`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/monday-mcp-server in a follow-on BRIEF._",
+      "body_preview": "# monday-mcp-server\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/monday-mcp-server`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/monday-mcp-server in a follow-on BRIEF._",
+      "body": "# monday-mcp-server\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/monday-mcp-server`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/monday-mcp-server in a follow-on BRIEF._",
       "search_text": "monday-mcp-server service # monday-mcp-server\n\n**category**: service\n**operational status**: working\n**completeness score**: 50\n\n## source files\n\n- `personal/monday-mcp-server`\n\n## known gaps\n\n- needs_audit\n\n## description\n\n_auto-generated stub. human-readable description to be populated from personal/monday-mcp-server in a follow-on brief._ working personal/monday-mcp-server",
       "file_path": "catalogue/pages/service/monday-mcp-server.md"
     },

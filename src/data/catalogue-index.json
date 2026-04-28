@@ -29,7 +29,7 @@
       "app_config"
     ],
     "env_files": [
-      "Personal/mcp-configs/.env"
+      "Personal/platform/mcp-configs/.env"
     ],
     "env_example_files": 11
   },
@@ -386,7 +386,7 @@
       "source_files": [
         "agents/ATLAS.yaml",
         "commands/rag.md",
-        "Personal/RAG-System/"
+        "Personal/platform/RAG-System/"
       ],
       "template_fields": {
         "role_description": "[GAP]",
@@ -404,7 +404,7 @@
         "enforcement_layer_interactions": "[GAP]",
         "status_per_layer": "[GAP]"
       },
-      "body": "# ATLAS\n\n**Category**: agent\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `agents/ATLAS.yaml`\n- `commands/rag.md`\n- `Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from agents/ATLAS.yaml in a follow-on BRIEF._",
+      "body": "# ATLAS\n\n**Category**: agent\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `agents/ATLAS.yaml`\n- `commands/rag.md`\n- `Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from agents/ATLAS.yaml in a follow-on BRIEF._",
       "gap_count": 14,
       "has_gaps": true
     },
@@ -2687,7 +2687,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 anthropic\n\nConsolidated credential references for the `anthropic` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `anthropic` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 anthropic\n\nConsolidated credential references for the `anthropic` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `anthropic` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2709,7 +2709,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 app_config\n\nConsolidated credential references for the `app_config` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `app_config` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 app_config\n\nConsolidated credential references for the `app_config` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `app_config` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2731,7 +2731,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 cloudinary\n\nConsolidated credential references for the `cloudinary` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `cloudinary` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 cloudinary\n\nConsolidated credential references for the `cloudinary` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `cloudinary` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2753,7 +2753,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 codia\n\nConsolidated credential references for the `codia` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `codia` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 codia\n\nConsolidated credential references for the `codia` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `codia` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2775,7 +2775,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 fal\n\nConsolidated credential references for the `fal` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `fal` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 fal\n\nConsolidated credential references for the `fal` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `fal` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2797,7 +2797,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 github\n\nConsolidated credential references for the `github` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `github` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 github\n\nConsolidated credential references for the `github` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `github` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2819,7 +2819,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 google\n\nConsolidated credential references for the `google` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `google` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 google\n\nConsolidated credential references for the `google` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `google` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2841,7 +2841,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 monday\n\nConsolidated credential references for the `monday` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `monday` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 monday\n\nConsolidated credential references for the `monday` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `monday` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2863,7 +2863,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 openrouter\n\nConsolidated credential references for the `openrouter` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `openrouter` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 openrouter\n\nConsolidated credential references for the `openrouter` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `openrouter` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2885,7 +2885,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 paths\n\nConsolidated credential references for the `paths` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `paths` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 paths\n\nConsolidated credential references for the `paths` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `paths` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2907,7 +2907,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 percy\n\nConsolidated credential references for the `percy` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `percy` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 percy\n\nConsolidated credential references for the `percy` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `percy` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2929,7 +2929,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 rag\n\nConsolidated credential references for the `rag` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `rag` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 rag\n\nConsolidated credential references for the `rag` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `rag` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2951,7 +2951,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 supabase\n\nConsolidated credential references for the `supabase` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `supabase` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 supabase\n\nConsolidated credential references for the `supabase` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `supabase` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2973,7 +2973,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 telegram\n\nConsolidated credential references for the `telegram` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `telegram` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 telegram\n\nConsolidated credential references for the `telegram` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `telegram` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -2995,7 +2995,7 @@
         "consumers": "[GAP]",
         "firewall_rules": "[GAP]"
       },
-      "body": "# Credentials \u2014 vercel\n\nConsolidated credential references for the `vercel` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `vercel` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
+      "body": "# Credentials \u2014 vercel\n\nConsolidated credential references for the `vercel` category.\n\n**Source of truth**: `registry/env-var-registry.yaml`\n**Total documented (all categories)**: 82\n\n## Env Files\n\n- `Personal/platform/mcp-configs/.env`\n\n## Details\n\n_Individual credential details for `vercel` to be extracted from `registry/env-var-registry.yaml` and `.env.example` files in a follow-on BRIEF._",
       "gap_count": 6,
       "has_gaps": true
     },
@@ -3720,7 +3720,7 @@
       "operational_status": "CONFIGURED",
       "completeness_score": 75,
       "source_files": [
-        "Personal/mcp-configs/servers/gitkraken.json"
+        "Personal/platform/mcp-configs/servers/gitkraken.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3732,7 +3732,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# gitkraken\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/gitkraken.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/gitkraken.json in a follow-on BRIEF._",
+      "body": "# gitkraken\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/gitkraken.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/gitkraken.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3742,7 +3742,7 @@
       "operational_status": "CONFIGURED",
       "completeness_score": 75,
       "source_files": [
-        "Personal/mcp-configs/servers/google-workspace.json"
+        "Personal/platform/mcp-configs/servers/google-workspace.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3754,7 +3754,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# google-workspace-alt\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
+      "body": "# google-workspace-alt\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3764,7 +3764,7 @@
       "operational_status": "WORKING",
       "completeness_score": 50,
       "source_files": [
-        "Personal/mcp-configs/servers/google-workspace-r17.json"
+        "Personal/platform/mcp-configs/servers/google-workspace-r17.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3776,7 +3776,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# google-workspace-r17\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace-r17.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace-r17.json in a follow-on BRIEF._",
+      "body": "# google-workspace-r17\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace-r17.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace-r17.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3786,7 +3786,7 @@
       "operational_status": "WORKING",
       "completeness_score": 50,
       "source_files": [
-        "Personal/mcp-configs/servers/google-workspace.json"
+        "Personal/platform/mcp-configs/servers/google-workspace.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3798,7 +3798,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# google-workspace\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/google-workspace.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
+      "body": "# google-workspace\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/google-workspace.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/google-workspace.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3852,7 +3852,7 @@
       "operational_status": "DEGRADED",
       "completeness_score": 75,
       "source_files": [
-        "Personal/mcp-configs/servers/monday-cloud.json"
+        "Personal/platform/mcp-configs/servers/monday-cloud.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3864,7 +3864,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# monday-cloud\n\n**Category**: mcp_connector\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/mcp-configs/servers/monday-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/monday-cloud.json in a follow-on BRIEF._",
+      "body": "# monday-cloud\n\n**Category**: mcp_connector\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/monday-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/monday-cloud.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3874,7 +3874,7 @@
       "operational_status": "WORKING",
       "completeness_score": 80,
       "source_files": [
-        "Personal/mcp-configs/servers/monday.json"
+        "Personal/platform/mcp-configs/servers/monday.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3886,7 +3886,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# monday\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `Personal/mcp-configs/servers/monday.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/monday.json in a follow-on BRIEF._",
+      "body": "# monday\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/monday.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/monday.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3896,7 +3896,7 @@
       "operational_status": "WORKING",
       "completeness_score": 50,
       "source_files": [
-        "Personal/mcp-configs/servers/playwright-mcp.json"
+        "Personal/platform/mcp-configs/servers/playwright-mcp.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3908,7 +3908,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# playwright-mcp\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/playwright-mcp.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
+      "body": "# playwright-mcp\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/playwright-mcp.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3918,7 +3918,7 @@
       "operational_status": "CONFIGURED",
       "completeness_score": 70,
       "source_files": [
-        "Personal/mcp-configs/servers/playwright-mcp.json"
+        "Personal/platform/mcp-configs/servers/playwright-mcp.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3930,7 +3930,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# playwright\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 70\n\n## Source Files\n\n- `Personal/mcp-configs/servers/playwright-mcp.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
+      "body": "# playwright\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 70\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/playwright-mcp.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/playwright-mcp.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3940,7 +3940,7 @@
       "operational_status": "WORKING",
       "completeness_score": 95,
       "source_files": [
-        "Personal/mcp-configs/servers/rag-system-cloud.json"
+        "Personal/platform/mcp-configs/servers/rag-system-cloud.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3952,7 +3952,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# rag-system-cloud\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-cloud.json in a follow-on BRIEF._",
+      "body": "# rag-system-cloud\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-cloud.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-cloud.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3962,7 +3962,7 @@
       "operational_status": "CONFIGURED",
       "completeness_score": 85,
       "source_files": [
-        "Personal/mcp-configs/servers/rag-system-local-fallback.json"
+        "Personal/platform/mcp-configs/servers/rag-system-local-fallback.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3974,7 +3974,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# rag-system-local-fallback\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-local-fallback.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-local-fallback.json in a follow-on BRIEF._",
+      "body": "# rag-system-local-fallback\n\n**Category**: mcp_connector\n**Operational status**: CONFIGURED\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-local-fallback.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-local-fallback.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -3984,7 +3984,7 @@
       "operational_status": "WORKING",
       "completeness_score": 85,
       "source_files": [
-        "Personal/mcp-configs/servers/rag-system-local.json"
+        "Personal/platform/mcp-configs/servers/rag-system-local.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -3996,7 +3996,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# rag-system-local\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-local.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-local.json in a follow-on BRIEF._",
+      "body": "# rag-system-local\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-local.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-local.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -4006,7 +4006,7 @@
       "operational_status": "WORKING",
       "completeness_score": 50,
       "source_files": [
-        "Personal/mcp-configs/servers/rag-system-web.json"
+        "Personal/platform/mcp-configs/servers/rag-system-web.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -4018,7 +4018,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# rag-system-web\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/mcp-configs/servers/rag-system-web.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/rag-system-web.json in a follow-on BRIEF._",
+      "body": "# rag-system-web\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/rag-system-web.json`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/rag-system-web.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -4050,7 +4050,7 @@
       "operational_status": "WORKING",
       "completeness_score": 85,
       "source_files": [
-        "Personal/mcp-configs/servers/supabase.json"
+        "Personal/platform/mcp-configs/servers/supabase.json"
       ],
       "template_fields": {
         "url": "[GAP]",
@@ -4062,7 +4062,7 @@
         "transport_type": "[GAP]",
         "known_issues": "[GAP]"
       },
-      "body": "# supabase\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/mcp-configs/servers/supabase.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/mcp-configs/servers/supabase.json in a follow-on BRIEF._",
+      "body": "# supabase\n\n**Category**: mcp_connector\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `Personal/platform/mcp-configs/servers/supabase.json`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/mcp-configs/servers/supabase.json in a follow-on BRIEF._",
       "gap_count": 8,
       "has_gaps": true
     },
@@ -5521,7 +5521,7 @@
       "operational_status": "WORKING",
       "completeness_score": 95,
       "source_files": [
-        "~/Developer/GitHub/Personal/RAG-System/"
+        "~/Developer/GitHub/Personal/platform/RAG-System/"
       ],
       "template_fields": {
         "github_org": "[GAP]",
@@ -5534,7 +5534,7 @@
         "ci_cd": "[GAP]",
         "components_contained": "[GAP]"
       },
-      "body": "# RAG-System\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/RAG-System/ in a follow-on BRIEF._",
+      "body": "# RAG-System\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/RAG-System/ in a follow-on BRIEF._",
       "gap_count": 9,
       "has_gaps": true
     },
@@ -5544,7 +5544,7 @@
       "operational_status": "WORKING",
       "completeness_score": 90,
       "source_files": [
-        "~/Developer/GitHub/Personal/SUPABASE/"
+        "~/Developer/GitHub/Personal/platform/SUPABASE/"
       ],
       "template_fields": {
         "github_org": "[GAP]",
@@ -5557,7 +5557,7 @@
         "ci_cd": "[GAP]",
         "components_contained": "[GAP]"
       },
-      "body": "# SUPABASE\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 90\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/SUPABASE/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/SUPABASE/ in a follow-on BRIEF._",
+      "body": "# SUPABASE\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 90\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/SUPABASE/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/SUPABASE/ in a follow-on BRIEF._",
       "gap_count": 9,
       "has_gaps": true
     },
@@ -5728,7 +5728,7 @@
       "operational_status": "WORKING",
       "completeness_score": 80,
       "source_files": [
-        "~/Developer/GitHub/Personal/mcp-configs/"
+        "~/Developer/GitHub/Personal/platform/mcp-configs/"
       ],
       "template_fields": {
         "github_org": "[GAP]",
@@ -5741,7 +5741,7 @@
         "ci_cd": "[GAP]",
         "components_contained": "[GAP]"
       },
-      "body": "# mcp-configs\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/mcp-configs/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/mcp-configs/ in a follow-on BRIEF._",
+      "body": "# mcp-configs\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 80\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/mcp-configs/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/mcp-configs/ in a follow-on BRIEF._",
       "gap_count": 9,
       "has_gaps": true
     },
@@ -5751,7 +5751,7 @@
       "operational_status": "WORKING",
       "completeness_score": 85,
       "source_files": [
-        "~/Developer/GitHub/Personal/monday-mcp-server/"
+        "~/Developer/GitHub/Personal/platform/monday-mcp-server/"
       ],
       "template_fields": {
         "github_org": "[GAP]",
@@ -5764,7 +5764,7 @@
         "ci_cd": "[GAP]",
         "components_contained": "[GAP]"
       },
-      "body": "# monday-mcp-server\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/monday-mcp-server/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/monday-mcp-server/ in a follow-on BRIEF._",
+      "body": "# monday-mcp-server\n\n**Category**: repository\n**Operational status**: WORKING\n**Completeness score**: 85\n\n## Source Files\n\n- `~/Developer/GitHub/Personal/platform/monday-mcp-server/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from ~/Developer/GitHub/Personal/platform/monday-mcp-server/ in a follow-on BRIEF._",
       "gap_count": 9,
       "has_gaps": true
     },
@@ -7451,7 +7451,7 @@
       "operational_status": "DEGRADED",
       "completeness_score": 75,
       "source_files": [
-        "Personal/monday-mcp-server/"
+        "Personal/platform/monday-mcp-server/"
       ],
       "template_fields": {
         "endpoint_url": "[GAP]",
@@ -7466,7 +7466,7 @@
         "dependencies": "[GAP]",
         "deployment_config_path": "[GAP]"
       },
-      "body": "# Monday Cloud MCP\n\n**Category**: service\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/monday-mcp-server/`\n\n## Known Gaps\n\n- health_endpoint\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/monday-mcp-server/ in a follow-on BRIEF._",
+      "body": "# Monday Cloud MCP\n\n**Category**: service\n**Operational status**: DEGRADED\n**Completeness score**: 75\n\n## Source Files\n\n- `Personal/platform/monday-mcp-server/`\n\n## Known Gaps\n\n- health_endpoint\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/monday-mcp-server/ in a follow-on BRIEF._",
       "gap_count": 11,
       "has_gaps": true
     },
@@ -7501,7 +7501,7 @@
       "operational_status": "WORKING",
       "completeness_score": 95,
       "source_files": [
-        "Personal/RAG-System/"
+        "Personal/platform/RAG-System/"
       ],
       "template_fields": {
         "endpoint_url": "[GAP]",
@@ -7516,7 +7516,7 @@
         "dependencies": "[GAP]",
         "deployment_config_path": "[GAP]"
       },
-      "body": "# RAG System (Local)\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/RAG-System/ in a follow-on BRIEF._",
+      "body": "# RAG System (Local)\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 95\n\n## Source Files\n\n- `Personal/platform/RAG-System/`\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/RAG-System/ in a follow-on BRIEF._",
       "gap_count": 11,
       "has_gaps": true
     },
@@ -7526,7 +7526,7 @@
       "operational_status": "WORKING",
       "completeness_score": 50,
       "source_files": [
-        "Personal/RAG-System"
+        "Personal/platform/RAG-System"
       ],
       "template_fields": {
         "endpoint_url": "[GAP]",
@@ -7541,7 +7541,7 @@
         "dependencies": "[GAP]",
         "deployment_config_path": "[GAP]"
       },
-      "body": "# RAG-System\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/RAG-System`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/RAG-System in a follow-on BRIEF._",
+      "body": "# RAG-System\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/RAG-System`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/RAG-System in a follow-on BRIEF._",
       "gap_count": 11,
       "has_gaps": true
     },
@@ -7551,7 +7551,7 @@
       "operational_status": "WORKING",
       "completeness_score": 50,
       "source_files": [
-        "Personal/monday-mcp-server"
+        "Personal/platform/monday-mcp-server"
       ],
       "template_fields": {
         "endpoint_url": "[GAP]",
@@ -7566,7 +7566,7 @@
         "dependencies": "[GAP]",
         "deployment_config_path": "[GAP]"
       },
-      "body": "# monday-mcp-server\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/monday-mcp-server`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/monday-mcp-server in a follow-on BRIEF._",
+      "body": "# monday-mcp-server\n\n**Category**: service\n**Operational status**: WORKING\n**Completeness score**: 50\n\n## Source Files\n\n- `Personal/platform/monday-mcp-server`\n\n## Known Gaps\n\n- needs_audit\n\n## Description\n\n_Auto-generated stub. Human-readable description to be populated from Personal/platform/monday-mcp-server in a follow-on BRIEF._",
       "gap_count": 11,
       "has_gaps": true
     },
